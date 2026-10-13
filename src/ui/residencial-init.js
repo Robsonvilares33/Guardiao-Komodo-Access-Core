@@ -509,7 +509,7 @@
             if (searchTerm) {
                 var extra = document.createElement('span');
                 extra.className = 'record-day-extra';
-                extra.textContent = ' (' + (('residencial' === 'residencial') ? String(item.dia || '').toUpperCase() : 'Agendado p/ ' + String(item.dia || '').toUpperCase()) + ')';
+                extra.textContent = ' (' + (('residencial' === 'residencial') ? String(item.dia || '').toUpperCase() + (item.data ? ' ' + String(item.data).split('-').reverse().join('/') : '') : 'Agendado p/ ' + String(item.dia || '').toUpperCase() + (item.data ? ' ' + String(item.data).split('-').reverse().join('/') : '')) + ')';
                 name.appendChild(extra);
             }
             header.appendChild(name);

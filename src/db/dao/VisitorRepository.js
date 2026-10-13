@@ -9,8 +9,15 @@ class VisitorRepository {
     return window.dbService.query('SELECT * FROM komodo_acessos WHERE modulo = ?', [modulo]);
   }
 
+  static _dateFor(dia) {
+    const KD = window.KomodoDate; if (!KD || !dia) return null;
+    const w = KD.weekDates()[dia]; if (!w) return null;
+    return w.year + '-' + String(w.month).padStart(2, '0') + '-' + String(w.day).padStart(2, '0');
+  }
+
   static async save(visitorDTO) {
     let result;
+    if (!visitorDTO.data) { const d = this._dateFor(visitorDTO.dia); if (d) visitorDTO = { ...visitorDTO, data: d }; }
     if (this._remote()) {
       if (!window.apiService) throw new Error('ApiService não carregado.');
       result = await window.apiService.post('/visitantes', visitorDTO);
@@ -38,9 +45,10 @@ class VisitorRepository {
   static async getAllDaily(dateString, modulo = 'residencial') {
     // API web filtra por dia da semana (seg..dom), não por data ISO completa.
     const day = String(dateString || '').trim().toLowerCase();
-    if (this._remote()) return window.apiService.get('/visitantes/' + encodeURIComponent(modulo) + '/' + encodeURIComponent(day));
+    const date = this._dateFor(day);
+    if (this._remote()) return window.apiService.get('/visitantes/' + encodeURIComponent(modulo) + '/' + encodeURIComponent(day) + (date ? '?data=' + date : ''));
     const rows = await this._localQuery(modulo);
-    return rows.filter(row => row.dia === dateString);
+    return rows.filter(row => row.dia === dateString && (!date || !row.data || row.data === date));
   }
 
   static async getAllByModule(modulo = 'residencial') {
