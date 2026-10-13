@@ -414,7 +414,7 @@
     });
 
     // Expõe a função global para manter compatibilidade com o RenderController
-    window.renderDaily = function(data, searchTerm) {
+    window.renderDaily = function(data, searchTerm, showAll) {
         var container = document.getElementById('cardsContainer');
         if (!container) return;
         container.replaceChildren();
@@ -422,7 +422,7 @@
 
         var state = window.appStore ? window.appStore.getState('visitors') : null;
         var currentDia = state ? state.diaAtivo : diaAtual;
-        var filtered = searchTerm ? data.slice() : data.filter(function(item) { return item.dia === currentDia; });
+        var filtered = (searchTerm || showAll) ? data.slice() : data.filter(function(item) { return item.dia === currentDia; });
         if (!filtered.length) {
             var empty = document.createElement('h3');
             empty.className = 'empty-records-message';
@@ -506,7 +506,7 @@
             var name = document.createElement('span');
             name.className = 'name';
             appendHighlighted(name, item.nome);
-            if (searchTerm) {
+            if (searchTerm || showAll) {
                 var extra = document.createElement('span');
                 extra.className = 'record-day-extra';
                 extra.textContent = ' (' + (('residencial' === 'residencial') ? String(item.dia || '').toUpperCase() + (item.data ? ' ' + String(item.data).split('-').reverse().join('/') : '') : 'Agendado p/ ' + String(item.dia || '').toUpperCase() + (item.data ? ' ' + String(item.data).split('-').reverse().join('/') : '')) + ')';

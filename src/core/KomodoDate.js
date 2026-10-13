@@ -19,7 +19,16 @@
   function todayKey(now, timeZone) { return todayParts(now, timeZone).dayKey; }
 
   /** Datas (dia do mês) da semana corrente, de segunda a domingo. */
+  let reference = null; // ISO 'YYYY-MM-DD' da semana em exibição (null = semana atual)
+  function setReference(iso) { reference = iso && /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : null; }
+  function getReference() { return reference; }
+  function toISO(p) { return p.year + '-' + String(p.month).padStart(2, '0') + '-' + String(p.day).padStart(2, '0'); }
+  function todayISO(now, timeZone) { return toISO(todayParts(now, timeZone)); }
+  function addDaysISO(iso, n) { const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+  function weekdayKeyOfISO(iso) { return KEYS[new Date(iso + 'T12:00:00Z').getUTCDay()]; }
+
   function weekDates(now, timeZone) {
+    if (now === undefined && reference) now = new Date(reference + 'T15:00:00Z');
     const t = todayParts(now, timeZone);
     const offsetToMonday = (t.weekday + 6) % 7;
     const monday = new Date(t.civil.getTime() - offsetToMonday * 86400000);
@@ -31,7 +40,7 @@
     return out;
   }
 
-  const api = { TZ, KEYS, todayParts, todayKey, weekDates };
+  const api = { TZ, KEYS, todayParts, todayKey, weekDates, setReference, getReference, toISO, todayISO, addDaysISO, weekdayKeyOfISO };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.KomodoDate = api;
 })(typeof window !== 'undefined' ? window : null);

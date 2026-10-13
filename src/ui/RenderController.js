@@ -19,7 +19,8 @@ class RenderController {
         const today = KD.todayParts();
         const week = KD.weekDates();
         const monthEl = document.querySelector('.month-title');
-        if (monthEl) monthEl.innerText = monthNames[today.month - 1];
+        const refMonth = KD.getReference() ? Number(KD.getReference().slice(5, 7)) : today.month;
+        if (monthEl) monthEl.innerText = monthNames[refMonth - 1];
 
         document.querySelectorAll('.tab').forEach(tab => {
             const diaStr = tab.getAttribute('data-dia');
@@ -27,8 +28,9 @@ class RenderController {
             if (!info) return;
             const originalText = tab.innerText.split(' ')[0];
             tab.innerText = `${originalText} ${String(info.day).padStart(2, '0')}`;
-            tab.classList.toggle('active', diaStr === today.dayKey);
-            tab.classList.toggle('today', diaStr === today.dayKey);
+            const isToday = KD.toISO(info) === KD.todayISO();
+            if (!KD.getReference()) tab.classList.toggle('active', isToday);
+            tab.classList.toggle('today', isToday);
         });
     }
 

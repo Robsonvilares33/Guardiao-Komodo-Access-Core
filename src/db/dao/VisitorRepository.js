@@ -56,6 +56,17 @@ class VisitorRepository {
     return this._localQuery(modulo);
   }
 
+  /** Registros do módulo num intervalo de datas (inclusive). de/ate: 'YYYY-MM-DD' ou null. */
+  static async getRange(modulo, de, ate) {
+    if (this._remote()) {
+      const qs = [de ? 'de=' + de : '', ate ? 'ate=' + ate : ''].filter(Boolean).join('&');
+      return window.apiService.get('/visitantes/' + encodeURIComponent(modulo) + (qs ? '?' + qs : ''));
+    }
+    const rows = await this._localQuery(modulo);
+    return rows.filter(r => r.data && (!de || r.data >= de) && (!ate || r.data <= ate))
+      .sort((a, b) => (a.data + (a.hora || '')).localeCompare(b.data + (b.hora || '')));
+  }
+
   static async getIncidentReports(modulo = 'residencial') {
     const allData = await this.getAllByModule(modulo);
     return allData.filter(item => item.alerta === true || item.alerta === 1 || item.alerta === 'true' || item.alerta === '1');
