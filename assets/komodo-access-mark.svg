@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Guardião Komodo Access</title>
+  <desc id="desc">Escudo abstrato dourado com figura geométrica de proteção em dourado e laranja.</desc>
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f2d28a"/>
+      <stop offset="0.55" stop-color="#c2a057"/>
+      <stop offset="1" stop-color="#8f6c2e"/>
+    </linearGradient>
+  </defs>
+  <path d="M64 7 108 23v34c0 28-17 49-44 64C37 106 20 85 20 57V23L64 7Z" fill="#0d0d0d" stroke="url(#gold)" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M64 18 97 30v27c0 21-12 38-33 50C43 95 31 78 31 57V30l33-12Z" fill="none" stroke="#c2a057" stroke-opacity=".45" stroke-width="1.5"/>
+  <circle cx="64" cy="43" r="10" fill="#e58a35"/>
+  <path d="M43 79c1-13 9-21 21-21s20 8 21 21" fill="none" stroke="url(#gold)" stroke-width="7" stroke-linecap="round"/>
+  <path d="M48 85h32" stroke="#e58a35" stroke-width="4" stroke-linecap="round"/>
+  <path d="M55 93 64 100l9-7" fill="none" stroke="#c2a057" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardião Komodo - Access Core</title>
+    <script src="vendor/jspdf-4.2.1/jspdf.umd.min.js"></script>
+    <script src="vendor/jspdf-autotable-5.0.8/jspdf.plugin.autotable.min.js"></script>
+    <script src="vendor/chart.js-4.5.1/chart.umd.js"></script>
+    <link rel="stylesheet" href="src/ui/styles/design-tokens.css">
+    <link rel="stylesheet" href="src/ui/styles/main.css">
+</head>
+<body>
+
+    <div class="bg-radar-container">
+        <div class="radar-crosshair"></div>
+        <div class="radar-sweep"></div>
+        <div class="bg-ring bg-ring-0"></div>
+        <div class="bg-ring bg-ring-1"></div>
+        <div class="bg-ring bg-ring-2"></div>
+        <div class="bg-ring bg-ring-3"></div>
+        <div class="bg-ring bg-ring-4"></div>
+    </div>
+    <canvas id="particles-canvas"></canvas>
+    <div class="hero-overlay"></div>
+
+    <header>
+        <div class="header-left">
+            <div class="logo-container">
+                <img src="assets/komodo-access-mark.svg" alt="Logo" class="logo-img">
+            </div>
+            <div class="header-title">KOMODO ACCESS</div>
+        </div>
+        <div class="search-container">
+            <input type="text" id="globalSearch" class="search-bar" name="search_query_off" placeholder="Busca global de segurança..." autocomplete="new-password">
+        </div>
+        <div class="kac-inline-b4edaa7885">
+            <a href="residencial.html" class="btn-outline">Residencial</a>
+            <button type="button" class="btn-gold" id="btnOpenModal">CLIENTE E VISITA</button>
+            <button type="button" class="btn-icon" id="btnOpenConfig" title="Configurações IA">⚙️</button>
+            <button type="button" class="btn-icon" id="btnLogout" title="Sair do Sistema">🚪</button>
+        </div>
+        <div id="apiStatus" class="api-status checking" role="status" aria-live="polite">Verificando conexão</div>
+    </header>
+
+    <div class="calendar-nav">
+        <div class="month-title">MAIO</div>
+        <div class="week-tabs" id="tabs">
+            <div class="tab" data-dia="seg">Segunda</div>
+            <div class="tab" data-dia="ter">Terça</div>
+            <div class="tab" data-dia="qua">Quarta</div>
+            <div class="tab active" data-dia="qui">Quinta</div>
+            <div class="tab" data-dia="sex">Sexta</div>
+            <div class="tab" data-dia="sab">Sábado</div>
+            <div class="tab" data-dia="dom">Domingo</div>
+        </div>
+        <div class="kac-inline-1d6d9e5b9f">
+            <button class="btn-outline kac-inline-21349d3fb7" id="btnOpenDashboard">📊 ABRIR DASHBOARD</button>
+            <button class="btn-outline kac-inline-1da9facb4d" id="btnExportPDF">📥 EXPORTAR PDF (TURNO)</button>
+        </div>
+    </div>
+
+    <div class="daily-view" id="dailyView">
+        <div class="quick-add-module" id="quickAddModule">
+            <div class="quick-add-title">⚡ Agendamento Inteligente</div>
+            <div class="quick-add-row">
+                <input type="time" class="quick-input" value="09:00" id="quickTime">
+                <div class="kac-inline-2cf2955a81">
+                    <input type="text" id="quickInput" class="quick-input kac-inline-69d66e5b2e" placeholder="Digite o nome para puxar do Banco de Dados..." autocomplete="off">
+                    <div class="autocomplete-dropdown" id="quickDropdown"></div>
+                </div>
+                <button class="btn-gold kac-inline-198dd89477" id="btnQuickAdd">ADD</button>
+            </div>
+        </div>
+        <div id="cardsContainer" class="kac-inline-d2288b8be9"></div>
+    </div>
+
+    <!-- ====== MODAL DE CADASTRO ====== -->
+    <komodo-modal id="mainModalOverlay" title="CADASTRO">
+        <div id="modalContent">
+            <form id="form-acesso" data-prevent-submit="true">
+
+            <!-- NOME -->
+            <div class="form-group">
+                <div class="label-row">
+                    <label>Nome</label>
+                    <div class="btn-toggle-group" data-group="tipo">
+                        <button class="btn-toggle active" type="button" data-val="Visita">Visita</button>
+                        <button class="btn-toggle" type="button" data-val="Cliente">Cliente</button>
+                    </div>
+                </div>
+                <input type="text" class="form-control" data-field="nome" placeholder="Ex: Roberto Almeida" required>
+            </div>
+
+            <!-- PLACA PRINCIPAL -->
+            <div class="form-group">
+                <div class="label-row">
+                    <label>Placa do veículo</label>
+                    <div class="btn-toggle-group" data-group="veiculo1">
+                        <span class="kac-inline-d3ce392dae">selecionar</span>
+                        <button class="btn-toggle active" type="button" data-val="Carro" data-target="1">Carro</button>
+                        <button class="btn-toggle" type="button" data-val="Moto" data-target="1">Moto</button>
+                    </div>
+                </div>
+                <div class="search-dropdown-wrapper">
+                    <button type="button" class="search-dropdown-btn" data-panel="dropdownPanel1">
+                        <span id="labelDropdown1">🔍 Buscar veículo</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="search-dropdown-panel" id="dropdownPanel1">
+                        <input type="text" class="search-input-box" data-list="listWrapper1" placeholder="🔎 Digite para filtrar a marca...">
+                        <div id="listWrapper1"></div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <input type="text" class="form-control" data-field="placa" placeholder="Placa (ABC-1234)" data-uppercase="true">
+                    <input type="text" class="form-control kac-inline-61f874a6fe" data-field="cor" placeholder="Cor (Ex: Preto)">
+                </div>
+            </div>
+
+            <!-- ACOMPANHANTE -->
+            <div class="form-group">
+                <div class="label-row">
+                    <label>Acompanhante</label>
+                    <select class="btn-toggle kac-inline-f045096c80">
+                        <option value="">+ Parentesco</option><option>Esposa</option><option>Marido</option><option>Filho(a)</option>
+                    </select>
+                </div>
+                <input type="text" class="form-control" data-field="acompanhantes" placeholder="Ex: Maria (Esposa) e 1 Criança">
+            </div>
+
+            <!-- PLACA ACOMPANHANTE -->
+            <div class="form-group">
+                <div class="label-row">
+                    <label>Placa do veículo (Acompanhante)</label>
+                    <div class="btn-toggle-group" data-group="veiculo2">
+                        <span class="kac-inline-d3ce392dae">selecionar</span>
+                        <button class="btn-toggle active" type="button" data-val="Carro" data-target="2">Carro</button>
+                        <button class="btn-toggle" type="button" data-val="Moto" data-target="2">Moto</button>
+                    </div>
+                </div>
+                <div class="search-dropdown-wrapper">
+                    <button type="button" class="search-dropdown-btn" data-panel="dropdownPanel2">
+                        <span id="labelDropdown2">🔍 Buscar veículo</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="search-dropdown-panel" id="dropdownPanel2">
+                        <input type="text" class="search-input-box" data-list="listWrapper2" placeholder="🔎 Digite para filtrar a marca...">
+                        <div id="listWrapper2"></div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <input type="text" class="form-control" data-field="placaAcomp" placeholder="Placa (ABC-1234)" data-uppercase="true">
+                    <input type="text" class="form-control kac-inline-61f874a6fe" data-field="corAcomp" placeholder="Cor (Ex: Preto)">
+                </div>
+            </div>
+
+            <!-- RELATÓRIO -->
+            <div class="form-group">
+                <label>Relatório</label>
+                <textarea class="form-control kac-inline-36ca0aff10" data-field="historico" placeholder="Descreva o motivo da visita ou alertas importantes..."></textarea>
+            </div>
+
+            <!-- FOTO / WEBCAM -->
+            <div class="form-group">
+                <div class="photo-box" id="photoBox">📷 + Adicionar Foto (Webcam ou Arquivo)</div>
+                <input type="file" id="fileUploader" accept="image/*" capture="environment" class="kac-inline-c8be1ccba6">
+                <div id="webcamContainer" class="kac-inline-e89b34533a">
+                    <video id="webcamVideo" autoplay playsinline class="kac-inline-7c961b8758"></video>
+                    <div class="kac-inline-2470e7367c">
+                        <button type="button" class="btn-gold kac-inline-964fdf79ac" id="btnCapture">📸 Capturar Foto</button>
+                        <button type="button" class="btn-gold kac-inline-ace4f20aa3" id="btnOcrPlaca">✨ Preencher via IA</button>
+                        <button type="button" class="btn-cancel" id="btnFilePhysical">📁 Arquivo Físico</button>
+                        <button type="button" class="btn-cancel" id="btnCloseWebcam">❌ Fechar Câmera</button>
+                    </div>
+                </div>
+                <div id="snapshotContainer" class="kac-inline-e89b34533a">
+                    <img id="snapshotImage" class="kac-inline-5e18f9ebf0">
+                    <div class="kac-inline-2470e7367c">
+                        <button type="button" class="btn-cancel" id="btnRemovePhoto">🗑️ Remover Foto</button>
+                        <button type="button" class="btn-gold kac-inline-964fdf79ac" id="btnRetakePhoto">📸 Tirar Outra</button>
+                        <button type="button" class="btn-gold kac-inline-ace4f20aa3" id="btnOcrPlacaFile">✨ Preencher via IA</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" id="btnCancelar">Cancelar</button>
+                <button type="button" class="btn-gold" id="btnSalvar">Salvar Registro</button>
+            </div>
+            </form>
+        </div>
+    </komodo-modal>
+
+    <!-- ====== MODAL DE CONFIGURAÇÕES ====== -->
+    <komodo-modal id="configModalOverlay" title="⚙️ KLA - CONFIGURAÇÃO">
+            <div class="form-group">
+                <label>Provedor de IA (Assistente Tático)</label>
+                <select id="configAiProvider" class="form-control kac-inline-e05481544a" disabled>
+                    <option value="groq">Groq (Llama 3 70B - Ultra Rápido)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Chave de IA — gerenciada no servidor (não inserir no navegador)</label>
+                <input type="password" id="configApiKey" class="form-control" placeholder="Configurada apenas no servidor" disabled readonly>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" data-action="close-config" data-target="configModalOverlay">Fechar</button>
+                <button type="button" class="btn-gold" id="btnSaveConfig">Salvar Config</button>
+            </div>
+    </komodo-modal>
+
+    <!-- ====== MODAL DE DASHBOARD ====== -->
+    <komodo-modal id="dashModalOverlay" title="📊 DASHBOARD OPERACIONAL">
+            <div class="kac-inline-adfb165fe3">
+                <div class="kac-inline-e28ed765c9">
+                    <canvas id="chartTipos"></canvas>
+                </div>
+                <div class="kac-inline-e28ed765c9">
+                    <canvas id="chartHorarios"></canvas>
+                </div>
+            </div>
+            <div class="kac-inline-6df5b4d5e2">
+                <div class="kac-inline-e28ed765c9">
+                    <canvas id="chartAlertas"></canvas>
+                </div>
+                <div class="kac-inline-e28ed765c9">
+                    <canvas id="chartFluxo"></canvas>
+                </div>
+            </div>
+            <div class="modal-actions kac-inline-3c5a730d74">
+                <button type="button" class="btn-cancel" data-action="close-dashboard" data-target="dashModalOverlay">Fechar Dashboard</button>
+                <button type="button" class="btn-gold" data-action="export-advanced-dashboard">📥 EXPORTAR RELATÓRIO AVANÇADO</button>
+            </div>
+    </komodo-modal>
+
+    <!-- KOMODO AI ASSISTANT -->
+    <button type="button" class="btn-floating-ai" id="btnToggleAi">🤖</button>
+    
+    <div class="ai-panel" id="aiPanel">
+        <div class="ai-header">
+            <div class="ai-title">🤖 KOMODO AI</div>
+            <button class="ai-close" id="btnCloseAi">✖</button>
+        </div>
+        <div class="ai-body" id="aiBody">
+            <div class="ai-msg bot">Assistente de IA indisponível neste release. As rotas de IA permanecem desativadas até implementação e configuração aprovadas.</div>
+            <div id="aiTypingIndicator" class="ai-typing">Analisando base de dados...</div>
+        </div>
+        <div class="ai-footer">
+            <input type="text" class="ai-input" id="aiInput" placeholder="Pergunte algo à IA..." autocomplete="off">
+            <button class="ai-send" id="btnSendAi">➤</button>
+        </div>
+    </div>
+
+  <!-- Komodo Enterprise Services -->
+  <script src="cordova.js"></script>
+  <!-- Komodo Core (Desacoplamento) -->
+  <script src="src/core/Events.js"></script>
+  <script src="src/core/EventBus.js"></script>
+  <script src="src/core/AppStore.js"></script>
+  <!-- Komodo Business & Adapters (Fase 2) -->
+  <script src="src/services/ValidationManager.js"></script>
+  <script src="src/services/adapters/AiProviderAdapter.js"></script>
+  <script src="src/services/ApiService.js"></script>
+  <script src="src/ui/ConnectionMonitor.js"></script>
+  <script src="src/db/dao/VisitorRepository.js"></script>
+  <!-- Komodo UI Managers (Fase 3 & 4) -->
+  <script src="src/ui/FormManager.js"></script>
+  <script src="src/ui/RenderController.js"></script>
+  <script src="src/ui/components/core/KomodoModal.js"></script>
+  <script src="src/db/DatabaseService.js"></script>
+  <script src="src/services/AuthService.js"></script>
+  <script src="src/ui/components/ParticlesEngine.js"></script>
+  <script src="src/ui/HtmlSafety.js"></script>
+  <script src="src/ui/init.js"></script>
+
+  <script src="src/db/dao/PacienteDAO.js"></script>
+  <script src="src/services/TelemetryService.js"></script>
+  <script src="src/services/OcrService.js"></script>
+  <script src="src/services/PdfExportService.js"></script>
+  <script src="src/services/KomodoCopilot.js"></script>
+  <script src="src/ui/DashboardManager.js"></script>
+  <script src="src/ui/components/PacienteForm.js"></script>
+  <script src="src/ui/components/FormulariosBase.js"></script>
+
+  <script src="src/ui/InlineActionHandlers.js"></script>
+</body>
+</html>

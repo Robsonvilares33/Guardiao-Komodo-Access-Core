@@ -1,0 +1,39 @@
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+
+# Local dependencies, builds, caches, and deployment metadata
+node_modules/
+.vercel/
+coverage/
+dist/
+build/
+out/
+.cache/
+
+# Logs, backups, databases, and local artifacts
+*.log
+*.bak
+*.tmp
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.zip
+*.exe
+*.asar
+*.pem
+*.key
+*.p12
+*.pfx
+.DS_Store
+Thumbs.db
+
+# Non-runtime maintenance artifact
+/dependency-artifacts-bootstrap-fix.ps1
+
+# Older vendor copies are not referenced by the release HTML/JS/CSS
+/vendor/chart.js-4.4.7/
+/vendor/jspdf-2.5.1/
+/vendor/jspdf-autotable-3.5.28/

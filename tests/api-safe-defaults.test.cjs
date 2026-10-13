@@ -1,0 +1,7 @@
+const test=require('node:test');const assert=require('node:assert/strict');
+const handler=require('../api/[...route].js');
+function invoke(route,method='GET',body={},headers={}){return new Promise(resolve=>{const res={statusCode:0,headers:{},setHeader(k,v){this.headers[k]=v;},end(s){resolve({status:this.statusCode,headers:this.headers,body:s?JSON.parse(s):null});}};handler({method,query:{route:route.split('/')},headers,body},res);});}
+test('without Supabase config, auth status returns 503 (never fake success)',async()=>{delete process.env.SUPABASE_URL;delete process.env.SUPABASE_SERVICE_ROLE_KEY;let called=false;const f=global.fetch;global.fetch=async()=>{called=true;throw new Error('no network');};const r=await invoke('auth/status');global.fetch=f;assert.equal(r.status,503);assert.equal(r.body.success,false);assert.equal(called,false);});
+test('without config, bootstrap is refused (403) and never creates admin',async()=>{delete process.env.KAC_BOOTSTRAP_SECRET;const r=await invoke('auth/bootstrap','POST',{email:'a@example.com',password:'x'.repeat(12),bootstrapSecret:''});assert.equal(r.status,403);});
+test('AI routes are not reachable without session and never report success',async()=>{const r=await invoke('ai/chat','POST',{});assert.notEqual(r.status,200);assert.equal(r.body.success,false);});
+test('API responses carry no-store and nosniff headers',async()=>{const r=await invoke('health');assert.equal(r.headers['Cache-Control'],'no-store');assert.equal(r.headers['X-Content-Type-Options'],'nosniff');});

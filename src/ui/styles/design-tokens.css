@@ -1,0 +1,53 @@
+/* design-tokens.css */
+:root {
+  /* Colors - Brand */
+  --komodo-color-primary: #c2a057; /* Gold */
+  --komodo-color-primary-hover: #dfbe76;
+  --komodo-color-primary-active: #b59461;
+  
+  --komodo-color-bg: #0d0d0d;
+  --komodo-color-surface: rgba(20, 20, 36, 0.6);
+  --komodo-color-surface-hover: rgba(30, 30, 50, 0.8);
+  
+  /* Text */
+  --komodo-text-main: #ffffff;
+  --komodo-text-muted: #a0a0a0;
+  
+  /* Semantic Colors */
+  --komodo-color-success: #27ae60;
+  --komodo-color-danger: #e74c3c;
+  --komodo-color-warning: #f39c12;
+  --komodo-color-info: #3498db;
+
+  /* Typography */
+  --komodo-font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --komodo-font-size-sm: 0.85rem;
+  --komodo-font-size-md: 1rem;
+  --komodo-font-size-lg: 1.2rem;
+  --komodo-font-size-xl: 1.5rem;
+
+  /* Spacing */
+  --komodo-spacing-xs: 4px;
+  --komodo-spacing-sm: 8px;
+  --komodo-spacing-md: 16px;
+  --komodo-spacing-lg: 24px;
+  --komodo-spacing-xl: 32px;
+
+  /* Borders & Shadows */
+  --komodo-border-radius: 12px;
+  --komodo-border-glass: 1px solid rgba(194, 160, 87, 0.25);
+  --komodo-shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --komodo-backdrop-blur: blur(12px);
+  
+  /* Animation */
+  --komodo-transition-fast: 0.2s ease;
+  --komodo-transition-normal: 0.3s ease;
+}
+
+body {
+  font-family: var(--komodo-font-family);
+  background-color: var(--komodo-color-bg);
+  color: var(--komodo-text-main);
+  margin: 0;
+  padding: 0;
+}
