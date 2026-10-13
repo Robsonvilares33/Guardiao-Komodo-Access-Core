@@ -1,7 +1,7 @@
 ﻿/**
- * AuthService â€” backend no desktop local; autenticaÃ§Ã£o local no Capacitor.
- * O servidor Ã© a autoridade para as sessÃµes do desktop. O modo local permanece
- * para o Android/offline e nÃ£o Ã© usado para autorizar chamadas ao backend.
+ * AuthService — backend no desktop local; autenticação local no Capacitor.
+ * O servidor é a autoridade para as sessões do desktop. O modo local permanece
+ * para o Android/offline e não é usado para autorizar chamadas ao backend.
  */
 class AuthService {
   constructor() {
@@ -56,14 +56,14 @@ class AuthService {
     const cleanEmail = String(email || '').trim().toLowerCase();
     const cleanPassword = String(password || '');
     if (this.isRemoteMode()) {
-      if (!cleanEmail || cleanPassword.length < 12) throw new Error('Defina um e-mail e uma senha com no mÃ­nimo 12 caracteres.');
+      if (!cleanEmail || cleanPassword.length < 12) throw new Error('Defina um e-mail e uma senha com no mínimo 12 caracteres.');
       const secret = String(bootstrapSecret || '');
       if (secret.length < 32) throw new Error('Informe a chave de configuração válida fornecida pelo administrador do ambiente.');
       await window.apiService.post('/auth/bootstrap', { email: cleanEmail, password: cleanPassword, bootstrapSecret: secret });
       return true;
     }
-    if (!cleanEmail || cleanPassword.length < 8) throw new Error('Defina um e-mail e uma senha com no mÃ­nimo 8 caracteres.');
-    if (await this.hasAnyUser()) throw new Error('JÃ¡ existe um administrador cadastrado.');
+    if (!cleanEmail || cleanPassword.length < 8) throw new Error('Defina um e-mail e uma senha com no mínimo 8 caracteres.');
+    if (await this.hasAnyUser()) throw new Error('Já existe um administrador cadastrado.');
     const salt = this._randomSaltHex();
     const hash = await this._deriveHash(cleanPassword, salt);
     await window.dbService.insert('komodo_tbl_usuarios', {
@@ -88,10 +88,10 @@ class AuthService {
     }
 
     const rows = await window.dbService.query('SELECT * FROM komodo_tbl_usuarios WHERE email = ?', [cleanEmail]);
-    if (!rows || rows.length === 0) throw new Error('Credenciais invÃ¡lidas.');
+    if (!rows || rows.length === 0) throw new Error('Credenciais inválidas.');
     const user = rows[0];
     const computed = await this._deriveHash(cleanPassword, user.salt);
-    if (computed !== user.hash) throw new Error('Credenciais invÃ¡lidas.');
+    if (computed !== user.hash) throw new Error('Credenciais inválidas.');
     const session = { token: this._randomSaltHex(24), userId: user.id, email: user.email, expiresAt: Date.now() + this.SESSION_TTL_MS };
     localStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
     return session;
@@ -115,7 +115,7 @@ class AuthService {
   logout() {
     const session = this.getSession();
     if (this.isRemoteMode() && session && window.apiService) {
-      // Inicia a revogaÃ§Ã£o antes de apagar o token local.
+      // Inicia a revogação antes de apagar o token local.
       const pending = window.apiService.post('/auth/logout', {}).catch(() => null);
       sessionStorage.removeItem(this.SESSION_KEY);
       return pending;

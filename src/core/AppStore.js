@@ -21,7 +21,7 @@ class AppStore {
                 currentData: {}
             },
             visitors: {
-                diaAtivo: 'qui',
+                diaAtivo: (window.KomodoDate ? window.KomodoDate.todayKey() : 'seg'),
                 dailyData: []
             }
         };

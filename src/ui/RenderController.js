@@ -14,30 +14,26 @@ class RenderController {
 
     updateCalendarUI() {
         const monthNames = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"];
-        const today = new Date();
+        const KD = window.KomodoDate;
+        if (!KD) return;
+        const today = KD.todayParts();
+        const week = KD.weekDates();
         const monthEl = document.querySelector('.month-title');
-        if (monthEl) monthEl.innerText = monthNames[today.getMonth()];
+        if (monthEl) monthEl.innerText = monthNames[today.month - 1];
 
-        const currentDay = today.getDay(); 
-        const diff = today.getDate() - currentDay + (currentDay == 0 ? -6 : 1); 
-        const monday = new Date(today.setDate(diff));
-
-        const tabMapping = {
-            'seg': 0, 'ter': 1, 'qua': 2, 'qui': 3, 'sex': 4, 'sab': 5, 'dom': 6
-        };
-
-        const tabs = document.querySelectorAll('.tab');
-        tabs.forEach(tab => {
+        document.querySelectorAll('.tab').forEach(tab => {
             const diaStr = tab.getAttribute('data-dia');
-            if (tabMapping[diaStr] !== undefined) {
-                const dateOfTab = new Date(monday);
-                dateOfTab.setDate(monday.getDate() + tabMapping[diaStr]);
-                
-                const originalText = tab.innerText.split(' ')[0]; // pega 'Segunda', etc.
-                const dayNum = dateOfTab.getDate().toString().padStart(2, '0');
-                tab.innerText = `${originalText} ${dayNum}`;
-            }
+            const info = week[diaStr];
+            if (!info) return;
+            const originalText = tab.innerText.split(' ')[0];
+            tab.innerText = `${originalText} ${String(info.day).padStart(2, '0')}`;
+            tab.classList.toggle('active', diaStr === today.dayKey);
+            tab.classList.toggle('today', diaStr === today.dayKey);
         });
+    }
+
+    static currentModule() {
+        return window.location.pathname.includes('residencial') ? 'residencial' : 'empresarial';
     }
 
     _bindEvents() {
@@ -72,7 +68,7 @@ class RenderController {
 
         // Tenta inferir o módulo caso não passado (fallback para a fase 5)
         if (!modulo) {
-            modulo = window.location.pathname.includes('index') ? 'empresarial' : 'residencial';
+            modulo = RenderController.currentModule();
         }
 
         try {

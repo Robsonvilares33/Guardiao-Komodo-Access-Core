@@ -378,7 +378,7 @@
     // A renderização é orquestrada pelo RenderController (Fase 4)
     
     var diasSemana = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
-    var diaAtual = diasSemana[new Date().getDay()];
+    var diaAtual = window.KomodoDate ? window.KomodoDate.todayKey() : diasSemana[new Date().getDay()];
     // diaAtivo fica agora encapsulado na Store, usamos apenas para inicializar
     
     // A função saveDB e carregarBanco foram substituídas pelo VisitorRepository

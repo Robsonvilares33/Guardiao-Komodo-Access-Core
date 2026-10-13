@@ -380,8 +380,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     // A renderização é orquestrada pelo RenderController (Fase 4)
     
     var diasSemana = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
-    var dataLocal = new Date();
-    var diaAtual = diasSemana[dataLocal.getDay()];
+    var diaAtual = window.KomodoDate ? window.KomodoDate.todayKey() : diasSemana[new Date().getDay()];
+    var allTabs = document.querySelectorAll('.tab');
     // diaAtivo fica agora encapsulado na Store, usamos apenas para inicializar
     
     // (A formatação de datas e nomes agora é feita pelo RenderController.js para ambas as telas)
@@ -620,14 +620,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     // Busca global
-    document.getElementById('globalSearch').addEventListener('input', function() {
+    document.getElementById('globalSearch').addEventListener('input', debounce(async function() {
         var state = window.appStore ? window.appStore.getState('visitors') : null;
         if (!state) return;
         var term = this.value.toLowerCase().trim();
         if (term) {
             var all = document.querySelectorAll('.tab');
             for (var i = 0; i < all.length; i++) all[i].classList.remove('active');
-            var filtered = state.dailyData.filter(function(item) {
+            var source = state.dailyData;
+            try { source = await window.VisitorRepository.getAllByModule('empresarial'); } catch (e) { source = state.dailyData; }
+            var filtered = (source || []).filter(function(item) {
                 return Object.values(item).some(function(v) { return String(v).toLowerCase().indexOf(term) !== -1; });
             });
             window.renderDaily(filtered, term);
@@ -636,18 +638,26 @@ document.addEventListener('DOMContentLoaded', async function() {
             for (var i = 0; i < tabs.length; i++) { if (tabs[i].getAttribute('data-dia') === state.diaAtivo) tabs[i].classList.add('active'); }
             window.renderDaily(state.dailyData);
         }
-    });
+    }, 300));
 
     // Autocomplete do agendamento rápido
     var quickInput = document.getElementById('quickInput');
     var quickAddModule = document.getElementById('quickAddModule');
     var quickDropdown = document.getElementById('quickDropdown');
 
-    quickInput.addEventListener('input', function() {
+    var historyCache = null;
+    async function loadHistory() {
+        if (historyCache) return historyCache;
+        try { historyCache = await window.VisitorRepository.getAllByModule('empresarial'); }
+        catch (e) { var st = window.appStore ? window.appStore.getState('visitors') : null; return st ? st.dailyData : []; }
+        return historyCache;
+    }
+    if (window.eventBus && window.SystemEvents) window.eventBus.on(window.SystemEvents.DB_SAVE_SUCCESS, function() { historyCache = null; });
+
+    quickInput.addEventListener('input', async function() {
         var term = this.value.toLowerCase().trim();
         if (term.length > 1) {
-            var state = window.appStore ? window.appStore.getState('visitors') : null;
-            var database = state ? state.dailyData : [];
+            var database = await loadHistory();
             // Filtrar itens unicos por nome do BD global
             var mapS = {};
             database.forEach(function(p) {
@@ -706,7 +716,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     document.getElementById('btnQuickAdd').addEventListener('click', async function() {
         var state = window.appStore ? window.appStore.getState('visitors') : null;
-        var database = state ? state.dailyData : [];
+        var database = await loadHistory();
         var nome = quickInput.value.trim();
         var hora = document.getElementById('quickTime').value || "00:00";
         if (!nome) { alert('Digite um nome ou selecione da lista.'); return; }
@@ -769,7 +779,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         if(typeof window.PdfExportService !== 'undefined') {
             const state = window.appStore ? window.appStore.getState('visitors') : null;
             const dailyData = state ? state.dailyData : [];
-            const diaAtivo = state ? state.diaAtivo : 'qui';
+            const diaAtivo = state ? state.diaAtivo : diaAtual;
             window.PdfExportService.exportTurnReport(dailyData, diaAtivo, "EMPRESARIAL");
         } else {
             alert("Módulo de PDF não carregado.");
@@ -795,7 +805,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('btnSaveConfig').addEventListener('click', function() {
         localStorage.setItem('komodo_ai_provider', document.getElementById('configAiProvider').value);
         document.getElementById('configModalOverlay').removeAttribute('open');
-        addAiMessage('bot', 'Preferências atualizadas. A IA depende da configuração segura no servidor.');
+        alert('Preferências salvas neste aparelho. A IA ainda não está habilitada no servidor.');
     });
 
     var aiPanel = document.getElementById('aiPanel');
@@ -808,9 +818,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     var btnLogout = document.getElementById('btnLogout');
     if (btnLogout) {
-        btnLogout.addEventListener('click', function() {
+        btnLogout.addEventListener('click', async function() {
             if (window.authService) {
-                window.authService.logout();
+                try { await window.authService.logout(); } catch (e) {}
                 window.location.href = 'login.html';
             }
         });

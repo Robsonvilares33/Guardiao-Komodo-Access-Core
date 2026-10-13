@@ -1,6 +1,6 @@
 ﻿/**
- * ApiService â€” API local do backend.
- * As rotas protegidas recebem o token de sessÃ£o emitido pelo servidor.
+ * ApiService — API local do backend.
+ * As rotas protegidas recebem o token de sessão emitido pelo servidor.
  */
 class ApiService {
   constructor() {
@@ -21,14 +21,14 @@ class ApiService {
     try {
       response = await fetch(this.baseUrl + endpoint, options);
     } catch {
-      throw new Error('NÃ£o foi possÃ­vel conectar ao serviÃ§o local. Verifique se ele estÃ¡ iniciado.');
+      throw new Error('Não foi possível conectar ao serviço local. Verifique se ele está iniciado.');
     }
     if (response.status === 204) return null;
     let data;
     try { data = await response.json(); }
-    catch { throw new Error('O serviÃ§o retornou uma resposta invÃ¡lida.'); }
+    catch { throw new Error('O serviço retornou uma resposta inválida.'); }
     if (!response.ok || data?.success !== true) {
-      const message = data?.message || (response.status === 401 ? 'SessÃ£o expirada. Entre novamente.' : 'NÃ£o foi possÃ­vel concluir a operaÃ§Ã£o.');
+      const message = data?.message || (response.status === 401 ? 'Sessão expirada. Entre novamente.' : 'Não foi possível concluir a operação.');
       if (response.status === 401 && !endpoint.startsWith('/auth/login') && !endpoint.startsWith('/auth/bootstrap')) {
         try { sessionStorage.removeItem('komodo_session'); } catch {}
       }
