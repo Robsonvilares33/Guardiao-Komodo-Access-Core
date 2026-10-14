@@ -6,6 +6,8 @@ const U=process.env.KAC_URL||'https://guardiao-komodo-access-core.vercel.app';
 const TZ='America/Sao_Paulo',iso=d=>new Intl.DateTimeFormat('en-CA',{timeZone:TZ}).format(d),br=s=>s.split('-').reverse().join('/');
 const DIAS=['dom','seg','ter','qua','qui','sex','sab'];const D0=iso(new Date()),D1=iso(new Date(Date.now()+3*864e5));const dia=s=>DIAS[new Date(s+'T12:00:00Z').getUTCDay()];const b=await launch();await b.send('Log.enable');
 const o=[];const ok=(n,c,x='')=>o.push(`${c===true?'PASS':'FAIL'} ${n}${x?' — '+x:''}`);const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+// Espera por condição (polling) em vez de sleep fixo: a latência de produção varia (falso FAIL com 3,5 s).
+const until=async(expr,ms=15000)=>{const t=Date.now();while(Date.now()-t<ms){if(await b.ev(expr)===true)return true;await sleep(250);}return b.ev(expr);};
 await b.send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:2,mobile:true});
 await b.nav(U+'/login.html');const pw=JSON.stringify(process.env.ADMIN_PASSWORD);
 ok('login',(await b.ev(`authService.login(${JSON.stringify(process.env.KAC_E2E_EMAIL||'robsonboiling@gmail.com')},${pw}).then(s=>s.role).catch(()=>'ERR')`))==='admin');
@@ -23,8 +25,8 @@ await b.ev(`document.querySelector('${sel} [data-visit-action=reschedule]').clic
 ok('diálogo modal abre com foco no campo de data',await b.ev(`document.getElementById('visitDialog').open&&document.activeElement.id==='reschedData'`));
 ok('diálogo cabe na tela mobile',await b.ev(`document.getElementById('visitDialog').getBoundingClientRect().width<=390`));
 await b.ev(`(()=>{const d=document.getElementById('reschedData'),h=document.getElementById('reschedHora');d.value='${D1}';h.value='08:15';document.getElementById('reschedSave').click();})()`);await sleep(3500);
-ok('diálogo fecha após salvar',await b.ev(`!document.getElementById('visitDialog').open`));
-ok('TESTE saiu do dia original',await b.ev(`!document.querySelector('${sel}')`));
+ok('diálogo fecha após salvar',await until(`!document.getElementById('visitDialog').open`));
+ok('TESTE saiu do dia original',await until(`!document.querySelector('${sel}')`));
 await b.ev(`(()=>{const p=document.getElementById('agendaDate');p.value='${D1}';p.dispatchEvent(new Event('change'));})()`);await sleep(3000);
 ok('TESTE aparece no novo dia às 08:15',await b.ev(`(()=>{const v=(appStore.getState('visitors').dailyData||[]).find(x=>x.id==='${id}');return !!(v&&v.data==='${D1}'&&v.hora==='08:15'&&document.querySelector('${sel}'))})()`));
 await b.ev(`document.querySelector('${sel} [data-visit-action=history]').click()`);await sleep(2500);
@@ -33,7 +35,7 @@ ok('histórico: Criado + Reagendado (antes → depois, dd/mm/aaaa)',/Criado/.tes
 await b.ev(`document.querySelector('.visit-dialog-close').click()`);await sleep(300);
 ok('fechar devolve foco ao botão Histórico',await b.ev(`document.activeElement&&document.activeElement.dataset.visitAction==='history'`));
 await b.ev(`document.querySelector('${sel} .btn-delete-card').click()`);await sleep(3500);
-ok('excluir pela UI remove o TESTE',await b.ev(`!(appStore.getState('visitors').dailyData||[]).some(x=>x.id==='${id}')`));
+ok('excluir pela UI remove o TESTE',await until(`!(appStore.getState('visitors').dailyData||[]).some(x=>x.id==='${id}')&&!document.querySelector('${sel}')`));
 const h2=await b.ev(`apiService.get('/visitantes/${id}/historico').then(r=>(Array.isArray(r)?r:r.data).map(x=>x.action).join(',')).catch(e=>'ERR '+e.message)`);ok('histórico pós-exclusão preservado',h2==='created,rescheduled,deleted',h2);
 await b.ev(`agendaToday.click()`);await sleep(2500);
 const realAfter=await b.ev(`apiService.get('/visitantes/empresarial?limit=500').then(r=>JSON.stringify((Array.isArray(r)?r:r.data).filter(x=>!/TESTE AUDITORIA/.test(x.nome)).map(x=>[x.id,x.data,x.hora,x.status,x.nome])))`);
