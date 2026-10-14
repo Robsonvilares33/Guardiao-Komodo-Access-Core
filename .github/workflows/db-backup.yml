@@ -1,0 +1,69 @@
+name: db-backup
+# Backup DIÁRIO, somente leitura, do banco de produção (todas as tabelas kac_* e komodo_*).
+# O repositório é PÚBLICO: o artefato é sempre CIFRADO (AES-256-CBC, PBKDF2 600k, openssl) e fica 14 dias.
+# Nada em texto claro é enviado ou commitado; o JSON em claro só existe no disco do runner e é apagado no fim.
+# Inativo até existirem os secrets SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY e BACKUP_PASSPHRASE (o job só avisa e termina).
+on:
+  schedule:
+    - cron: '17 6 * * *'   # 03:17 em São Paulo (06:17 UTC)
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+      EXPECT_VISIT_MD5: ${{ vars.KAC_EXPECT_VISIT_MD5 }}
+    steps:
+      - name: Verificar secrets (sem imprimir valores)
+        id: guard
+        run: |
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_SERVICE_ROLE_KEY" ] && [ ${#BACKUP_PASSPHRASE} -ge 24 ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Backup inativo: faltam secrets SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / BACKUP_PASSPHRASE (>=24 caracteres)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.guard.outputs.ready == 'true'
+        uses: actions/checkout@v4
+      - if: steps.guard.outputs.ready == 'true'
+        uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Dump (somente leitura)
+        if: steps.guard.outputs.ready == 'true'
+        run: |
+          umask 077; mkdir -p "$RUNNER_TEMP/bk"
+          STAMP=$(date -u +%Y%m%dT%H%M%SZ); echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+          node scripts/backup/dump.mjs "$RUNNER_TEMP/bk/kac_$STAMP.json" "$RUNNER_TEMP/bk/kac_$STAMP.manifest.json"
+      - name: Cifrar
+        if: steps.guard.outputs.ready == 'true'
+        run: |
+          cd "$RUNNER_TEMP/bk"
+          openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -salt -in "kac_$STAMP.json" -out "kac_$STAMP.json.enc" -pass env:BACKUP_PASSPHRASE
+          sha256sum "kac_$STAMP.json.enc" > "kac_$STAMP.json.enc.sha256"
+      - name: Teste de restauração (decifra o artefato e restaura em PGlite)
+        if: steps.guard.outputs.ready == 'true'
+        run: |
+          npm install --no-save --no-package-lock --silent @electric-sql/pglite@0.5.10
+          node scripts/backup/restore-check.mjs "$RUNNER_TEMP/bk/kac_$STAMP.json.enc" "$RUNNER_TEMP/bk/kac_$STAMP.manifest.json"
+      - name: Apagar texto claro
+        if: always() && steps.guard.outputs.ready == 'true'
+        run: rm -f "$RUNNER_TEMP"/bk/*.json
+      - name: Publicar artefato CIFRADO (14 dias)
+        if: steps.guard.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: kac-db-backup-${{ env.STAMP }}
+          path: |
+            ${{ runner.temp }}/bk/*.json.enc
+            ${{ runner.temp }}/bk/*.json.enc.sha256
+            ${{ runner.temp }}/bk/*.manifest.json
+          retention-days: 14
+          if-no-files-found: error

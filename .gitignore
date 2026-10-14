@@ -37,3 +37,8 @@ Thumbs.db
 /vendor/chart.js-4.4.7/
 /vendor/jspdf-2.5.1/
 /vendor/jspdf-autotable-3.5.28/
+
+# backups do banco (nunca commitar)
+kac_*.json
+*.json.enc
+backups/
