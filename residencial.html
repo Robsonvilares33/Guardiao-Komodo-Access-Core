@@ -28,12 +28,12 @@
     <header>
         <div class="header-left">
             <div class="logo-container">
-                <img src="assets/komodo-access-mark.svg" alt="Logo" class="logo-img">
+                <img src="assets/komodo-access-mark.svg" alt="Guardião Komodo" class="logo-img">
             </div>
             <div class="header-title">KOMODO ACCESS</div>
         </div>
         <div class="search-container">
-            <input type="text" id="globalSearch" class="search-bar" name="search_query_off" placeholder="Busca global de segurança..." autocomplete="new-password">
+            <input aria-label="Buscar visitas" type="text" id="globalSearch" class="search-bar" name="search_query_off" placeholder="Busca global de segurança..." autocomplete="new-password">
         </div>
         <div class="kac-inline-b4edaa7885">
             <a href="index.html" class="btn-outline">Empresarial</a>
@@ -67,7 +67,7 @@
             <div class="quick-add-row">
                 <input type="time" class="quick-input" value="09:00" id="quickTime">
                 <div class="kac-inline-2cf2955a81">
-                    <input type="text" id="quickInput" class="quick-input kac-inline-69d66e5b2e" placeholder="Digite o nome para puxar do Banco de Dados..." autocomplete="off">
+                    <input aria-label="Cadastro rápido" type="text" id="quickInput" class="quick-input kac-inline-69d66e5b2e" placeholder="Digite o nome para puxar do Banco de Dados..." autocomplete="off">
                     <div class="autocomplete-dropdown" id="quickDropdown"></div>
                 </div>
                 <button class="btn-gold kac-inline-198dd89477" id="btnQuickAdd">ADD</button>
@@ -91,11 +91,11 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Nome do Visitante</label>
-                        <input type="text" class="form-control" data-field="nome" placeholder="Ex: Carlos Silva">
+                        <input aria-label="Nome" type="text" class="form-control" data-field="nome" placeholder="Ex: Carlos Silva">
                     </div>
                     <div class="form-group kac-inline-cd7e46ee9c">
                         <label>Documento</label>
-                        <input type="text" class="form-control" data-field="doc" placeholder="RG ou CPF">
+                        <input aria-label="Documento (RG ou CPF)" type="text" class="form-control" data-field="doc" placeholder="RG ou CPF">
                     </div>
                 </div>
 
@@ -114,7 +114,7 @@
 
                 <div class="form-group">
                     <label>Unidade de Destino</label>
-                    <input type="text" class="form-control" data-field="unidade" placeholder="Ex: Bloco A - Apt 304 ou Casa 12">
+                    <input aria-label="Unidade" type="text" class="form-control" data-field="unidade" placeholder="Ex: Bloco A - Apt 304 ou Casa 12">
                 </div>
 
                 <!-- PLACA VISITANTE -->
@@ -136,20 +136,20 @@
                             <span>▼</span>
                         </button>
                         <div class="search-dropdown-panel" id="dropdownPanelVis">
-                            <input type="text" class="search-input-box" data-list="listWrapperVis" placeholder="🔎 Digite para filtrar a marca...">
+                            <input aria-label="Filtrar marca" type="text" class="search-input-box" data-list="listWrapperVis" placeholder="🔎 Digite para filtrar a marca...">
                             <div id="listWrapperVis"></div>
                         </div>
                     </div>
                     <div class="form-row">
-                        <input type="text" class="form-control" data-field="placa" placeholder="Placa (Ex: ABC-1234)" data-uppercase="true">
-                        <input type="text" class="form-control kac-inline-61f874a6fe" data-field="cor" placeholder="Cor (Ex: Preto)">
+                        <input aria-label="Placa do veículo" type="text" class="form-control" data-field="placa" placeholder="Placa (Ex: ABC-1234)" data-uppercase="true">
+                        <input aria-label="Cor do veículo" type="text" class="form-control kac-inline-61f874a6fe" data-field="cor" placeholder="Cor (Ex: Preto)">
                     </div>
                 </div>
 
                 <!-- ACOMPANHANTE VISITANTE -->
                 <div class="form-group">
                     <label>Acompanhantes</label>
-                    <input type="text" class="form-control" data-field="acompanhantes" placeholder="Qtd ou Nome dos Acompanhantes (Deixe vazio se 0)">
+                    <input aria-label="Acompanhantes" type="text" class="form-control" data-field="acompanhantes" placeholder="Qtd ou Nome dos Acompanhantes (Deixe vazio se 0)">
                 </div>
                 <div class="form-group">
                     <div class="label-row">
@@ -168,13 +168,13 @@
                             <span>▼</span>
                         </button>
                         <div class="search-dropdown-panel" id="dropdownPanelVisAcomp">
-                            <input type="text" class="search-input-box" data-list="listWrapperVisAcomp" placeholder="🔎 Digite para filtrar a marca...">
+                            <input aria-label="Filtrar marca" type="text" class="search-input-box" data-list="listWrapperVisAcomp" placeholder="🔎 Digite para filtrar a marca...">
                             <div id="listWrapperVisAcomp"></div>
                         </div>
                     </div>
                     <div class="form-row">
-                        <input type="text" class="form-control" data-field="placaAcomp" placeholder="Placa do Acompanhante" data-uppercase="true">
-                        <input type="text" class="form-control kac-inline-61f874a6fe" data-field="corAcomp" placeholder="Cor (Ex: Prata)">
+                        <input aria-label="Placa do acompanhante" type="text" class="form-control" data-field="placaAcomp" placeholder="Placa do Acompanhante" data-uppercase="true">
+                        <input aria-label="Cor do veículo do acompanhante" type="text" class="form-control kac-inline-61f874a6fe" data-field="corAcomp" placeholder="Cor (Ex: Prata)">
                     </div>
                 </div>
 
@@ -191,18 +191,18 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Nome do Morador</label>
-                        <input type="text" class="form-control" data-field="nome" placeholder="Ex: Roberto Almeida">
+                        <input aria-label="Nome" type="text" class="form-control" data-field="nome" placeholder="Ex: Roberto Almeida">
                     </div>
                     <div class="form-group kac-inline-cd7e46ee9c">
                         <label>Documento</label>
-                        <input type="text" class="form-control" data-field="doc" placeholder="RG ou CPF">
+                        <input aria-label="Documento (RG ou CPF)" type="text" class="form-control" data-field="doc" placeholder="RG ou CPF">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label>Unidade (Bloco/Apt ou Lote)</label>
-                        <input type="text" class="form-control" data-field="unidade" placeholder="Ex: Bloco A - Apt 102">
+                        <input aria-label="Unidade" type="text" class="form-control" data-field="unidade" placeholder="Ex: Bloco A - Apt 102">
                     </div>
                     <div class="form-group">
                         <label>Parentesco</label>
@@ -233,20 +233,20 @@
                             <span>▼</span>
                         </button>
                         <div class="search-dropdown-panel" id="dropdownPanelMor">
-                            <input type="text" class="search-input-box" data-list="listWrapperMor" placeholder="🔎 Digite para filtrar a marca...">
+                            <input aria-label="Filtrar marca" type="text" class="search-input-box" data-list="listWrapperMor" placeholder="🔎 Digite para filtrar a marca...">
                             <div id="listWrapperMor"></div>
                         </div>
                     </div>
                     <div class="form-row">
-                        <input type="text" class="form-control" data-field="placa" placeholder="Placa (Ex: DEF-5678)" data-uppercase="true">
-                        <input type="text" class="form-control kac-inline-61f874a6fe" data-field="cor" placeholder="Cor (Ex: Preto)">
+                        <input aria-label="Placa do veículo" type="text" class="form-control" data-field="placa" placeholder="Placa (Ex: DEF-5678)" data-uppercase="true">
+                        <input aria-label="Cor do veículo" type="text" class="form-control kac-inline-61f874a6fe" data-field="cor" placeholder="Cor (Ex: Preto)">
                     </div>
                 </div>
 
                 <!-- ACOMPANHANTE MORADOR -->
                 <div class="form-group">
                     <label>Acompanhantes</label>
-                    <input type="text" class="form-control" data-field="acompanhantes" placeholder="Qtd ou Nome dos Acompanhantes (Deixe vazio se 0)">
+                    <input aria-label="Acompanhantes" type="text" class="form-control" data-field="acompanhantes" placeholder="Qtd ou Nome dos Acompanhantes (Deixe vazio se 0)">
                 </div>
                 <div class="form-group">
                     <div class="label-row">
@@ -265,13 +265,13 @@
                             <span>▼</span>
                         </button>
                         <div class="search-dropdown-panel" id="dropdownPanelMorAcomp">
-                            <input type="text" class="search-input-box" data-list="listWrapperMorAcomp" placeholder="🔎 Digite para filtrar a marca...">
+                            <input aria-label="Filtrar marca" type="text" class="search-input-box" data-list="listWrapperMorAcomp" placeholder="🔎 Digite para filtrar a marca...">
                             <div id="listWrapperMorAcomp"></div>
                         </div>
                     </div>
                     <div class="form-row">
-                        <input type="text" class="form-control" data-field="placaAcomp" placeholder="Placa do Acompanhante" data-uppercase="true">
-                        <input type="text" class="form-control kac-inline-61f874a6fe" data-field="corAcomp" placeholder="Cor (Ex: Prata)">
+                        <input aria-label="Placa do acompanhante" type="text" class="form-control" data-field="placaAcomp" placeholder="Placa do Acompanhante" data-uppercase="true">
+                        <input aria-label="Cor do veículo do acompanhante" type="text" class="form-control kac-inline-61f874a6fe" data-field="corAcomp" placeholder="Cor (Ex: Prata)">
                     </div>
                 </div>
                 </form>
@@ -319,7 +319,7 @@
             </div>
             <div class="form-group">
                 <label>Chave de IA — gerenciada no servidor (não inserir no navegador)</label>
-                <input type="password" id="configApiKey" class="form-control kac-inline-8eace7f643" placeholder="Configurada apenas no servidor" disabled readonly>
+                <input aria-label="Chave da API de IA" type="password" id="configApiKey" class="form-control kac-inline-8eace7f643" placeholder="Configurada apenas no servidor" disabled readonly>
             </div>
             <div class="modal-actions kac-inline-0db319c0e8">
                 <button type="button" class="btn-cancel" data-action="close-config" data-target="configModalOverlay">Fechar</button>
@@ -367,7 +367,7 @@
             <div id="aiTypingIndicator" class="ai-typing">Analisando base de dados...</div>
         </div>
         <div class="ai-footer">
-            <input type="text" class="ai-input" id="chat-input" placeholder="Pergunte algo à IA..." autocomplete="off">
+            <input aria-label="Pergunta para a IA" type="text" class="ai-input" id="chat-input" placeholder="Pergunte algo à IA..." autocomplete="off">
             <button class="ai-send" id="btnSendAi">➤</button>
         </div>
     </div>

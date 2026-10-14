@@ -28,12 +28,12 @@
     <header>
         <div class="header-left">
             <div class="logo-container">
-                <img src="assets/komodo-access-mark.svg" alt="Logo" class="logo-img">
+                <img src="assets/komodo-access-mark.svg" alt="Guardião Komodo" class="logo-img">
             </div>
             <div class="header-title">KOMODO ACCESS</div>
         </div>
         <div class="search-container">
-            <input type="text" id="globalSearch" class="search-bar" name="search_query_off" placeholder="Busca global de segurança..." autocomplete="new-password">
+            <input aria-label="Buscar visitas" type="text" id="globalSearch" class="search-bar" name="search_query_off" placeholder="Busca global de segurança..." autocomplete="new-password">
         </div>
         <div class="kac-inline-b4edaa7885">
             <a href="residencial.html" class="btn-outline">Residencial</a>
@@ -67,7 +67,7 @@
             <div class="quick-add-row">
                 <input type="time" class="quick-input" value="09:00" id="quickTime">
                 <div class="kac-inline-2cf2955a81">
-                    <input type="text" id="quickInput" class="quick-input kac-inline-69d66e5b2e" placeholder="Digite o nome para puxar do Banco de Dados..." autocomplete="off">
+                    <input aria-label="Cadastro rápido" type="text" id="quickInput" class="quick-input kac-inline-69d66e5b2e" placeholder="Digite o nome para puxar do Banco de Dados..." autocomplete="off">
                     <div class="autocomplete-dropdown" id="quickDropdown"></div>
                 </div>
                 <button class="btn-gold kac-inline-198dd89477" id="btnQuickAdd">ADD</button>
@@ -90,7 +90,7 @@
                         <button class="btn-toggle" type="button" data-val="Cliente">Cliente</button>
                     </div>
                 </div>
-                <input type="text" class="form-control" data-field="nome" placeholder="Ex: Roberto Almeida" required>
+                <input aria-label="Nome" type="text" class="form-control" data-field="nome" placeholder="Ex: Roberto Almeida" required>
             </div>
 
             <!-- PLACA PRINCIPAL -->
@@ -109,13 +109,13 @@
                         <span>▼</span>
                     </button>
                     <div class="search-dropdown-panel" id="dropdownPanel1">
-                        <input type="text" class="search-input-box" data-list="listWrapper1" placeholder="🔎 Digite para filtrar a marca...">
+                        <input aria-label="Filtrar marca" type="text" class="search-input-box" data-list="listWrapper1" placeholder="🔎 Digite para filtrar a marca...">
                         <div id="listWrapper1"></div>
                     </div>
                 </div>
                 <div class="form-row">
-                    <input type="text" class="form-control" data-field="placa" placeholder="Placa (ABC-1234)" data-uppercase="true">
-                    <input type="text" class="form-control kac-inline-61f874a6fe" data-field="cor" placeholder="Cor (Ex: Preto)">
+                    <input aria-label="Placa do veículo" type="text" class="form-control" data-field="placa" placeholder="Placa (ABC-1234)" data-uppercase="true">
+                    <input aria-label="Cor do veículo" type="text" class="form-control kac-inline-61f874a6fe" data-field="cor" placeholder="Cor (Ex: Preto)">
                 </div>
             </div>
 
@@ -127,7 +127,7 @@
                         <option value="">+ Parentesco</option><option>Esposa</option><option>Marido</option><option>Filho(a)</option>
                     </select>
                 </div>
-                <input type="text" class="form-control" data-field="acompanhantes" placeholder="Ex: Maria (Esposa) e 1 Criança">
+                <input aria-label="Acompanhantes" type="text" class="form-control" data-field="acompanhantes" placeholder="Ex: Maria (Esposa) e 1 Criança">
             </div>
 
             <!-- PLACA ACOMPANHANTE -->
@@ -146,13 +146,13 @@
                         <span>▼</span>
                     </button>
                     <div class="search-dropdown-panel" id="dropdownPanel2">
-                        <input type="text" class="search-input-box" data-list="listWrapper2" placeholder="🔎 Digite para filtrar a marca...">
+                        <input aria-label="Filtrar marca" type="text" class="search-input-box" data-list="listWrapper2" placeholder="🔎 Digite para filtrar a marca...">
                         <div id="listWrapper2"></div>
                     </div>
                 </div>
                 <div class="form-row">
-                    <input type="text" class="form-control" data-field="placaAcomp" placeholder="Placa (ABC-1234)" data-uppercase="true">
-                    <input type="text" class="form-control kac-inline-61f874a6fe" data-field="corAcomp" placeholder="Cor (Ex: Preto)">
+                    <input aria-label="Placa do acompanhante" type="text" class="form-control" data-field="placaAcomp" placeholder="Placa (ABC-1234)" data-uppercase="true">
+                    <input aria-label="Cor do veículo do acompanhante" type="text" class="form-control kac-inline-61f874a6fe" data-field="corAcomp" placeholder="Cor (Ex: Preto)">
                 </div>
             </div>
 
@@ -203,7 +203,7 @@
             </div>
             <div class="form-group">
                 <label>Chave de IA — gerenciada no servidor (não inserir no navegador)</label>
-                <input type="password" id="configApiKey" class="form-control" placeholder="Configurada apenas no servidor" disabled readonly>
+                <input aria-label="Chave da API de IA" type="password" id="configApiKey" class="form-control" placeholder="Configurada apenas no servidor" disabled readonly>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn-cancel" data-action="close-config" data-target="configModalOverlay">Fechar</button>
@@ -248,7 +248,7 @@
             <div id="aiTypingIndicator" class="ai-typing">Analisando base de dados...</div>
         </div>
         <div class="ai-footer">
-            <input type="text" class="ai-input" id="aiInput" placeholder="Pergunte algo à IA..." autocomplete="off">
+            <input aria-label="Pergunta para a IA" type="text" class="ai-input" id="aiInput" placeholder="Pergunte algo à IA..." autocomplete="off">
             <button class="ai-send" id="btnSendAi">➤</button>
         </div>
     </div>
