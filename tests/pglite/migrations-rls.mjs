@@ -16,8 +16,12 @@ ok('001-004 aplicam em Postgres limpo',true);
 await ex(`INSERT INTO komodo_tbl_usuarios(id,email,salt,hash,papel) VALUES ('uA','a@example.com','s','h','admin'),('uB','b@example.com','s','h','admin'),('uV','v@example.com','s','h','operador');
 INSERT INTO komodo_acessos(id,modulo,dia,hora,nome,data) VALUES ('legacy1','empresarial','ter','09:00','Legado',NULL);`);
 await ex(fs.readFileSync(M+'/005_tenancy.sql','utf8')); ok('005 aplica sobre dados existentes',true);
+// Simula a Fase C (Supabase Auth): em produção a 005 NÃO concede nada a authenticated.
+ok('005 produção: authenticated sem grants',(await q(`select count(*)::int n from information_schema.role_table_grants where grantee='authenticated' and table_schema='public'`))[0].n===0);
+await ex(`GRANT SELECT ON kac_organizations,kac_memberships TO authenticated; GRANT SELECT,INSERT,UPDATE,DELETE ON komodo_acessos TO authenticated; GRANT EXECUTE ON FUNCTION kac_is_member(uuid,text[]), kac_current_user() TO authenticated;`);
 ok('005 backfill: linha legada recebe org padrão',(await q(`select organization_id from komodo_acessos where id='legacy1'`))[0].organization_id==='00000000-0000-4000-8000-000000000001');
 await ex(fs.readFileSync(M+'/006_visit_history_audit.sql','utf8')); ok('006 aplica',true);
+await ex(`GRANT SELECT ON kac_visit_history TO authenticated;`).catch(()=>{});
 // cenário: org A (uA owner, uV viewer), org B (uB owner)
 await ex(`INSERT INTO kac_organizations(id,name) VALUES ('aaaaaaaa-0000-4000-8000-000000000001','Org A'),('bbbbbbbb-0000-4000-8000-000000000001','Org B');
 DELETE FROM kac_memberships; INSERT INTO kac_memberships VALUES ('aaaaaaaa-0000-4000-8000-000000000001','uA','owner'),('aaaaaaaa-0000-4000-8000-000000000001','uV','viewer'),('bbbbbbbb-0000-4000-8000-000000000001','uB','owner');

@@ -1,4 +1,6 @@
-# Plano de migração (NENHUMA aplicada — exige aprovação)
+# Plano de migração
+
+**005 APLICADA em produção em 2026-10-13 21:10 (horário de Brasília), versão 20261014001027, com autorização.** Antes houve um backup JSON (sha256 09be96ec…; 1 visita, 1 usuário, 3 sessões, 12 tentativas de login) e um teste de restauração e rollback no PGlite. Variante de produção: **sem grants** para anon/authenticated e `organization_id DEFAULT` = org padrão (compatível com a API atual). 006 e 007 continuam **não aplicadas**.
 
 Todas as migrações estão em `docs/master/migrations/` com rollback e são testadas por `tests/pglite/migrations-rls.mjs` (PGlite / PostgreSQL 18.6: **26/26 PASS**, incluindo rollback e reaplicação).
 

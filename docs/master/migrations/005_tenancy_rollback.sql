@@ -1,6 +1,6 @@
 -- Rollback de 005 (remove políticas, colunas e tabelas de tenancy; dados de visitas são preservados).
 BEGIN;
-REVOKE SELECT, INSERT, UPDATE, DELETE ON public.komodo_acessos FROM authenticated;
+REVOKE ALL ON TABLE public.komodo_acessos FROM anon, authenticated;
 DROP POLICY IF EXISTS kac_acessos_read ON public.komodo_acessos;
 DROP POLICY IF EXISTS kac_acessos_write ON public.komodo_acessos;
 DROP POLICY IF EXISTS kac_acessos_update ON public.komodo_acessos;

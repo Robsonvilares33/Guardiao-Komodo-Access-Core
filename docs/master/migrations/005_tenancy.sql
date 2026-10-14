@@ -1,4 +1,4 @@
--- 005_tenancy (PROPOSTA — NÃO APLICADA). Multi-tenant: banco compartilhado + organization_id + RLS.
+-- 005_tenancy — APLICADA em produção (2026-10-13, autorizada). Multi-tenant: banco compartilhado + organization_id + RLS.
 -- Compatível: colunas novas anuláveis; linhas atuais vão para a organização "padrão" (backfill).
 BEGIN;
 CREATE TABLE IF NOT EXISTS public.kac_organizations (
@@ -32,8 +32,9 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public AS $$
                  WHERE m.organization_id = p_org AND m.user_id = public.kac_current_user()
                    AND (p_roles IS NULL OR m.role = ANY (p_roles)))
 $$;
-REVOKE ALL ON FUNCTION public.kac_is_member(uuid, text[]) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.kac_is_member(uuid, text[]) TO authenticated;
+-- Produção: o acesso continua só via service_role (API). EXECUTE para authenticated só quando houver Supabase Auth (Fase C).
+REVOKE ALL ON FUNCTION public.kac_is_member(uuid, text[]) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.kac_current_user() FROM PUBLIC, anon, authenticated;
 
 ALTER TABLE public.kac_organizations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.kac_memberships ENABLE ROW LEVEL SECURITY;
@@ -51,14 +52,16 @@ CREATE POLICY kac_acessos_update ON public.komodo_acessos FOR UPDATE TO authenti
   WITH CHECK (public.kac_is_member(organization_id, ARRAY['owner','admin','operator']));
 DROP POLICY IF EXISTS kac_acessos_delete ON public.komodo_acessos;
 CREATE POLICY kac_acessos_delete ON public.komodo_acessos FOR DELETE TO authenticated USING (public.kac_is_member(organization_id, ARRAY['owner','admin']));
--- Grants mínimos para o papel autenticado (anon continua sem acesso).
-GRANT SELECT ON public.kac_organizations, public.kac_memberships TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.komodo_acessos TO authenticated;
+-- Sem grants para anon/authenticated (anula os default privileges do Supabase). As policies ficam prontas para a Fase C.
+REVOKE ALL ON TABLE public.kac_organizations, public.kac_memberships FROM anon, authenticated;
+REVOKE ALL ON TABLE public.komodo_acessos FROM anon, authenticated;
 
 -- Backfill: organização padrão com o admin atual como owner.
 INSERT INTO public.kac_organizations(id, name) VALUES ('00000000-0000-4000-8000-000000000001', 'Organização padrão') ON CONFLICT DO NOTHING;
 INSERT INTO public.kac_memberships(organization_id, user_id, role)
   SELECT '00000000-0000-4000-8000-000000000001', id, CASE WHEN papel = 'admin' THEN 'owner' ELSE 'operator' END
   FROM public.komodo_tbl_usuarios ON CONFLICT DO NOTHING;
+-- Compatibilidade: a API atual não envia organization_id; novas linhas caem na org padrão.
+ALTER TABLE public.komodo_acessos ALTER COLUMN organization_id SET DEFAULT '00000000-0000-4000-8000-000000000001';
 UPDATE public.komodo_acessos SET organization_id = '00000000-0000-4000-8000-000000000001' WHERE organization_id IS NULL;
 COMMIT;
