@@ -8,7 +8,7 @@ const DIAS=['dom','seg','ter','qua','qui','sex','sab'];const D0=iso(new Date()),
 const o=[];const ok=(n,c,x='')=>o.push(`${c===true?'PASS':'FAIL'} ${n}${x?' — '+x:''}`);const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 await b.send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:2,mobile:true});
 await b.nav(U+'/login.html');const pw=JSON.stringify(process.env.ADMIN_PASSWORD);
-ok('login',(await b.ev(`authService.login('robsonboiling@gmail.com',${pw}).then(s=>s.role).catch(()=>'ERR')`))==='admin');
+ok('login',(await b.ev(`authService.login(${JSON.stringify(process.env.KAC_E2E_EMAIL||'robsonboiling@gmail.com')},${pw}).then(s=>s.role).catch(()=>'ERR')`))==='admin');
 await b.nav(U+'/');await sleep(1500);
 const realBefore=await b.ev(`apiService.get('/visitantes/empresarial?limit=500').then(r=>JSON.stringify((Array.isArray(r)?r:r.data).filter(x=>!/TESTE AUDITORIA/.test(x.nome)).map(x=>[x.id,x.data,x.hora,x.status,x.nome])))`);
 const existing=await b.ev(`((appStore.getState('visitors').dailyData||[]).find(x=>x.nome==='TESTE AUDITORIA UI')||{}).id||null`);

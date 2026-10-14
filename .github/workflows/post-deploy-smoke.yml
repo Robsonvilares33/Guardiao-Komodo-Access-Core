@@ -29,3 +29,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Smoke autenticado ainda não implementado/ativado (requer aprovação + usuário dedicado)."
+  # PREPARADO, DESLIGADO: auditoria de acessibilidade (axe-core) nas páginas e modais da produção.
+  # Ligar: variável de repositório KAC_SMOKE_A11Y=true + secrets KAC_SMOKE_EMAIL / KAC_SMOKE_PASSWORD de um usuário
+  # dedicado de smoke (NÃO o admin; papel em KAC_SMOKE_ROLE, padrão operador). Só lê páginas/abre modais; não grava dados.
+  smoke-a11y:
+    if: vars.KAC_SMOKE_A11Y == 'true' && (github.event_name == 'workflow_dispatch' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install --no-save --no-package-lock axe-core@4.14.0
+      - name: a11y páginas + modais
+        env:
+          KAC_E2E_EMAIL: ${{ secrets.KAC_SMOKE_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.KAC_SMOKE_PASSWORD }}
+          KAC_E2E_ROLE: ${{ vars.KAC_SMOKE_ROLE || 'operador' }}
+          KAC_AXE: node_modules/axe-core/axe.min.js
+        run: |
+          node scripts/e2e/a11y-audit.mjs
+          node scripts/e2e/a11y-modals.mjs

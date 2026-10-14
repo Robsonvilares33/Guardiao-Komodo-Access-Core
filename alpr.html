@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Guardião Komodo - Revisão de placas</title>
+  <link rel="stylesheet" href="src/ui/styles/auth.css">
+</head>
+<body>
+  <main class="auth-card alpr-card">
+    <h1>Revisão de placas (ALPR)</h1>
+    <p id="alprMsg" class="auth-msg" role="status" aria-live="polite"></p>
+    <section id="secOff"><h2>Indisponível</h2><p>Este módulo ainda não está habilitado. Volte para a <a href="index.html">agenda</a>.</p></section>
+    <section id="secOn" hidden>
+      <h2>Leitura simulada</h2>
+      <p class="hint">Sem câmera e sem imagem: digite a placa e a confiança para testar a regra. Nada é gravado e nenhuma leitura autoriza entrada sozinha.</p>
+      <form id="formRead">
+        <label for="plate">Placa lida</label><input id="plate" autocomplete="off" maxlength="10" required>
+        <label for="conf">Confiança: <output id="confOut" for="conf">0,95</output></label><input id="conf" type="range" min="0" max="1" step="0.01" value="0.95">
+        <button type="submit">Avaliar leitura</button>
+      </form>
+      <div id="result" hidden>
+        <h2 id="resTitle">Resultado</h2>
+        <p><span id="resBadge" class="badge"></span> <span id="resReason"></span></p>
+        <ul id="resCands" class="cands" aria-label="Visitas candidatas de hoje"></ul>
+        <label for="corr">Placa corrigida (se necessário)</label><input id="corr" autocomplete="off" maxlength="10">
+        <div class="row3">
+          <button type="button" id="btnAccept">Confirmar</button>
+          <button type="button" id="btnCorrect" class="sec">Corrigir</button>
+          <button type="button" id="btnReject" class="sec">Rejeitar</button>
+        </div>
+      </div>
+      <h2>Decisões desta sessão (não gravadas)</h2>
+      <ol id="log" class="cands"></ol>
+    </section>
+  </main>
+  <script src="src/ui/alpr-review.js"></script>
+</body>
+</html>

@@ -12,7 +12,7 @@ const crit=r=>(r||[]).filter(v=>v.impact==='critical');
 await b.nav(U+'/login.html');let r=await audit('login');ok('login: 0 violações críticas (axe)',Array.isArray(r)&&crit(r).length===0,JSON.stringify(crit(r)));
 await b.nav(U+'/auth.html');await sleep(800);r=await audit('auth');ok('auth.html: 0 violações críticas (axe)',Array.isArray(r)&&crit(r).length===0,JSON.stringify(crit(r)));
 await b.nav(U+'/login.html');const pw=JSON.stringify(process.env.ADMIN_PASSWORD);
-ok('login admin',(await b.ev(`authService.login('robsonboiling@gmail.com',${pw}).then(s=>s.role).catch(()=>'ERR')`))==='admin');
+ok('login ('+(process.env.KAC_E2E_ROLE||'admin')+')',(await b.ev(`authService.login(${JSON.stringify(process.env.KAC_E2E_EMAIL||'robsonboiling@gmail.com')},${pw}).then(s=>s.role).catch(()=>'ERR')`))===(process.env.KAC_E2E_ROLE||'admin'));
 for(const page of ['/','/residencial.html']){
   await b.nav(U+page);await sleep(2500);const P=page==='/'?'empresarial':'residencial';
   // D4

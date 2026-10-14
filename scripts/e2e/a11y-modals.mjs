@@ -6,7 +6,7 @@ const AXE=fs.readFileSync(process.env.KAC_AXE||createRequire(import.meta.url).re
 const FAIL_ON=(process.env.KAC_A11Y_FAIL_ON||'critical,serious').split(',');
 const b=await launch();const o=[];const ok=(n,c,x='')=>o.push(`${c===true?'PASS':'FAIL'} ${n}${x?' — '+x:''}`);const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 await b.send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:2,mobile:true});
-await b.nav(U+'/login.html');ok('login admin',(await b.ev(`authService.login('robsonboiling@gmail.com',${JSON.stringify(process.env.ADMIN_PASSWORD)}).then(s=>s.role).catch(()=>'ERR')`))==='admin');
+await b.nav(U+'/login.html');ok('login ('+(process.env.KAC_E2E_ROLE||'admin')+')',(await b.ev(`authService.login(${JSON.stringify(process.env.KAC_E2E_EMAIL||'robsonboiling@gmail.com')},${JSON.stringify(process.env.ADMIN_PASSWORD)}).then(s=>s.role).catch(()=>'ERR')`))===(process.env.KAC_E2E_ROLE||'admin'));
 const cases=[['/','cadastro','btnOpenModal','#mainModalOverlay',null],['/','dashboard','btnOpenDashboard','#dashModalOverlay',null],['/','configuração','btnOpenConfig','#configModalOverlay',null],
  ['/residencial.html','cadastro (visitante)','btnOpenModal','#mainModalOverlay',null],['/residencial.html','cadastro (morador)','btnOpenModal','#mainModalOverlay','.modal-tab[data-target="sectionMorador"]'],['/residencial.html','dashboard','btnOpenDashboard','#dashModalOverlay',null],['/residencial.html','configuração','btnOpenConfig','#configModalOverlay',null]];
 const all={};

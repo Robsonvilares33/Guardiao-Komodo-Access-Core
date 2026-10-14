@@ -25,3 +25,4 @@ Redesenho visual, mudança de fluxo de cadastro, novos campos, textos legais.
 
 ## Modais (2026-10-14)
 `scripts/e2e/a11y-modals.mjs` abre cadastro (visitante/morador), dashboard e configuração nas duas páginas e roda axe (falha em critical/serious). Linha de base: 4 críticas — 3 `<select>` sem nome (Acompanhante, Parentesco, Provedor de IA) e `aria-pressed` indevido no `<select class="btn-toggle">` (efeito colateral do D4). Corrigidas; D4 agora só em `button.btn-toggle`.
+- Smoke pós-deploy: job `smoke-a11y` (páginas + modais com axe) **preparado e desligado** — requer `vars.KAC_SMOKE_A11Y=true` e secrets `KAC_SMOKE_EMAIL`/`KAC_SMOKE_PASSWORD` de um usuário dedicado (não o admin).
