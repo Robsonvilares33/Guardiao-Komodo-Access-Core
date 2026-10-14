@@ -1,6 +1,6 @@
 # Fase E — Planos, assentos e pagamentos (sandbox/mock)
 
-Situação: **implementado e testado atrás de flag (`KAC_BILLING`, desligada)**; nenhuma cobrança real; migração 007 **proposta, não aplicada**.
+Situação: **implementado e testado atrás de flag (`KAC_BILLING`, desligada em produção)**; nenhuma cobrança real; **migração 007 APLICADA em produção em 14/10/2026** (aditiva; backup `kac_pre007_20261014T145448.json`). Preços de pro/business **provisórios** (planos inativos).
 
 ## Modelo
 | Plano | Preço/mês | Assentos | Locais | Visitas/mês | Situação |
@@ -25,7 +25,13 @@ Preços são placeholders para modelagem; definir com você antes de qualquer ve
 - `lib/mercadopago.cjs` + `provider('mercadopago')`. Só aceita `MP_TEST_ACCESS_TOKEN`/`MP_TEST_PUBLIC_KEY` com prefixo `TEST-` (recusa `APP_USR-`); nunca lê variáveis de produção. Webhook secret ≥ 32.
 - `POST /api/billing/checkout` (sessão + MFA + org; só admin/owner): cria preferência do Checkout Pro e devolve `sandbox_init_point`. `external_reference` = `kac1.<org>.<plano>.<nonce>.<HMAC>` (org vem da sessão, não do cliente).
 - `POST /api/billing/webhook/mercadopago` (sem sessão): `x-signature` `ts=..,v1=..` = HMAC-SHA256(secret, `id:<data.id>;request-id:<x-request-id>;ts:<ts>;`) com comparação em tempo constante; janela anti-replay ±5 min; ignora `live_mode=true`; **não confia no corpo**: busca `/v1/payments/<id>` com o token de teste e resolve org/plano pelo `external_reference` assinado; idempotência por `mp:payment:<id>:<status>`. Respostas só `{"received":true|false}`; logs só com código de erro.
-- Persistência: **em memória por instância** (perde no cold start). Definitiva depende da migração 007 (`kac_payment_events`, UNIQUE provider+evento) — **não autorizada**.
+- Persistência: **banco** (007). Webhook grava em `kac_payment_events` (UNIQUE provider+evento → 409 = duplicado, idempotência atômica entre instâncias) e faz upsert em `kac_subscriptions` (aprovado → plano/active; recusado/cancelado → past_due). Payload sem dados do pagador. Falha de banco → 500 (MP reenvia). `GET /billing/seats` lê o plano da assinatura.
 - Testes: `tests/mercadopago.test.cjs` (fetch simulado). Smoke real: `scripts/mp-sandbox-smoke.mjs`.
 - **Limitação conhecida:** com flag desligada em produção, a URL de teste configurada no MP (`/api/billing/webhook/mercadopago` em produção) responde **404**; notificações de teste do MP não são processadas até ligar a flag (ou apontar a URL de teste para um ambiente com a flag ligada).
 - **Bloqueio do sandbox:** o token `TEST-` da conta principal recebe `403 PA_UNAUTHORIZED_RESULT_FROM_POLICIES` ao criar preferência (leitura funciona). Caminho usual do MP: usar as credenciais do **usuário de teste vendedor** (formato `APP_USR-`, conta marcada `test_user`). Exige decisão: adaptar a trava para aceitar `APP_USR-` somente se `/users/me` tiver a tag `test_user`.
+
+## 007 em produção (14/10/2026)
+- Revisão antes de aplicar: `REVOKE ALL` de PUBLIC/anon/authenticated **e service_role**, depois grants mínimos só para service_role: `kac_plans` SELECT; `kac_subscriptions` SELECT/INSERT/UPDATE; `kac_payment_events` SELECT/INSERT (sem UPDATE/DELETE → trilha imutável). Índice em `kac_payment_events(organization_id)`.
+- Ensaio PGlite sobre o backup real: `tests/pglite/prod007-billing.mjs` 49/49 (tabelas existentes inalteradas, grants, RLS, duplicado rejeitado, sem DELETE, anon negado, rollback, reaplicação, idempotência).
+- Verificação em produção: RLS nas 3 tabelas; grants exatamente os acima; 0 grants anon/authenticated em `public`; 0 tabelas sem RLS; planos free ativo / pro e business inativos; 1 assinatura free/active (a org existente); 0 eventos; visita real md5 inalterado. Advisors de segurança: só INFO `rls_enabled_no_policy` (intencional: acesso apenas via API service_role).
+- Rollback: ver BACKUP_RESTORE.md.

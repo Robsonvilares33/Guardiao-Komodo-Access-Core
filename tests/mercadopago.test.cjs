@@ -83,9 +83,22 @@ test('rota /billing/webhook/mercadopago: 404 com flag desligada; 405 em GET; 401
     Object.assign(process.env,ENV,{KAC_BILLING:'on'});
     r=res();await H({method:'GET',query:{route:'billing/webhook/mercadopago'},headers:{},body:{}},r);assert.equal(r.statusCode,405);
     r=res();await H({method:'POST',query:{route:'billing/webhook/mercadopago','data.id':'5'},headers:{'x-signature':'ts=1,v1=00','x-request-id':'a'},body:{type:'payment',data:{id:'5'}}},r);assert.equal(r.statusCode,401);assert.equal(r.body,'{"received":false}');
-    globalThis.fetch=fakeFetch({'GET /v1/payments/42':()=>[200,{id:42,status:'approved',live_mode:false,external_reference:MP.makeRef(SECRET,ORG,'pro')}]});
+    process.env.SUPABASE_URL='https://fakeproj.supabase.co';process.env.SUPABASE_SERVICE_ROLE_KEY='fake-service-key';const sb=[];
+    globalThis.fetch=async(url,opt={})=>{if(url.startsWith('https://fakeproj.supabase.co/rest/v1/')){sb.push({url,opt});const dup=url.includes('kac_payment_events')&&sb.filter(x=>x.url.includes('kac_payment_events')).length>1;return{ok:!dup,status:dup?409:201,text:async()=>dup?'{"code":"23505"}':''};}
+      if(url.endsWith('/v1/payments/42'))return{ok:true,status:200,json:async()=>({id:42,status:'approved',live_mode:false,external_reference:MP.makeRef(SECRET,ORG,'pro'),transaction_amount:99})};return{ok:false,status:404,json:async()=>({})};};
     r=res();await H({method:'POST',url:'/api/billing/webhook/mercadopago?data.id=42&type=payment',query:{route:'billing/webhook/mercadopago'},headers:{'x-signature':sig('42','rq'),'x-request-id':'rq'},body:{type:'payment',data:{id:'42'}}},r);
     assert.equal(r.statusCode,200);assert.equal(r.body,'{"received":true}');for(const v of Object.values(ENV))assert.ok(!r.body.includes(v));
+    const ev=JSON.parse(sb[0].opt.body)[0];assert.match(sb[0].url,/kac_payment_events$/);assert.deepEqual([ev.provider,ev.provider_event_id,ev.organization_id,ev.type],['mercadopago','mp:payment:42:approved',ORG,'checkout.completed']);
+    assert.match(sb[1].url,/kac_subscriptions\?on_conflict=organization_id$/);assert.match(sb[1].opt.headers.Prefer,/merge-duplicates/);assert.deepEqual((({plan_id,status,provider})=>({plan_id,status,provider}))(JSON.parse(sb[1].opt.body)[0]),{plan_id:'pro',status:'active',provider:'mercadopago'});
+    // reenvio (novo request-id): 409 no banco → duplicado, assinatura não é tocada de novo
+    r=res();await H({method:'POST',url:'/api/billing/webhook/mercadopago?data.id=42&type=payment',query:{route:'billing/webhook/mercadopago'},headers:{'x-signature':sig('42','rq2'),'x-request-id':'rq2'},body:{type:'payment',data:{id:'42'}}},r);
+    assert.equal(r.statusCode,200);assert.equal(sb.length,3,'só o insert duplicado; sem novo upsert');
   }finally{for(const k of Object.keys(process.env))if(!(k in saved))delete process.env[k];Object.assign(process.env,saved);globalThis.fetch=gf;}
 });
 test('webhook: pagamento inexistente na API → 200 ignorado (MP não reenvia em loop)',async()=>{const {p,args}=hook({id:'888'});const a=args();a.headers['x-signature']=sig('999',a.headers['x-request-id']);a.query['data.id']='999';a.body.data.id='999';assert.equal((await p.handleWebhook(a)).result,'ignored_unknown_payment');});
+test('dbStore: insere evento sem dados do pagador; 409/23505 → duplicado; falha de banco propaga (MP reenvia)',async()=>{
+  const calls=[];let mode='ok';const db=async(t,o)=>{calls.push([t,o]);if(t==='kac_payment_events'&&mode==='dup'){const e=new Error('DATABASE_ERROR');e.status=409;e.code='23505';throw e;}if(mode==='down'){const e=new Error('DATABASE_ERROR');e.status=503;throw e;}return null;};
+  const st=MP.dbStore(db);const v={provider:'mercadopago',orgId:ORG,type:'invoice.payment_failed',planId:'pro',paymentId:'9',status:'rejected',amountCents:9900};
+  assert.deepEqual(await st.record('mp:payment:9:rejected',v),{duplicate:false});assert.deepEqual(Object.keys(calls[0][1].body[0].payload).sort(),['amountCents','paymentId','planId','status']);assert.equal(calls[1][1].body[0].status,'past_due');assert.equal(calls[1][1].body[0].plan_id,undefined);
+  mode='dup';assert.deepEqual(await st.record('x',v),{duplicate:true});mode='down';await assert.rejects(st.record('y',v),/DATABASE_ERROR/);
+});

@@ -1,4 +1,5 @@
--- PROPOSTA — NÃO APLICADA (requer autorização). Planos, assinaturas e eventos de pagamento (somente sandbox/mock).
+-- 007 — Planos, assinaturas e eventos de pagamento (sandbox). Autorizada em 14/10/2026. Puramente aditiva: só cria tabelas novas.
+-- Preços de pro/business são PROVISÓRIOS (planos inativos).
 -- Rev. 2026-10-14: alinhada à política zero-grant (anon/authenticated sem acesso; só service_role via API), provider 'mock', planos pro/business inativos.
 BEGIN;
 CREATE TABLE IF NOT EXISTS public.kac_plans (
@@ -21,6 +22,12 @@ ALTER TABLE public.kac_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.kac_payment_events ENABLE ROW LEVEL SECURITY;
 -- Sem policies/grants para anon/authenticated (mesma política da 005–008): leitura e escrita só pela API com service_role.
 REVOKE ALL ON TABLE public.kac_plans, public.kac_subscriptions, public.kac_payment_events FROM anon, authenticated;
+REVOKE ALL ON TABLE public.kac_plans, public.kac_subscriptions, public.kac_payment_events FROM PUBLIC, service_role;
+-- Grants explícitos e mínimos para a API (service_role). Eventos: só inserir/ler (trilha imutável, sem UPDATE/DELETE).
+GRANT SELECT ON TABLE public.kac_plans TO service_role;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.kac_subscriptions TO service_role;
+GRANT SELECT, INSERT ON TABLE public.kac_payment_events TO service_role;
+CREATE INDEX IF NOT EXISTS kac_payment_events_org_idx ON public.kac_payment_events(organization_id);
 INSERT INTO public.kac_subscriptions(organization_id, plan_id, status)
   SELECT id, 'free', 'active' FROM public.kac_organizations ON CONFLICT DO NOTHING;
 COMMIT;
