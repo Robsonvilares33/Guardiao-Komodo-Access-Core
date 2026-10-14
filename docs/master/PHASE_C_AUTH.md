@@ -63,3 +63,11 @@ Migração 008 **proposta, não aplicada**. Nenhuma configuração do Supabase A
 | A7 | SMTP próprio | Escolher o provedor (Gmail com senha de app ou um plano gratuito). Supabase → Auth → SMTP Settings: host/porta/usuário/senha (**você** cola) e o remetente | R$0 dentro do limite gratuito | Sem isso, verificação e convites só chegam a membros da equipe Supabase (2/h) |
 | A8 | Vercel env (Production) | `KAC_SUPABASE_ANON_KEY` (chave pública/publishable) e, por último, `KAC_SUPABASE_AUTH=on` | R$0 | Desligar = remover a env e fazer redeploy |
 | A9 | Produção | Ligar primeiro só para o admin (vincular + TOTP), validar e depois liberar os convites | R$0 | Senha local continua como fallback |
+
+## UI da Fase C (implementada, atrás da flag)
+- Página isolada `/auth.html` (sem link em nenhuma página existente; `noindex`). Com a flag desligada, `/api/auth/supabase/config` → 404 e a página mostra só "Indisponível" + link para o login atual.
+- `src/ui/SupabaseAuthClient.js`: GoTrue REST sem SDK — login e-mail/senha, cadastro com `redirect_to`, Google (`/authorize?provider=google`, fluxo implícito, hash limpo com `history.replaceState`), MFA TOTP (enroll → challenge → verify → aal2), vincular conta (`/api/auth/supabase/link`, cookie + Bearer), aceitar convite (`/auth.html?convite=<token>`). Tokens só em memória.
+- `src/ui/auth-init.js`: estados Indisponível / Entrar / MFA / Conectado; foco no título a cada troca; `aria-live`; alvos ≥44px; mobile.
+- Testes: `tests/ui-phase-c-auth.test.cjs` (13).
+- **Antes de ligar a flag (somar ao A8):** incluir `https://hcqcmirculeiyrpiwlpm.supabase.co` em `connect-src` do CSP (hoje Report-Only → só geraria relatórios) e cadastrar `https://guardiao-komodo-access-core.vercel.app/auth.html` (com query `?convite=`) nas Redirect URLs (A2).
+- Planejado: criar convite pela UI do admin (hoje só via API), refresh de token (sessão expira em ~1h → novo login).

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Guardião Komodo - Conta</title>
+  <link rel="stylesheet" href="src/ui/styles/auth.css">
+</head>
+<body>
+  <main class="auth-card">
+    <h1>Guardião Komodo</h1>
+    <p id="authMsg" class="auth-msg" role="status" aria-live="polite"></p>
+    <section id="secOff"><h2>Indisponível</h2><p>Este acesso ainda não está habilitado. Use o <a href="login.html">login atual</a>.</p></section>
+    <section id="secLogin" hidden>
+      <h2>Entrar</h2>
+      <form id="formLogin">
+        <label for="email">E-mail</label><input id="email" type="email" autocomplete="username" required>
+        <label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" minlength="12" required>
+        <button type="submit">Entrar</button>
+        <button type="button" id="btnSignup" class="sec">Criar conta</button>
+      </form>
+      <button type="button" id="btnGoogle" class="sec">Entrar com Google</button>
+    </section>
+    <section id="secMfa" hidden>
+      <h2>Verificação em duas etapas</h2>
+      <p id="mfaHint"></p>
+      <img id="mfaQr" alt="QR code para o app autenticador" width="200" height="200" hidden>
+      <form id="formMfa">
+        <label for="mfaCode">Código</label><input id="mfaCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>
+        <button type="submit">Verificar</button>
+      </form>
+    </section>
+    <section id="secReady" hidden>
+      <h2>Conectado</h2>
+      <p>Conta: <strong id="who"></strong></p>
+      <p id="mfaState"></p>
+      <button type="button" id="btnEnroll">Ativar MFA</button>
+      <button type="button" id="btnInvite" hidden>Aceitar convite</button>
+      <button type="button" id="btnLink" class="sec" title="Requer estar logado no login atual com o mesmo e-mail">Vincular ao meu usuário atual</button>
+      <button type="button" id="btnOut" class="sec">Sair</button>
+    </section>
+  </main>
+  <script src="src/ui/SupabaseAuthClient.js"></script>
+  <script src="src/ui/auth-init.js"></script>
+</body>
+</html>
