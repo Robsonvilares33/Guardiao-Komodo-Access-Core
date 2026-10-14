@@ -14,11 +14,11 @@ Objetivo: melhorar uso no celular, teclado e leitor de tela **sem alterar regras
 | D1 | Link "Pular para a agenda" + alvo focável | implementado, testado (estático) |
 | D2 | Foco visível e `prefers-reduced-motion` no login e `/auth.html` | implementado, testado (estático) |
 | D3 | `aria-label` nos campos que só tinham placeholder (nome, placa, cor, unidade, documento, acompanhantes, filtro de marca); `alt` do logo | implementado, testado (estático) |
-| D4 | Botões Visita/Cliente, Carro/Moto com `aria-pressed` sincronizado | planejado (exige JS no FormManager → teste de UI) |
-| D5 | Mensagens de erro do formulário ligadas ao campo (`aria-describedby`, `aria-invalid`) | planejado |
-| D6 | Estado vazio/carregando da agenda com `role="status"` | planejado |
-| D7 | Auditoria automática (axe-core vendorizado no E2E, sem CDN) | planejado |
-| D8 | Contraste das cores do tema verificado (tokens) | planejado |
+| D4 | `aria-pressed` nos botões de alternância e `aria-current=date` na aba do dia (`src/ui/A11yEnhancer.js`, por observação do DOM; sem tocar handlers) | implementado, testado (unit + clique ao vivo) |
+| D5 | Dica no campo ao sair dele: nome <3 e placa (regra do `ValidationManager`) → `aria-invalid` + `aria-describedby`; só informa, o salvar continua igual | implementado, testado (unit + clique ao vivo) |
+| D6 | Região `role=status` antes da agenda anuncia "N registros" ou a mensagem de vazio existente | implementado, testado (unit + ao vivo) |
+| D7 | `scripts/e2e/a11y-audit.mjs`: axe-core 4.14 (local, fora do deploy) em login, auth, empresarial, residencial (390px) + cliques D4–D6; falha em violação crítica | implementado; linha de base achou 1 crítica (`#quickTime` sem rótulo) → corrigida |
+| D8 | Contraste (regra `color-contrast` do axe, WCAG AA) nas 4 páginas | verificado: 0 violações no estado renderizado; modais/estados não abertos não cobertos |
 
 ## Fora de escopo
 Redesenho visual, mudança de fluxo de cadastro, novos campos, textos legais.

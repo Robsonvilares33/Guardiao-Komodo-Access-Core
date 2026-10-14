@@ -700,3 +700,6 @@ html body .kac-inline-65b777e9bf {
 .skip-link{position:absolute;left:8px;top:-60px;z-index:10000;padding:10px 14px;background:#111;color:#fff;border-radius:8px;text-decoration:none}
 .skip-link:focus{top:8px;outline:3px solid var(--gold,#ffd166)}
 #cardsContainer:focus{outline:none}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.a11y-hint{display:block;margin-top:4px;font-size:.85rem;color:#ffb4a8}.a11y-hint:empty{display:none}
+input[aria-invalid="true"]{border-color:#ff8a7a!important}
