@@ -10,6 +10,7 @@ function dayFilter(row,q){const m=/or\(data\.eq\.(\d{4}-\d{2}-\d{2}),and\(data\.
 function res(status,body){return{ok:status<300,status,text:async()=>body==null?'':JSON.stringify(body)};}
 global.fetch=async(url,opts={})=>{const u=new URL(url);urls.push(decodeURIComponent(u.search));const t=u.pathname.split('/').pop();const method=opts.method||'GET';
   if(t==='komodo_web_sessions')return res(200,[{user_id:'u1',expires_at:new Date(Date.now()+3600e3).toISOString(),token_hash:hash}]);
+  if(t==='kac_memberships')return res(200,[{organization_id:'00000000-0000-4000-8000-000000000001',role:'owner'}]);
   if(t==='komodo_tbl_usuarios')return res(200,[{id:'u1',email:'op@example.com',papel:'operador'}]);
   if(t==='komodo_acessos'){if(method==='POST'){visitors.push(...JSON.parse(opts.body));return res(201,null);}
     return res(200,visitors.filter(r=>r.modulo===(u.searchParams.get('modulo')||'').slice(3)&&dayFilter(r,u.searchParams)));}

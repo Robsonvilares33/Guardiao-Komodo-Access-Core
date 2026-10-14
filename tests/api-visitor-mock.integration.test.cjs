@@ -2,7 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const handler = require('../api/[...route].js');
-const tables = { komodo_tbl_usuarios: [], komodo_web_sessions: [], komodo_login_attempts: [], komodo_acessos: [] };
+const tables = { komodo_tbl_usuarios: [], komodo_web_sessions: [], komodo_login_attempts: [], komodo_acessos: [], kac_memberships: [{ organization_id: '00000000-0000-4000-8000-000000000001', user_id: 'op1', role: 'operator', created_at: '2026-10-13T00:00:00Z' }] };
 const originalFetch = global.fetch;
 process.env.SUPABASE_URL = 'https://mock-project.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-only-not-a-real-key';

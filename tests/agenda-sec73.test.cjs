@@ -9,6 +9,7 @@ function match(r,q){const a=q.get('and')||'';const m=/or\(data\.eq\.([\d-]+),and
   const g=/data\.gte\.([\d-]+)/.exec(a);if(g&&!(r.data&&r.data>=g[1]))return false;const l=/data\.lte\.([\d-]+)/.exec(a);if(l&&!(r.data&&r.data<=l[1]))return false;return true;}
 global.fetch=async(url,o={})=>{const u=new URL(url),t=u.pathname.split('/').pop(),m=o.method||'GET';
   if(t==='komodo_web_sessions')return res(200,[{user_id:'u1',expires_at:new Date(Date.now()+3600e3).toISOString()}]);
+  if(t==='kac_memberships')return res(200,[{organization_id:'00000000-0000-4000-8000-000000000001',role:'owner'}]);
   if(t==='komodo_tbl_usuarios')return res(200,[{id:'u1',email:'a@example.com',papel:'admin'}]);
   if(m==='POST'){rows.push(...JSON.parse(o.body));return res(201,null);}
   return res(200,rows.filter(r=>r.modulo===u.searchParams.get('modulo').slice(3)&&match(r,u.searchParams)).sort((a,b)=>(a.data||'').localeCompare(b.data||'')));};
