@@ -1,6 +1,6 @@
 # Plano de migração
 
-**005 APLICADA em produção em 2026-10-13 21:10 (horário de Brasília), versão 20261014001027, com autorização.** Antes houve um backup JSON (sha256 09be96ec…; 1 visita, 1 usuário, 3 sessões, 12 tentativas de login) e um teste de restauração e rollback no PGlite. Variante de produção: **sem grants** para anon/authenticated e `organization_id DEFAULT` = org padrão (compatível com a API atual). 006 e 007 continuam **não aplicadas**.
+**005 APLICADA em produção em 2026-10-13 21:10 (horário de Brasília), versão 20261014001027, com autorização.** Antes houve um backup JSON (sha256 09be96ec…; 1 visita, 1 usuário, 3 sessões, 12 tentativas de login) e um teste de restauração e rollback no PGlite. Variante de produção: **sem grants** para anon/authenticated e `organization_id DEFAULT` = org padrão (compatível com a API atual). **006 APLICADA em produção em 2026-10-13 22:30 BRT (versão 20261014013009), com autorização.** Antes houve um backup JSON (sha256 dacbcf93…, em /workspace/backups e em Documents\\kac_backups) e um ensaio de restauração, 006 e rollback no PGlite (33/33). Variante de produção: histórico sem FK (sobrevive à exclusão), trigger também em DELETE, ator via `kac_actor()` (header x-kac-actor aceito só de service_role) e sem grants para anon/authenticated. 007 continua **não aplicada**.
 
 Todas as migrações estão em `docs/master/migrations/` com rollback e são testadas por `tests/pglite/migrations-rls.mjs` (PGlite / PostgreSQL 18.6: **26/26 PASS**, incluindo rollback e reaplicação).
 

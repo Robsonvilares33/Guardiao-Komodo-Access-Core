@@ -26,5 +26,4 @@ test('7.3-05 linha legada (data nula) aparece pelo dia da semana e fica fora de 
 test('7.3-06 "hoje" usa America/Sao_Paulo (23:30 BRT = 02:30 UTC do dia seguinte)',()=>{assert.equal(KD.todayISO(new Date('2026-10-14T02:30:00Z')),'2026-10-13');});
 test('7.3-07 navegação de semana atravessa virada de mês corretamente',()=>{assert.equal(KD.addDaysISO('2026-10-27',7),'2026-11-03');KD.setReference('2026-11-03');const w=KD.weekDates();assert.equal(KD.toISO(w.seg),'2026-11-02');assert.equal(KD.toISO(w.dom),'2026-11-08');KD.setReference(null);});
 test('7.3-08 período inválido (de > até, data inexistente) é rejeitado',async()=>{assert.equal((await call('visitantes/empresarial','GET',{}, {de:'2026-10-20',ate:'2026-10-01'})).status,400);assert.equal((await call('visitantes/empresarial','GET',{}, {de:'2026-02-30'})).status,400);});
-test('7.3-09 reagendamento preserva histórico (visit_history)',{todo:'requer migration 005/006 (visits + visit_history) — não aprovada'},()=>{assert.fail('pendente de esquema');});
-test('7.3-10 isolamento entre organizações e concorrência de agenda',{todo:'requer organization_id + RLS (migration 005) — validado só em PGlite descartável'},()=>{assert.fail('pendente de esquema');});
+// 7.3-09 e 7.3-10: ativados em tests/api-tenant-isolation.test.cjs (API) e tests/pglite/prod006-history.mjs (trigger real).
