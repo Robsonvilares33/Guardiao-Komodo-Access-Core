@@ -5,3 +5,6 @@ label{display:block;margin:10px 0 4px}input{width:100%;box-sizing:border-box;pad
 button{display:block;width:100%;margin-top:12px;padding:11px;border:0;border-radius:8px;background:#2f7cf6;color:#fff;font-size:1rem;cursor:pointer;min-height:44px}
 button.sec{background:#26334d}button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #ffd166;outline-offset:2px}
 .auth-msg{min-height:1.2em;color:#9fd3a8}.auth-msg.bad{color:#ff8a8a}a{color:#8ab4ff}img{display:block;margin:8px auto;background:#fff}
+select{width:100%;padding:10px;border-radius:8px;border:1px solid #33415c;background:#0b1220;color:inherit;font-size:16px;min-height:44px}
+summary{cursor:pointer;margin-top:14px;min-height:44px;line-height:44px}summary:focus-visible,select:focus-visible{outline:3px solid #ffd166}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

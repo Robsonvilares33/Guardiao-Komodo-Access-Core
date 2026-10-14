@@ -38,6 +38,20 @@
       <button type="button" id="btnEnroll">Ativar MFA</button>
       <button type="button" id="btnInvite" hidden>Aceitar convite</button>
       <button type="button" id="btnLink" class="sec" title="Requer estar logado no login atual com o mesmo e-mail">Vincular ao meu usuário atual</button>
+      <details id="invBox">
+        <summary>Convidar pessoa (admin/owner)</summary>
+        <form id="formInvite">
+          <label for="invEmail">E-mail da pessoa</label><input id="invEmail" type="email" autocomplete="off" required>
+          <label for="invRole">Papel</label>
+          <select id="invRole"><option value="viewer">Visualizador</option><option value="operator" selected>Operador</option><option value="admin">Administrador (só owner)</option></select>
+          <button type="submit">Gerar convite</button>
+        </form>
+        <div id="invOut" hidden>
+          <label for="invLink">Link do convite (uso único, 72 h)</label><input id="invLink" readonly>
+          <p id="invExp"></p>
+          <button type="button" id="btnCopy" class="sec">Copiar link</button>
+        </div>
+      </details>
       <button type="button" id="btnOut" class="sec">Sair</button>
     </section>
   </main>

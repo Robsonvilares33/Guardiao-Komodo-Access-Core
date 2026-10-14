@@ -695,3 +695,8 @@ html body .kac-inline-65b777e9bf {
 .visit-dialog .btn-primary { background: var(--gold); color: #111; border: 0; border-radius: 8px; font-weight: 700; cursor: pointer; }
 .visit-dialog .btn-primary:disabled { opacity: 0.6; cursor: wait; }
 .visit-form-msg { min-height: 1.2em; font-size: 14px; }
+
+/* Fase D — acessibilidade sem mudar comportamento */
+.skip-link{position:absolute;left:8px;top:-60px;z-index:10000;padding:10px 14px;background:#111;color:#fff;border-radius:8px;text-decoration:none}
+.skip-link:focus{top:8px;outline:3px solid var(--gold,#ffd166)}
+#cardsContainer:focus{outline:none}

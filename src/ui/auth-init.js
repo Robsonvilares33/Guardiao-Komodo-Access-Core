@@ -4,6 +4,7 @@
   var U = window.SupabaseAuthClient._util; var c = window.SupabaseAuthClient.create();
   var $ = function (id) { return document.getElementById(id); };
   var invite = U.inviteFrom(location.search); var pendingFactor = null;
+  c.onSessionChange(function (ev) { if (ev === 'expired') { show('secLogin'); msg('Sua sessão expirou. Entre novamente.', true); } });
   function back() { return location.origin + location.pathname + (invite ? '?convite=' + encodeURIComponent(invite) : ''); }
   function show(id) { ['secOff', 'secLogin', 'secMfa', 'secReady'].forEach(function (s) { $(s).hidden = s !== id; }); var h = $(id).querySelector('h2'); if (h) { h.tabIndex = -1; h.focus(); } }
   function msg(t, bad) { var m = $('authMsg'); m.textContent = t || ''; m.className = bad ? 'auth-msg bad' : 'auth-msg'; }
@@ -28,6 +29,8 @@
     $('formMfa').addEventListener('submit', function (e) { e.preventDefault(); guard(async function () { await c.verify(pendingFactor, $('mfaCode').value.trim()); $('mfaCode').value = ''; $('mfaQr').removeAttribute('src'); await afterLogin(); }); });
     $('btnLink').addEventListener('click', function () { guard(async function () { await c.link(); msg('Conta vinculada ao seu usuário atual.'); }); });
     $('btnInvite').addEventListener('click', function () { guard(async function () { var r = await c.acceptInvite(invite); invite = null; $('btnInvite').hidden = true; msg(r.data && r.data.status === 'already_member' ? 'Você já é membro desta organização.' : 'Convite aceito.'); }); });
+    $('formInvite').addEventListener('submit', function (e) { e.preventDefault(); guard(async function () { var r = await c.createInvite($('invEmail').value, $('invRole').value); var link = c.inviteLink(location.href, r.data.token); $('invLink').value = link; $('invOut').hidden = false; $('invExp').textContent = 'Válido até ' + new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' }).format(new Date(r.data.expiresAt)) + ' (horário de Brasília). Envie o link só para a pessoa convidada.'; $('invLink').focus(); $('invLink').select(); }); });
+    $('btnCopy').addEventListener('click', function () { guard(async function () { await navigator.clipboard.writeText($('invLink').value); msg('Link copiado.'); }); });
     $('btnOut').addEventListener('click', function () { guard(async function () { await c.signOut(); show('secLogin'); }); });
     start();
   });

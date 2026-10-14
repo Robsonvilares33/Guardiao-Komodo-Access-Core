@@ -71,3 +71,10 @@ Migração 008 **proposta, não aplicada**. Nenhuma configuração do Supabase A
 - Testes: `tests/ui-phase-c-auth.test.cjs` (13).
 - **Antes de ligar a flag (somar ao A8):** incluir `https://hcqcmirculeiyrpiwlpm.supabase.co` em `connect-src` do CSP (hoje Report-Only → só geraria relatórios) e cadastrar `https://guardiao-komodo-access-core.vercel.app/auth.html` (com query `?convite=`) nas Redirect URLs (A2).
 - Planejado: criar convite pela UI do admin (hoje só via API), refresh de token (sessão expira em ~1h → novo login).
+
+## Atualização 2026-10-13 (noite)
+- Console Supabase (feito pelo usuário): Site URL prod, Redirect `…/**`, signup aberto **desligado**, confirmação de e-mail **ligada**, TOTP **ligado** (A2–A4). Google (A5/A6) e SMTP (A7) adiados.
+- UI: criar convite (e-mail + papel → link de uso único 72 h, botão copiar; servidor decide permissão) e renovação automática da sessão (refresh 60 s antes do `exp`; falha → "sessão expirou").
+- CSP Report-Only: `connect-src 'self' https://hcqcmirculeiyrpiwlpm.supabase.co` (ainda só observação).
+- E2E de UI no repositório: `scripts/e2e/ui-visit-actions.mjs` (Reagendar + Histórico; datas relativas a hoje em BRT; senha só via env).
+- Fase D (acessibilidade, sem mudança de comportamento): link "Pular para a agenda", foco visível e `prefers-reduced-motion` no login e em `/auth.html`.
