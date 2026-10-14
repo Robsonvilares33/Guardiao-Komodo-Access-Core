@@ -7,6 +7,8 @@
 4. Manter ping semanal para evitar a pausa por inatividade.
 
 ## Restauração (testar trimestralmente)
+
+> Achado no ensaio da 008: ao restaurar `kac_audit_log`/`kac_visit_history` com ids explícitos, reposicionar as sequências (`select setval(pg_get_serial_sequence('<tabela>','id'), max(id)+1, false)`), senão o próximo INSERT falha por chave duplicada.
 1. Criar um banco descartável (PGlite/Postgres local ou 2º projeto Free).
 2. `pg_restore --no-owner` → conferir contagens por tabela e rodar `tests/pglite/migrations-rls.mjs`.
 3. Registrar RPO (≤24 h) e RTO medidos.

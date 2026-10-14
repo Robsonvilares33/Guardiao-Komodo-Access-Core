@@ -1,4 +1,4 @@
--- 008_supabase_auth (PROPOSTA — NÃO APLICADA). Vínculo usuário ↔ Supabase Auth + convites atômicos.
+-- 008_supabase_auth — APLICADA em produção 2026-10-13 23:18 (BRT), versão 20261014021837. Vínculo usuário ↔ Supabase Auth + convites atômicos.
 -- Não altera senhas nem sessões atuais: o login por senha continua funcionando (sem lockout).
 BEGIN;
 ALTER TABLE public.komodo_tbl_usuarios ADD COLUMN IF NOT EXISTS auth_user_id uuid;
@@ -49,4 +49,5 @@ END $$;
 REVOKE ALL ON FUNCTION public.kac_accept_invite(text, uuid, text, text) FROM PUBLIC, anon, authenticated;
 ALTER TABLE public.kac_invites ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.kac_invites FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.kac_accept_invite(text, uuid, text, text) TO service_role;
 COMMIT;

@@ -51,17 +51,17 @@ Migração 008 **proposta, não aplicada**. Nenhuma configuração do Supabase A
 - Validação local por JWKS com cache (opcional).
 - CSP: liberar `connect-src https://hcqcmirculeiyrpiwlpm.supabase.co` e `https://accounts.google.com`, conforme o fluxo escolhido.
 
-## Autorizações e passos de console necessários (nada foi feito)
+## Autorizações e passos de console (A1 feita; A2–A9 pendentes)
 | # | Onde | Passo exato | Custo | Risco / reversão |
 |---|---|---|---|---|
-| A1 | Supabase (banco) | Aplicar a migração 008 (backup + PGlite + rollback, mesmo procedimento da 005/006) | R$0 | Reversível via `008_supabase_auth_rollback.sql` |
+| A1 | Supabase (banco) | Aplicar a migração 008 (backup + PGlite + rollback, mesmo procedimento da 005/006) | R$0 | **FEITO 2026-10-13 23:18 BRT** (versão 20261014021837; backup kac_pre008, ensaio `tests/pglite/prod008-auth.mjs` 29/29). Rollback: `008_supabase_auth_rollback.sql` |
 | A2 | Supabase → Auth → URL Configuration | Site URL `https://guardiao-komodo-access-core.vercel.app`. Redirect URLs: `https://guardiao-komodo-access-core.vercel.app/**` (e, se quiser previews, `https://guardiao-komodo-access-core-*-robsonvilares-projects.vercel.app/**`) | R$0 | Reversível |
 | A3 | Supabase → Auth → Providers → Email | Manter "Confirm email" **ligado**. Signup aberto **desligado** (só por convite), se você preferir | R$0 | Reversível |
 | A4 | Supabase → Auth → MFA | Manter o TOTP habilitado (padrão) | R$0 | — |
 | A5 | Google Cloud Console | Projeto → OAuth consent screen (External, nome "Guardião Komodo", escopos `openid email profile`) → Credentials → OAuth client ID (Web). Redirect URI: `https://hcqcmirculeiyrpiwlpm.supabase.co/auth/v1/callback` | R$0 | Pode ficar em modo "Testing" (até 100 usuários de teste) sem verificação do Google |
 | A6 | Supabase → Auth → Providers → Google | Colar o Client ID e o Client Secret do passo A5 (**você** cola; eu não vejo nem guardo o secret) | R$0 | Reversível |
 | A7 | SMTP próprio | Escolher o provedor (Gmail com senha de app ou um plano gratuito). Supabase → Auth → SMTP Settings: host/porta/usuário/senha (**você** cola) e o remetente | R$0 dentro do limite gratuito | Sem isso, verificação e convites só chegam a membros da equipe Supabase (2/h) |
-| A8 | Vercel env (Production) | `KAC_SUPABASE_ANON_KEY` (chave pública/publishable) e, por último, `KAC_SUPABASE_AUTH=on` | R$0 | Desligar = remover a env e fazer redeploy |
+| A8 | Vercel env (Production) | `KAC_SUPABASE_ANON_KEY` (chave pública/publishable) e, por último, `KAC_SUPABASE_AUTH=on`. No mesmo deploy, somar `https://hcqcmirculeiyrpiwlpm.supabase.co` ao `connect-src` do CSP (vercel.json) | R$0 | Desligar = remover a env e fazer redeploy |
 | A9 | Produção | Ligar primeiro só para o admin (vincular + TOTP), validar e depois liberar os convites | R$0 | Senha local continua como fallback |
 
 ## UI da Fase C (implementada, atrás da flag)
