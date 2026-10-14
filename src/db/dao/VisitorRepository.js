@@ -34,6 +34,16 @@ class VisitorRepository {
     return { id, deleted: true };
   }
 
+  static async reschedule(id, data, hora) {
+    if (!this._remote()) throw new Error('Reagendamento disponível apenas no modo online.');
+    return window.apiService.put('/visitantes/' + encodeURIComponent(id) + '/reagendar', { data, hora });
+  }
+
+  static async history(id) {
+    if (!this._remote()) return { data: [] };
+    return window.apiService.get('/visitantes/' + encodeURIComponent(id) + '/historico');
+  }
+
   static async updateStatus(id, newStatus) {
     if (this._remote()) return window.apiService.put('/visitantes/' + encodeURIComponent(id) + '/status', { status: newStatus });
     const status = Number(newStatus);

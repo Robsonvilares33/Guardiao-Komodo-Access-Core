@@ -675,3 +675,23 @@ html body .kac-inline-65b777e9bf {
 .agenda-btn { padding: 6px 12px; font-size: 12px; }
 .agenda-date { background: rgba(0,0,0,0.6); color: var(--text, #eee); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 6px 8px; font-size: 13px; color-scheme: dark; }
 .agenda-view-label { font-size: 12px; color: var(--gold); min-height: 14px; text-align: center; }
+/* Reagendar / Histórico */
+.visit-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.visit-btn { min-height: 44px; padding: 8px 14px; font-size: 14px; border-radius: 8px; cursor: pointer; }
+.visit-btn:focus-visible, .visit-dialog button:focus-visible, .visit-dialog input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.visit-dialog { width: min(480px, calc(100vw - 24px)); max-height: calc(100vh - 32px); overflow: auto; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--dark-card, #111); color: inherit; padding: 18px; }
+.visit-dialog::backdrop { background: rgba(0,0,0,0.6); }
+.visit-dialog-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.visit-dialog-head h2 { font-size: 18px; margin: 0; }
+.visit-dialog-close { min-width: 44px; min-height: 44px; background: transparent; color: inherit; border: 1px solid var(--glass-border); border-radius: 8px; cursor: pointer; }
+.visit-form { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.visit-form input { min-height: 44px; font-size: 16px; padding: 8px; border-radius: 8px; }
+.visit-form-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 8px; }
+.visit-form-actions button { min-height: 44px; padding: 8px 16px; }
+.visit-history-list { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 10px; }
+.visit-history-list li { border-left: 3px solid var(--gold); padding-left: 10px; }
+.visit-history-detail { opacity: 0.85; font-size: 14px; }
+@media (max-width: 600px) { .visit-actions .visit-btn { flex: 1 1 45%; } }
+.visit-dialog .btn-primary { background: var(--gold); color: #111; border: 0; border-radius: 8px; font-weight: 700; cursor: pointer; }
+.visit-dialog .btn-primary:disabled { opacity: 0.6; cursor: wait; }
+.visit-form-msg { min-height: 1.2em; font-size: 14px; }
