@@ -27,7 +27,7 @@ for(const page of ['/','/residencial.html']){
   r=await audit(P);ok(`${P}: 0 violações críticas (axe)`,Array.isArray(r)&&crit(r).length===0,JSON.stringify(crit(r)));
 }
 ok('sem exceções JS',b.errors().length===0,b.errors().join('; '));
-ok('CSP Report-Only: 0 violações',!b.events.some(e=>/Content.Security.Policy/i.test(e.params?.entry?.text||'')));
+ok('CSP: 0 violações',!b.events.some(e=>/Content.Security.Policy/i.test(e.params?.entry?.text||'')));
 ok('nenhum diálogo de alerta disparado',b.dialogs().length===0,b.dialogs().join(' | '));
 await b.ev(`authService.logout()`);await sleep(1200);ok('logout → 401',(await b.ev(`fetch('/api/visitantes/empresarial').then(r=>r.status)`))===401);
 b.close();

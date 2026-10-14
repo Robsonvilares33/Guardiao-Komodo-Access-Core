@@ -41,6 +41,6 @@ await b.ev(`agendaToday.click()`);await sleep(2500);
 const realAfter=await b.ev(`apiService.get('/visitantes/empresarial?limit=500').then(r=>JSON.stringify((Array.isArray(r)?r:r.data).filter(x=>!/TESTE AUDITORIA/.test(x.nome)).map(x=>[x.id,x.data,x.hora,x.status,x.nome])))`);
 ok('visita real intacta',realAfter===realBefore&&realBefore!=='[]'&&!/ERR/.test(realBefore));
 ok('sem exceções JS',b.errors().length===0,b.errors().join('; '));
-ok('CSP Report-Only: 0 violações',!b.events.some(e=>/Content.Security.Policy/i.test(e.params?.entry?.text||'')));
+ok('CSP: 0 violações',!b.events.some(e=>/Content.Security.Policy/i.test(e.params?.entry?.text||'')));
 await b.ev(`authService.logout()`);await sleep(1500);ok('logout → 401',(await b.ev(`fetch('/api/visitantes/empresarial').then(r=>r.status)`))===401);
 b.close();console.log(o.join('\n'));const f=o.filter(x=>!x.startsWith('PASS')).length;console.log('fail=',f);process.exit(f?1:0);
