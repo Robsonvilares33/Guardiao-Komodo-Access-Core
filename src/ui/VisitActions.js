@@ -20,18 +20,18 @@
     document.body.appendChild(dlg);
     return dlg;
   }
-  function open(title, body) {
+  function open(title, body, trigger) {
     var d = dialog(); d.textContent = '';
     var head = el('div', { className: 'visit-dialog-head' });
     head.append(el('h2', { id: 'visitDialogTitle' }, title), el('button', { type: 'button', className: 'visit-dialog-close', attrs: { 'aria-label': 'Fechar' } }, '✕'));
     head.lastChild.addEventListener('click', function () { d.close(); });
     d.append(head, body);
-    lastFocus = document.activeElement;
+    lastFocus = trigger || document.activeElement;
     if (typeof d.showModal === 'function') d.showModal(); else d.setAttribute('open', '');
     var first = d.querySelector('input,button:not(.visit-dialog-close)'); if (first) first.focus();
   }
 
-  function openReschedule(id) {
+  function openReschedule(id, trigger) {
     var v = findVisit(id); if (!v) return;
     var form = el('form', { className: 'visit-form', noValidate: true });
     var info = el('p', { className: 'visit-dialog-info' }, v.nome + ' — atual: ' + br(v.data) + ' às ' + (v.hora || '—'));
@@ -54,21 +54,21 @@
       try {
         await window.VisitorRepository.reschedule(v.id, iData.value, iHora.value);
         msg.textContent = 'Reagendado para ' + br(iData.value) + ' às ' + iHora.value + '.';
-        dlg.close(); reload();
+        dlg.close(); lastFocus = null; reload();
       } catch (ex) { msg.textContent = 'Erro: ' + (ex && ex.message || 'falha ao reagendar'); save.disabled = false; }
     });
-    open('Reagendar visita', form);
+    open('Reagendar visita', form, trigger);
   }
 
-  async function openHistory(id) {
+  async function openHistory(id, trigger) {
     var v = findVisit(id);
     var box = el('div', { className: 'visit-history' });
     var status = el('p', { attrs: { role: 'status', 'aria-live': 'polite' } }, 'Carregando histórico…');
     box.append(status);
-    open('Histórico — ' + (v ? v.nome : 'visita'), box);
+    open('Histórico — ' + (v ? v.nome : 'visita'), box, trigger);
     try {
       var r = await window.VisitorRepository.history(id);
-      var rows = (r && r.data) || [];
+      var rows = Array.isArray(r) ? r : ((r && r.data) || []); // ApiService devolve o array já desembrulhado
       status.textContent = rows.length ? rows.length + ' evento(s)' : 'Sem histórico registrado.';
       var ol = el('ol', { className: 'visit-history-list' });
       rows.forEach(function (h) {
@@ -99,7 +99,7 @@
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('[data-visit-action]'); if (!b) return;
     e.stopPropagation();
-    if (b.dataset.visitAction === 'reschedule') openReschedule(b.dataset.id); else openHistory(b.dataset.id);
+    if (b.dataset.visitAction === 'reschedule') openReschedule(b.dataset.id, b); else openHistory(b.dataset.id, b);
   }, true);
   function start() { var c = document.getElementById('cardsContainer'); if (!c) return; decorate(c); new MutationObserver(function () { decorate(c); }).observe(c, { childList: true, subtree: true }); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
