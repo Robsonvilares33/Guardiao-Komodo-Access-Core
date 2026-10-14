@@ -5,7 +5,7 @@ const results = []; const check = (name, cond, info = '') => results.push({ name
 const get = async (p, opt = {}) => { const r = await fetch(BASE + p, { redirect: 'manual', ...opt }); let j = null; const t = await r.text(); try { j = JSON.parse(t); } catch {} return { r, t, j }; };
 const home = await get('/');
 check('GET / 200 + HTML do app', home.r.status === 200 && /AgendaNav\.js/.test(home.t), `status=${home.r.status}`);
-for (const [h, re] of [['strict-transport-security', /max-age=\d+/], ['x-frame-options', /DENY/i], ['x-content-type-options', /nosniff/i], ['content-security-policy-report-only', /default-src 'self'/]])
+for (const [h, re] of [['strict-transport-security', /max-age=\d+/], ['x-frame-options', /DENY/i], ['x-content-type-options', /nosniff/i], ['content-security-policy', /default-src 'self'; script-src 'self';/]])
   check(`header ${h}`, re.test(home.r.headers.get(h) || ''));
 check('nenhum segredo no HTML', !/service_role|eyJhbGciOi|sk_live|SUPABASE_SERVICE/i.test(home.t));
 for (const p of ['/login.html', '/residencial.html', '/src/ui/AgendaNav.js', '/src/core/KomodoDate.js']) { const x = await get(p); check(`GET ${p} 200`, x.r.status === 200, `status=${x.r.status}`); }
