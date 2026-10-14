@@ -1,0 +1,21 @@
+// Uso: node tests/pglite/mig007-billing.mjs  (PGlite descartável; não toca produção). Ensaio da 007 (proposta) sobre 001–006+008.
+import { PGlite } from '@electric-sql/pglite'; import fs from 'node:fs';
+const R=new URL('../../docs',import.meta.url).pathname, M=R+'/master/migrations';
+const db=new PGlite(); const out=[]; const ok=(n,c,x='')=>out.push(`${c===true?'PASS':'FAIL'} ${n}${x?' — '+x:''}`); const q=async s=>(await db.query(s)).rows;
+await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;`);
+for(const f of ['proposed_supabase_migration_001.sql','proposed_supabase_migration_002_web_auth.sql','proposed_supabase_migration_003_atomic_auth.sql','proposed_supabase_migration_004_data.sql']) await db.exec(fs.readFileSync(R+'/'+f,'utf8'));
+for(const f of ['005_tenancy.sql','006_visit_history_audit.sql','008_supabase_auth.sql']) await db.exec(fs.readFileSync(M+'/'+f,'utf8'));
+await db.exec(`INSERT INTO kac_organizations(id,name) VALUES ('bbbbbbbb-0000-4000-8000-000000000001','Org B TESTE') ON CONFLICT DO NOTHING`);
+const orgs=(await q(`select count(*)::int n from kac_organizations`))[0].n;
+await db.exec(fs.readFileSync(M+'/007_billing.sql','utf8')); ok('007 aplica sobre 001–006+008',true);
+ok('toda org recebe assinatura free/active',(await q(`select count(*)::int n from kac_subscriptions where plan_id='free' and status='active'`))[0].n===orgs,String(orgs));
+ok('só o free ativo; pro/business inativos',JSON.stringify((await q(`select id from kac_plans where active order by id`)).map(x=>x.id))==='["free"]');
+ok('zero grants anon/authenticated',(await q(`select count(*)::int n from information_schema.role_table_grants where grantee in ('anon','authenticated') and table_schema='public'`))[0].n===0);
+ok('RLS em todas as tabelas',(await q(`select count(*)::int n from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and not c.relrowsecurity`))[0].n===0);
+await db.exec(`insert into kac_payment_events(provider,provider_event_id,type,payload) values('mock','e1','invoice.paid','{}')`);
+let dup=false;try{await db.exec(`insert into kac_payment_events(provider,provider_event_id,type,payload) values('mock','e1','invoice.paid','{}')`);}catch{dup=true;} ok('evento duplicado rejeitado (idempotência no banco)',dup);
+let bad=false;try{await db.exec(`update kac_subscriptions set provider='paypal'`);}catch{bad=true;} ok('provider fora da lista rejeitado',bad);
+await db.exec(fs.readFileSync(M+'/007_billing_rollback.sql','utf8'));
+ok('rollback remove as 3 tabelas e preserva 005/008',(await q(`select to_regclass('public.kac_plans') p, to_regclass('public.kac_invites') i`)).every(x=>x.p===null&&x.i!==null));
+await db.exec(fs.readFileSync(M+'/007_billing.sql','utf8')); ok('007 reaplica após rollback',true);
+console.log(out.join('\n')); console.log('fail=',out.filter(x=>!x.startsWith('PASS')).length);

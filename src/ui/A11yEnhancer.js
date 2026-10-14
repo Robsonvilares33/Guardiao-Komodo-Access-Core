@@ -7,7 +7,7 @@
   var PLATE = /^[A-Z]{3}-?\d[A-Z0-9]\d{2}$/;
   // Mesma regra do ValidationManager (fonte da verdade) quando disponível.
   function validPlate(p) { var VM = window.ValidationManager; return VM && typeof VM.isValidMercosulOrOld === 'function' ? VM.isValidMercosulOrOld(p) : PLATE.test(String(p).toUpperCase()); }
-  function syncToggles(root) { (root || document).querySelectorAll('.btn-toggle').forEach(function (b) { var v = b.classList.contains('active') ? 'true' : 'false'; if (b.getAttribute('aria-pressed') !== v) b.setAttribute('aria-pressed', v); }); }
+  function syncToggles(root) { (root || document).querySelectorAll('button.btn-toggle').forEach(function (b) { var v = b.classList.contains('active') ? 'true' : 'false'; if (b.getAttribute('aria-pressed') !== v) b.setAttribute('aria-pressed', v); }); }
   function syncTabs(root) { (root || document).querySelectorAll('.tab[data-dia]').forEach(function (t) { if (t.classList.contains('active')) { if (t.getAttribute('aria-current') !== 'date') t.setAttribute('aria-current', 'date'); } else if (t.hasAttribute('aria-current')) t.removeAttribute('aria-current'); }); }
   function rule(input) { var f = input.getAttribute('data-field'); var v = String(input.value || '').trim(); if (f === 'nome') return v && v.length < 3 ? 'Nome deve ter pelo menos 3 caracteres.' : ''; if (f === 'placa') return v && !validPlate(v.split(' ')[0]) ? 'Placa no formato ABC-1234 ou ABC1D23.' : ''; return ''; }
   var seq = 0;

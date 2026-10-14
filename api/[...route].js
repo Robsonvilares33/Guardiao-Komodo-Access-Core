@@ -1,7 +1,7 @@
 'use strict';
 const crypto = require('node:crypto');
 const KomodoDate = require('../src/core/KomodoDate.js');
-const SA = require('../lib/supabase-auth.cjs');
+const SA = require('../lib/supabase-auth.cjs');const BILL=require('../lib/billing.cjs');
 const INVITES = 'kac_invites';
 const USERS = 'komodo_tbl_usuarios';
 const VISITORS = 'komodo_acessos';
@@ -63,6 +63,10 @@ module.exports=async function handler(req,res){
     if(req.method==='POST'&&route==='/auth/login'){const ip=clientIp(req);const allowed=await db('rpc/komodo_consume_login_attempt_atomic',{method:'POST',body:{p_id:crypto.randomUUID(),p_ip_hash:sha(ip),p_now:new Date().toISOString()}});const permitted=typeof allowed==='boolean'?allowed:Array.isArray(allowed)?allowed[0]?.komodo_consume_login_attempt_atomic:allowed?.komodo_consume_login_attempt_atomic;if(permitted!==true)return reply(res,429,{success:false,message:'Muitas tentativas. Aguarde 15 minutos.'});const email=clean(body.email,254).toLowerCase();const password=String(body.password||'');if(!email||!password||password.length>256)return reply(res,401,{success:false,message:'Credenciais inválidas.'});const rows=await db(USERS,{query:`select=id,email,salt,hash,papel&email=eq.${encodeURIComponent(email)}&limit=1`});const user=rows?.[0];const candidate=passwordHash(password,user?.salt||'00000000000000000000000000000000');if(!user||!safeHexEqual(candidate,user.hash))return reply(res,401,{success:false,message:'Credenciais inválidas.'});const token=crypto.randomBytes(32).toString('base64url');const expires=new Date(Date.now()+TTL).toISOString();await db(SESSIONS,{method:'POST',body:[{token_hash:sha(token),user_id:user.id,expires_at:expires}],prefer:'return=minimal'});return reply(res,200,{success:true,data:{expiresAt:Date.parse(expires),user:{id:user.id,email:user.email,role:user.papel||'operador'}}},{'Set-Cookie':cookie(token,TTL/1000,secure)});}
     if(req.method==='POST'&&route==='/auth/logout'){const token=tokenFrom(req);if(token)await db(SESSIONS,{method:'DELETE',query:`token_hash=eq.${sha(token)}`});return reply(res,200,{success:true,data:{loggedOut:true}},{'Set-Cookie':cookie('',0,secure)});}
     if(route.startsWith('/auth/supabase/')||route==='/convites'||route.startsWith('/convites/')){if(!SA.enabled())return reply(res,404,{success:false,message:'Rota não encontrada.'});return await phaseC(req,res,route,body);}
+    if(route==='/billing'||route.startsWith('/billing/')){if(!BILL.enabled())return reply(res,404,{success:false,message:'Rota não encontrada.'});const s=await sessionFor(req);if(!s)return reply(res,401,{success:false,message:'Autenticação necessária.'});if(s.mfaRequired)return reply(res,403,{success:false,code:'mfa_required',message:'Conclua o MFA.'});if(!s.orgId)return reply(res,403,{success:false,message:'Usuário sem organização vinculada.'});
+      if(req.method==='GET'&&route==='/billing/plans')return reply(res,200,{success:true,data:Object.values(BILL.PLANS)});
+      if(req.method==='GET'&&route==='/billing/seats'){const rows=await db(MEMBERS,{query:`select=user_id&organization_id=eq.${s.orgId}`});return reply(res,200,{success:true,data:{seats:(rows||[]).length,plan:'free',check:BILL.seatCheck('free',(rows||[]).length,0)}});}
+      return reply(res,404,{success:false,message:'Rota não encontrada.'});}
     const visitorRoute=route==='/visitantes'||route.startsWith('/visitantes/');const aiRoute=route==='/ai/chat'||route==='/ai/analyze';if(!['GET','POST','PUT','DELETE'].includes(req.method)||(!visitorRoute&&!aiRoute))return reply(res,404,{success:false,message:'Rota não encontrada.'});
     const session=await sessionFor(req);if(!session)return reply(res,401,{success:false,message:'Autenticação necessária.'},{'Set-Cookie':cookie('',0,secure)});
     if(session.mfaRequired)return reply(res,403,{success:false,code:'mfa_required',message:'Administradores precisam concluir a verificação em duas etapas (MFA).'});
