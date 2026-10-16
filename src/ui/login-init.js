@@ -85,6 +85,7 @@
                 window.location.href = 'index.html';
             } catch (err) {
                 showError(errEl, box, passInput, err.message);
+                if (err && err.code === 'use_new_login') { const l = document.getElementById('newLoginLink'); if (l) l.hidden = false; }
                 btn.disabled = false;
             }
         });
