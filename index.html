@@ -28,6 +28,7 @@
                 <img src="assets/komodo-access-mark.svg" alt="Guardião Komodo" class="logo-img">
             </div>
             <h1 class="header-title">KOMODO ACCESS</h1>
+                <span id="orgName" class="org-name" hidden></span>
         </div>
         <div class="search-container">
             <input aria-label="Buscar visitas" type="text" id="globalSearch" class="search-bar" name="search_query_off" placeholder="Busca global de segurança..." autocomplete="new-password">
@@ -75,11 +76,26 @@
     </div>
 
     </main>
+    <nav class="bottom-nav" aria-label="Navegação principal">
+        <button type="button" data-nav="agenda"><span aria-hidden="true">📅</span> Agenda</button>
+        <button type="button" data-nav="search"><span aria-hidden="true">🔍</span> Buscar</button>
+        <button type="button" data-nav="new" class="bn-primary"><span aria-hidden="true">＋</span> Nova visita</button>
+        <details class="bn-more">
+            <summary><span aria-hidden="true">☰</span> Mais</summary>
+            <div class="bn-menu">
+                <button type="button" data-nav="dashboard">Dashboard</button>
+                <button type="button" data-nav="pdf">Exportar PDF do turno</button>
+                <button type="button" data-nav="config">Configurações</button>
+                <button type="button" data-nav="logout">Sair</button>
+            </div>
+        </details>
+    </nav>
     <!-- ====== MODAL DE CADASTRO ====== -->
     <komodo-modal id="mainModalOverlay" title="CADASTRO">
         <div id="modalContent">
             <form id="form-acesso" data-prevent-submit="true">
 
+            <p class="form-steps-hint">Preencha o nome e salve. Veículo, acompanhante e foto são opcionais.</p>
             <!-- NOME -->
             <div class="form-group">
                 <div class="label-row">
@@ -93,6 +109,7 @@
             </div>
 
             <!-- PLACA PRINCIPAL -->
+            <details class="opt-section"><summary>Veículo (opcional)</summary>
             <div class="form-group">
                 <div class="label-row">
                     <label for="indP101">Placa do veículo</label>
@@ -117,8 +134,10 @@
                     <input aria-label="Cor do veículo" type="text" class="form-control kac-inline-61f874a6fe" data-field="cor" placeholder="Cor (Ex: Preto)">
                 </div>
             </div>
+            </details>
 
             <!-- ACOMPANHANTE -->
+            <details class="opt-section"><summary>Acompanhante (opcional)</summary>
             <div class="form-group">
                 <div class="label-row">
                     <label for="idxF3">Acompanhante</label>
@@ -128,8 +147,10 @@
                 </div>
                 <input aria-label="Acompanhantes" type="text" class="form-control" data-field="acompanhantes" placeholder="Ex: Maria (Esposa) e 1 Criança">
             </div>
+            </details>
 
             <!-- PLACA ACOMPANHANTE -->
+            <details class="opt-section"><summary>Veículo do acompanhante (opcional)</summary>
             <div class="form-group">
                 <div class="label-row">
                     <label for="indP102">Placa do veículo (Acompanhante)</label>
@@ -154,6 +175,7 @@
                     <input aria-label="Cor do veículo do acompanhante" type="text" class="form-control kac-inline-61f874a6fe" data-field="corAcomp" placeholder="Cor (Ex: Preto)">
                 </div>
             </div>
+            </details>
 
             <!-- RELATÓRIO -->
             <div class="form-group">
@@ -162,6 +184,7 @@
             </div>
 
             <!-- FOTO / WEBCAM -->
+            <details class="opt-section"><summary>Foto (opcional)</summary>
             <div class="form-group">
                 <div class="photo-box" id="photoBox">📷 + Adicionar Foto (Webcam ou Arquivo)</div>
                 <input type="file" id="fileUploader" accept="image/*" capture="environment" class="kac-inline-c8be1ccba6">
@@ -183,6 +206,7 @@
                     </div>
                 </div>
             </div>
+            </details>
 
             <div class="modal-actions">
                 <button type="button" class="btn-cancel" id="btnCancelar">Cancelar</button>
@@ -279,6 +303,8 @@
   <script src="src/ui/KomodoFx.js"></script>
   <script src="src/ui/LazyVendor.js"></script>
   <script src="src/ui/DayTabs.js"></script>
+  <script src="src/ui/VisitStatus.js"></script>
+  <script src="src/ui/MobileShell.js"></script>
   <script src="src/ui/HtmlSafety.js"></script>
   <script src="src/ui/init.js"></script>
 

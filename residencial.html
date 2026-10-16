@@ -28,6 +28,7 @@
                 <img src="assets/komodo-access-mark.svg" alt="Guardião Komodo" class="logo-img">
             </div>
             <h1 class="header-title">KOMODO ACCESS</h1>
+                <span id="orgName" class="org-name" hidden></span>
         </div>
         <div class="search-container">
             <input aria-label="Buscar visitas" type="text" id="globalSearch" class="search-bar" name="search_query_off" placeholder="Busca global de segurança..." autocomplete="new-password">
@@ -75,6 +76,20 @@
     </div>
 
     </main>
+    <nav class="bottom-nav" aria-label="Navegação principal">
+        <button type="button" data-nav="agenda"><span aria-hidden="true">📅</span> Agenda</button>
+        <button type="button" data-nav="search"><span aria-hidden="true">🔍</span> Buscar</button>
+        <button type="button" data-nav="new" class="bn-primary"><span aria-hidden="true">＋</span> Nova visita</button>
+        <details class="bn-more">
+            <summary><span aria-hidden="true">☰</span> Mais</summary>
+            <div class="bn-menu">
+                <button type="button" data-nav="dashboard">Dashboard</button>
+                <button type="button" data-nav="pdf">Exportar PDF do turno</button>
+                <button type="button" data-nav="config">Configurações</button>
+                <button type="button" data-nav="logout">Sair</button>
+            </div>
+        </details>
+    </nav>
     <!-- ====== MODAL DE CADASTRO ====== -->
     <komodo-modal id="mainModalOverlay" title="CADASTRO RESIDENCIAL">
         <div id="modalContent">
@@ -117,7 +132,8 @@
                 </div>
 
                 <!-- PLACA VISITANTE -->
-                <div class="form-group">
+                <details class="opt-section"><summary>Veículo (opcional)</summary>
+            <div class="form-group">
                     <div class="label-row">
                         <label for="resP101">Veículo do Visitante</label>
                         <div class="btn-toggle-group" data-group="veiculoVis">
@@ -144,12 +160,15 @@
                         <input aria-label="Cor do veículo" type="text" class="form-control kac-inline-61f874a6fe" data-field="cor" placeholder="Cor (Ex: Preto)">
                     </div>
                 </div>
+            </details>
 
                 <!-- ACOMPANHANTE VISITANTE -->
-                <div class="form-group">
+                <details class="opt-section"><summary>Acompanhante (opcional)</summary>
+            <div class="form-group">
                     <label for="resF4">Acompanhantes</label>
                     <input id="resF4" aria-label="Acompanhantes" type="text" class="form-control" data-field="acompanhantes" placeholder="Qtd ou Nome dos Acompanhantes (Deixe vazio se 0)">
                 </div>
+            </details>
                 <div class="form-group">
                     <div class="label-row">
                         <label for="resP102">Veículo do Acompanhante</label>
@@ -215,7 +234,8 @@
                 </div>
 
                 <!-- PLACA MORADOR -->
-                <div class="form-group">
+                <details class="opt-section"><summary>Veículo (opcional)</summary>
+            <div class="form-group">
                     <div class="label-row">
                         <label for="resP103">Veículo Autorizado</label>
                         <div class="btn-toggle-group" data-group="veiculoMor">
@@ -241,12 +261,15 @@
                         <input aria-label="Cor do veículo" type="text" class="form-control kac-inline-61f874a6fe" data-field="cor" placeholder="Cor (Ex: Preto)">
                     </div>
                 </div>
+            </details>
 
                 <!-- ACOMPANHANTE MORADOR -->
-                <div class="form-group">
+                <details class="opt-section"><summary>Acompanhante (opcional)</summary>
+            <div class="form-group">
                     <label for="resF10">Acompanhantes</label>
                     <input id="resF10" aria-label="Acompanhantes" type="text" class="form-control" data-field="acompanhantes" placeholder="Qtd ou Nome dos Acompanhantes (Deixe vazio se 0)">
                 </div>
+            </details>
                 <div class="form-group">
                     <div class="label-row">
                         <label for="resP104">Veículo do Acompanhante</label>
@@ -277,6 +300,7 @@
             </div>
 
             <!-- ================= CÂMERA GLOBAL ================= -->
+            <details class="opt-section"><summary>Foto (opcional)</summary>
             <div class="form-group kac-inline-54d32d80db">
                 <div class="photo-box" id="photoBox">📷 + Adicionar Foto (Webcam ou Arquivo)</div>
                 <input type="file" id="fileUploader" accept="image/*" capture="environment" class="kac-inline-c8be1ccba6">
@@ -298,6 +322,7 @@
                     </div>
                 </div>
             </div>
+            </details>
 
             <div class="modal-actions">
                 <button type="button" class="btn-cancel" id="btnCancelar">Cancelar</button>
@@ -398,6 +423,8 @@
   <script src="src/ui/KomodoFx.js"></script>
   <script src="src/ui/LazyVendor.js"></script>
   <script src="src/ui/DayTabs.js"></script>
+  <script src="src/ui/VisitStatus.js"></script>
+  <script src="src/ui/MobileShell.js"></script>
     
     <script src="src/services/OcrService.js"></script>
     <script src="src/services/PdfExportService.js"></script>

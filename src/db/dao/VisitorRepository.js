@@ -44,10 +44,14 @@ class VisitorRepository {
     return window.apiService.get('/visitantes/' + encodeURIComponent(id) + '/historico');
   }
 
-  static async updateStatus(id, newStatus) {
-    if (this._remote()) return window.apiService.put('/visitantes/' + encodeURIComponent(id) + '/status', { status: newStatus });
+  static async updateStatus(id, newStatus, opts = {}) {
+    const body = { status: newStatus };
+    if (opts.from !== undefined) body.from = opts.from;
+    if (opts.undo === true) body.undo = true;
+    if (this._remote()) return window.apiService.put('/visitantes/' + encodeURIComponent(id) + '/status', body);
     const status = Number(newStatus);
     if (!Number.isInteger(status) || status < 0 || status > 2) throw new Error('Status inválido.');
+    if (opts.from !== undefined) { await window.dbService.init(); const cur = (await window.dbService.query('SELECT status FROM komodo_acessos WHERE id = ?', [id]))[0]; if (cur && Number(cur.status || 0) !== Number(opts.from)) { const e = new Error('Status alterado em outro aparelho.'); e.status = 409; throw e; } }
     await window.dbService.update('komodo_acessos', { id, status });
     return { id, status };
   }

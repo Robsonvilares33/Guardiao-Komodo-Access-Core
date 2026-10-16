@@ -713,3 +713,45 @@ body:not(.kac-fx) .radar-sweep { opacity: .35; }
 
 h1.header-title, h1.login-title { margin-top: 0; }
 h1.header-title { margin-bottom: 0; }
+/* ===== UX fase 2 ===== */
+.org-name { display: inline-block; margin-left: 12px; max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; color: var(--text-muted, #c9c9c9); font-weight: 600; font-size: .95rem; }
+/* (5) estado + próxima ação */
+.status-box { position: absolute; top: 12px; right: 60px; display: flex; gap: 8px; align-items: center; }
+.status-badge { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid currentColor; }
+.status-badge.status-0 { color: #d0d0d0; }
+.status-badge.status-1 { color: #4ade80; }
+.status-badge.status-2 { color: #f87171; }
+.btn-status-next { min-height: 44px; min-width: 88px; padding: 8px 16px; border-radius: 10px; font-weight: 800; font-size: 15px; cursor: pointer; border: none; }
+.btn-status-next.status-next-0 { background: #22c55e; color: #052e14; }
+.btn-status-next.status-next-1 { background: #f2c14e; color: #2b1d00; }
+.btn-status-next:focus-visible, .bottom-nav button:focus-visible, .bottom-nav summary:focus-visible { outline: 3px solid #f5d27a; outline-offset: 2px; }
+.btn-status-next:disabled { opacity: .6; }
+.kac-toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: 24px; z-index: 10050; display: flex; gap: 12px; align-items: center; background: #111; color: #fff; border: 1px solid #f5d27a; border-radius: 12px; padding: 10px 14px; max-width: 92vw; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+.kac-toast[hidden] { display: none; }
+.kac-toast-undo { min-height: 44px; padding: 0 14px; background: #f5d27a; color: #1a1300; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; }
+/* (6) cadastro em etapas curtas */
+.form-steps-hint { margin: 0 0 12px; color: #cfcfcf; font-size: .9rem; }
+details.opt-section { border: 1px solid rgba(194,160,87,.35); border-radius: 10px; margin: 10px 0; padding: 0 12px; }
+details.opt-section > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 700; color: var(--gold, #c2a057); list-style: none; }
+details.opt-section > summary::before { content: '＋'; margin-right: 8px; }
+details.opt-section[open] > summary::before { content: '－'; }
+details.opt-section > summary::-webkit-details-marker { display: none; }
+details.opt-section[open] { padding-bottom: 8px; }
+/* (7) navegação inferior no celular */
+.bottom-nav { display: none; }
+@media (max-width: 768px) {
+  .bottom-nav { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 9950; background: rgba(10,10,10,.97); border-top: 1px solid rgba(194,160,87,.4); padding: 6px max(6px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)); gap: 4px; justify-content: space-around; }
+  .bottom-nav > button, .bottom-nav summary { flex: 1; min-height: 52px; min-width: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: none; border: none; color: #eee; font-size: 12px; font-weight: 600; cursor: pointer; list-style: none; border-radius: 10px; }
+  .bottom-nav summary::-webkit-details-marker { display: none; }
+  .bottom-nav .bn-primary { background: var(--gold, #c2a057); color: #1a1300; font-weight: 800; }
+  .bn-more { flex: 1; position: relative; display: flex; }
+  .bn-menu { position: absolute; bottom: 60px; right: 0; min-width: 220px; background: #151515; border: 1px solid rgba(194,160,87,.5); border-radius: 12px; padding: 6px; display: flex; flex-direction: column; }
+  .bn-menu button { min-height: 48px; text-align: left; padding: 0 14px; background: none; border: none; color: #eee; font-size: 15px; cursor: pointer; border-radius: 8px; }
+  body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .btn-floating-ai { bottom: calc(84px + env(safe-area-inset-bottom)); width: 52px; height: 52px; }
+  .kac-toast { bottom: calc(84px + env(safe-area-inset-bottom)); }
+  /* no celular, a barra inferior substitui os botões do cabeçalho (continuam no DOM e acessíveis no desktop) */
+  header #btnOpenModal, header #btnOpenConfig, header #btnLogout, .calendar-nav #btnOpenDashboard, .calendar-nav #btnExportPDF { display: none; }
+  .status-box { position: static; margin-bottom: 8px; }
+  .org-name { display: block; margin: 4px 0 0; max-width: 70vw; }
+}

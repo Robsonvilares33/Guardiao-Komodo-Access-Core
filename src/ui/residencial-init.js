@@ -480,21 +480,13 @@
             deleteButton.textContent = '🗑️';
             card.appendChild(deleteButton);
 
-            var statusText = 'Aguardando';
-            var statusColor = '#a0a0a0';
-            var statusBg = 'rgba(255,255,255,0.1)';
-            if (item.status === 1) {
-                statusText = '🟢 Entrada'; statusColor = 'var(--success)'; statusBg = 'rgba(34,197,94,0.15)';
-            } else if (item.status === 2) {
-                statusText = '🔴 Saída'; statusColor = 'var(--danger)'; statusBg = 'rgba(239,68,68,0.15)';
-            }
-            var statusButton = document.createElement('button');
-            statusButton.type = 'button';
-            statusButton.className = 'btn-status-toggle';
-            statusButton.dataset.id = String(item.id == null ? '' : item.id);
-            statusButton.textContent = statusText;
-            statusButton.style.cssText = 'position:absolute;top:12px;right:60px;background:' + statusBg + ';color:' + statusColor + ';border:1px solid ' + statusColor + ';padding:5px 12px;border-radius:6px;font-size:12px;font-weight:800;cursor:pointer;text-transform:uppercase;transition:0.3s;box-shadow:0 0 10px ' + statusBg + ';';
-            card.appendChild(statusButton);
+            // UX fase 2: estado visível + próxima ação em 1 toque (VisitStatus.js)
+            var statusBox = document.createElement('div');
+            statusBox.className = 'status-box';
+            statusBox.appendChild(window.VisitStatus.badge(item.status));
+            var nextBtn = window.VisitStatus.actionButton(item);
+            if (nextBtn) statusBox.appendChild(nextBtn);
+            card.appendChild(statusBox);
 
             var header = document.createElement('div');
             header.className = 'card-header-inline';
@@ -595,17 +587,10 @@
         var btnStatus = e.target.closest('.btn-status-toggle');
         if (btnStatus) {
             var regId = btnStatus.getAttribute('data-id');
-            var reg = state.dailyData.find(r => r.id === regId);
-            if (reg) {
-                var s = reg.status || 0;
-                s = (s + 1) % 3; // 0 -> 1 -> 2 -> 0
-                reg.status = s;
-                try {
-                    await window.VisitorRepository.updateStatus(reg.id, s);
-                    if (window.renderController) window.renderController.reloadDailyData(state.diaAtivo, 'residencial');
-                } catch(ex) {
-                    alert("Erro ao atualizar status: " + ex.message);
-                }
+            var reg = state.dailyData.find(r => String(r.id) === regId);
+            if (reg && !btnStatus.disabled) {
+                btnStatus.disabled = true;
+                await window.VisitStatus.advance(reg, window.VisitorRepository, async function () { if (window.renderController) await window.renderController.reloadDailyData(state.diaAtivo, 'residencial'); });
             }
         }
     });
