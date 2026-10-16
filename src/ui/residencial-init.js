@@ -8,7 +8,7 @@
     // ENGINE DE PARTÍCULAS
     // ==================================================
     if (window.KomodoParticles) {
-        window.KomodoParticles.init('particles-canvas', { count: 50 });
+        if (window.KomodoFx) window.KomodoFx.init('particles-canvas', { count: 50 });
     }
 
     // ==================================================
@@ -785,7 +785,9 @@
     if (btnOcrPlacaFile) btnOcrPlacaFile.addEventListener('click', function() { handleAutoFillAI(false); });
 
     // PDF Desacoplado (Fase 5)
-    document.getElementById('btnExportPDF').addEventListener('click', function() {
+    document.getElementById('btnExportPDF').addEventListener('click', async function() {
+        // UX fase 1: jsPDF só é baixado agora (não no carregamento da agenda).
+        try { if (window.KacVendor) await window.KacVendor.pdf(); } catch (e) { alert('Não foi possível carregar o módulo de PDF. Verifique a conexão.'); return; }
         if(typeof window.PdfExportService !== 'undefined') {
             const state = window.appStore ? window.appStore.getState('visitors') : null;
             const dailyData = state ? state.dailyData : [];
