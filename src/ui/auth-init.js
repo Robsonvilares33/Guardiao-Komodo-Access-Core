@@ -6,7 +6,7 @@
   var invite = U.inviteFrom(location.search); var pendingFactor = null;
   c.onSessionChange(function (ev) { if (ev === 'expired') { show('secLogin'); msg('Sua sessão expirou. Entre novamente.', true); } });
   function back() { return location.origin + location.pathname + (invite ? '?convite=' + encodeURIComponent(invite) : ''); }
-  function show(id) { ['secLoading', 'secOff', 'secLogin', 'secMfa', 'secReady', 'secNoOrg', 'secOnboard'].forEach(function (s) { $(s).hidden = s !== id; }); var h = $(id).querySelector('h2'); if (h) { h.tabIndex = -1; h.focus(); } }
+  function show(id) { ['secLoading', 'secOff', 'secLogin', 'secMfa', 'secReady', 'secNoOrg', 'secOnboard', 'secAdmin'].forEach(function (s) { $(s).hidden = s !== id; }); var h = $(id).querySelector('h2'); if (h) { h.tabIndex = -1; h.focus(); } }
   function msg(t, bad) { var m = $('authMsg'); m.textContent = t || ''; m.className = bad ? 'auth-msg bad' : 'auth-msg'; }
   async function guard(fn) { msg(''); try { await fn(); } catch (e) { msg(e.message || 'Erro.', true); } }
   function clearSetup() { var i = $('mfaQr'); i.removeAttribute('src'); i.hidden = true; $('mfaSecret').value = ''; $('mfaSetup').hidden = true; var a = $('mfaUri'); a.removeAttribute('href'); a.hidden = true; }
@@ -17,7 +17,7 @@
     $('btnEnroll').hidden = c.aal() === 'aal2'; $('btnInvite').hidden = !invite;
     var st = null; try { st = (await c.me()).data; } catch (_) {}
     if (st && (!st.linked || !st.hasOrg)) { $('btnLinkNoOrg').hidden = !!st.linked; $('whoNoOrg').textContent = st.email || ''; $('btnInviteNoOrg').hidden = !invite; return show('secNoOrg'); }
-    $('btnOpenApp').hidden = !(st && st.linked && st.hasOrg && !st.mfaRequired); if (st && st.mfaRequired) $('mfaState').textContent = 'Ative e confirme o MFA para abrir o sistema como administrador.'; show('secReady');
+    $('btnOpenApp').hidden = !(st && st.linked && st.hasOrg && !st.mfaRequired); $('btnAdmin').hidden = !(st && st.hasOrg && (st.orgRole === 'owner' || st.orgRole === 'admin')); if (st && st.mfaRequired) $('mfaState').textContent = 'Ative e confirme o MFA para abrir o sistema como administrador.'; show('secReady');
   }
   async function start() {
     // Mantém "Carregando…" até a config resolver; tenta de novo uma vez em falha transitória (rede/5xx). Só mostra Indisponível em falha definitiva.
@@ -41,10 +41,13 @@
     $('btnSignOutNoOrg').addEventListener('click', function () { guard(async function () { if (c.signOut) await c.signOut(); show('secLogin'); }); });
     $('btnLink').addEventListener('click', function () { guard(async function () { await c.link(); msg('Conta vinculada ao seu usuário atual.'); }); });
     $('btnInvite').addEventListener('click', function () { guard(async function () { var r = await c.acceptInvite(invite); invite = null; $('btnInvite').hidden = true; msg(r.data && r.data.status === 'already_member' ? 'Você já é membro desta organização.' : 'Convite aceito.'); await afterLogin(); }); });
-    $('formInvite').addEventListener('submit', function (e) { e.preventDefault(); guard(async function () { var r = await c.createInvite($('invEmail').value, $('invRole').value); var link = c.inviteLink(location.href, r.data.token); $('invLink').value = link; $('invOut').hidden = false; $('invExp').textContent = 'Válido até ' + new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' }).format(new Date(r.data.expiresAt)) + ' (horário de Brasília). Envie o link só para a pessoa convidada.'; $('invLink').focus(); $('invLink').select(); }); });
+    $('formInvite').addEventListener('submit', function (e) { e.preventDefault(); guard(async function () { var r = await c.createInvite($('invEmail').value, $('invRole').value); var link = c.inviteLink(location.href, r.data.token); $('invLink').value = link; $('invOut').hidden = false; $('invExp').textContent = 'Válido até ' + new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' }).format(new Date(r.data.expiresAt)) + ' (horário de Brasília). Envie o link só para a pessoa convidada.'; $('invLink').focus(); $('invLink').select(); if (adm && !$('secAdmin').hidden) adm.load().catch(function () {}); }); });
     $('btnCopy').addEventListener('click', function () { guard(async function () { await navigator.clipboard.writeText($('invLink').value); msg('Link copiado.'); }); });
     $('btnOut').addEventListener('click', function () { guard(async function () { await c.signOut(); show('secLogin'); }); });
     function fieldErr(id, t) { $(id).textContent = t || ''; }
+    var adm = window.AdminConsole.mount({ client: c, doc: document, msg: msg, guard: guard });
+    $('btnAdmin').addEventListener('click', function () { guard(async function () { if (c.aal() !== 'aal2') throw new Error('Conclua o MFA (verificação em duas etapas) para administrar.'); show('secAdmin'); await adm.load(); }); });
+    $('btnAdminBack').addEventListener('click', function () { guard(afterLogin); });
     $('btnCreateOrg').addEventListener('click', function () { msg(''); show('secOnboard'); $('obName').focus(); });
     $('btnObCancel').addEventListener('click', function () { guard(afterLogin); });
     $('obCnpj').addEventListener('blur', function () { var v = $('obCnpj').value.trim(); fieldErr('obCnpjErr', v && !U.validCnpj(v) ? 'CNPJ inválido. Confira os 14 dígitos.' : ''); });

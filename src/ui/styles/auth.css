@@ -22,3 +22,32 @@ input[type=range]{padding:0;min-height:44px}button:disabled{opacity:.5;cursor:no
 .mfa-secret { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: .08em; font-size: 1rem; min-height: 44px; }
 .mfa-setup small { display: block; color: #b8c4d6; margin-top: 4px; }
 .mfa-setup a { display: inline-block; min-height: 44px; line-height: 44px; }
+/* UX item 9 — administração (mobile-first) */
+.admin .adm-sub{margin:.2rem 0 1rem;color:#a8b3c7;font-size:.9rem}
+.adm-tabs{display:flex;gap:.25rem;overflow-x:auto;border-bottom:1px solid #33415c;margin-bottom:1rem}
+.adm-tabs [role=tab]{flex:0 0 auto;min-height:44px;width:auto;margin:0;background:transparent;color:#e6edf6;border:0;border-bottom:3px solid transparent;border-radius:0;padding:.5rem .75rem}
+.adm-tabs [role=tab][aria-selected=true]{border-bottom-color:#8ab4ff;font-weight:700;color:#8ab4ff}
+.adm-tabs [role=tab]:focus-visible{outline:3px solid #ffd166;outline-offset:-3px}
+.adm-list{list-style:none;padding:0;margin:0 0 1rem}
+.adm-item{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid #26334d}
+.adm-who{display:flex;flex-direction:column;min-width:0;word-break:break-word}
+.adm-meta{font-size:.85rem;color:#a8b3c7}
+.adm-act{display:flex;gap:.4rem;align-items:center}
+.adm-act select{width:auto;min-height:44px;margin:0}
+button.small{width:auto;min-height:44px;margin:0;padding:.4rem .8rem}
+button.danger{background:#b91c1c;color:#fff}
+.adm-empty{color:#a8b3c7;padding:.5rem 0}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+.field-err{color:#ff8a8a;display:block}
+h3{font-size:1rem;margin:1rem 0 .4rem}
+
+/* UX item 10 — avisos PWA */
+.pwa-bar{position:fixed;left:.5rem;right:.5rem;top:.5rem;z-index:10000;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:space-between;padding:.6rem .8rem;border-radius:10px;font-size:.95rem;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+.pwa-bar[hidden]{display:none}
+.pwa-offline{background:#7c2d12;color:#fff}
+.pwa-update{background:#0f172a;color:#fff;top:auto;bottom:5rem}
+.pwa-bar button{min-height:44px;width:auto;margin:0;padding:.4rem .9rem;border-radius:8px;border:0;background:#f2d28a;color:#111;font-weight:700;cursor:pointer}
+.pwa-bar button.sec{background:transparent;color:#fff;border:1px solid #fff}
+.pwa-bar button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+select{width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid #33415c;background:#0b1220;color:inherit;font-size:16px;min-height:44px}
+.admin{width:100%}
