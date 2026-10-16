@@ -1,7 +1,8 @@
 import { spawn } from 'node:child_process';
 export async function launch(){
   const ch=spawn('google-chrome',['--headless=new','--remote-debugging-port=9333','--no-sandbox','--user-data-dir=/tmp/kac-chrome','--no-first-run','about:blank'],{stdio:'ignore'});
-  let tgt; for(let i=0;i<50;i++){ try{ const r=await fetch('http://127.0.0.1:9333/json'); tgt=(await r.json()).find(t=>t.type==='page'); if(tgt)break;}catch{} await new Promise(r=>setTimeout(r,200)); }
+  let tgt; for(let i=0;i<300;i++){ try{ const r=await fetch('http://127.0.0.1:9333/json'); tgt=(await r.json()).find(t=>t.type==='page'); if(tgt)break;}catch{} await new Promise(r=>setTimeout(r,200)); }
+  if(!tgt) throw new Error('Chrome não abriu em 60 s (porta 9333)');
   const ws=new WebSocket(tgt.webSocketDebuggerUrl); await new Promise(r=>ws.onopen=r);
   let id=0; const pend=new Map(); const events=[];
   ws.onmessage=m=>{const d=JSON.parse(m.data); if(d.id&&pend.has(d.id)){pend.get(d.id)(d);pend.delete(d.id);} else events.push(d);};
