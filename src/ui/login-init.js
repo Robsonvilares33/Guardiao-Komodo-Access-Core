@@ -43,6 +43,8 @@
             return;
         }
 
+        // Novo login (Fase C): mostra o atalho só se o servidor tiver o flag ligado.
+        if (window.authService.isRemoteMode()) { fetch('/api/auth/supabase/config', { credentials: 'same-origin' }).then(function (r) { if (r.ok) document.getElementById('newLoginLink').hidden = false; }).catch(function () {}); }
         const hasAdmin = await window.authService.hasAnyUser();
         overlay.style.display = 'none';
 

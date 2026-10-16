@@ -31,10 +31,23 @@
         <button type="submit">Verificar</button>
       </form>
     </section>
+    <section id="secNoOrg" hidden>
+      <h2>Conta sem empresa vinculada</h2>
+      <p>Você entrou como <strong id="whoNoOrg"></strong>, mas esta conta ainda não pertence a nenhuma empresa no Guardião Komodo.</p>
+      <ul>
+        <li>Recebeu um <strong>convite</strong>? Abra o link do convite e clique em "Aceitar convite".</li>
+        <li>Já usa o sistema com e-mail e senha? Entre no <a href="login.html">login atual</a> e depois volte aqui para vincular esta conta.</li>
+        <li>Caso contrário, peça um convite ao administrador da sua empresa.</li>
+      </ul>
+      <button type="button" id="btnInviteNoOrg" hidden>Aceitar convite</button>
+      <button type="button" id="btnLinkNoOrg" class="sec">Vincular ao meu usuário atual</button>
+      <button type="button" id="btnSignOutNoOrg" class="sec">Sair</button>
+    </section>
     <section id="secReady" hidden>
       <h2>Conectado</h2>
       <p>Conta: <strong id="who"></strong></p>
       <p id="mfaState"></p>
+      <button type="button" id="btnOpenApp" hidden>Abrir o sistema</button>
       <button type="button" id="btnEnroll">Ativar MFA</button>
       <button type="button" id="btnInvite" hidden>Aceitar convite</button>
       <button type="button" id="btnLink" class="sec" title="Requer estar logado no login atual com o mesmo e-mail">Vincular ao meu usuário atual</button>

@@ -36,6 +36,8 @@
       onSessionChange: function (fn) { onChange = fn; },
       createInvite(email, role) { email = String(email || '').trim().toLowerCase(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Promise.reject(new Error('E-mail inválido.')); if (['admin', 'operator', 'viewer'].indexOf(role) < 0) return Promise.reject(new Error('Papel inválido.')); return api('/convites', 'POST', { email: email, role: role }); },
       inviteLink(base, token) { return String(base).replace(/[?#].*$/, '') + '?convite=' + encodeURIComponent(token); },
+      me() { return api('/auth/supabase/me', 'GET'); },
+      openApp() { return api('/auth/supabase/session', 'POST', {}); },
       acceptInvite(token) { if (!INVITE_RE.test(String(token))) return Promise.reject(new Error('Convite inválido.')); return api('/convites/aceitar', 'POST', { token: token }); },
       async signOut() { if (session) { try { await gt('/logout', { method: 'POST' }); } catch (_) {} } setSession(null); }
     };
