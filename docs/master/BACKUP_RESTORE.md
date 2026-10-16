@@ -50,3 +50,12 @@ Guardados em `/workspace/backups` (box, pasta 700/arquivos 600) e `C:\Users\yyy\
 4. Testar a restauração sem tocar em produção: `npm i --no-save @electric-sql/pglite@0.5.10 && EXPECT_VISIT_MD5=<md5> node scripts/backup/restore-check.mjs kac_<data>.json.enc kac_<data>.manifest.json`.
 5. Restauração real (só com autorização): inserir tabela a tabela na ordem do `restore-check.mjs` (organizações → usuários → membros → visitas → sessões → tentativas → histórico → auditoria → convites → planos → assinaturas → eventos), `OVERRIDING SYSTEM VALUE` em `kac_payment_events` e reposicionar sequências (`setval`).
 - Validado em 14/10/2026 no box com dados reais: dump (12 tabelas) → cifra → decifra → PGlite: todas as contagens, SHA-256 e md5 `cc9fe7b3…` PASS; senha errada → falha ao decifrar.
+
+## Usuário dedicado de smoke (15/10/2026)
+- Criado em produção (aditivo; backup antes: `kac_presmoke_20261015T220144.json`, SHA-256 72489f15…edf0947): org fictícia `Smoke CI (fictícia, sem dados reais)` (`53b19a65-0627-41eb-a662-48c2fee0a81a`), usuário `user_smoke_ci` / `smoke-ci@komodo-smoke.invalid` (papel `operador`, membro `viewer`), assinatura free.
+- Isolamento: toda consulta de visitas filtra `organization_id` da sessão; verificado ao vivo (0 visitas visíveis, real intacta). Os jobs `smoke-auth` e `smoke-a11y` só leem.
+- Senha: gerada no Revision-PC, só em GitHub Secrets (`KAC_SMOKE_EMAIL`, `KAC_SMOKE_PASSWORD`) e em `C:\Users\yyy\Documents\kac_backups\KAC_SMOKE_PASSWORD.txt` (ACL só yyy) até ir para o 1Password.
+- Rollback (desligar e remover):
+  1. Variáveis de repositório `KAC_SMOKE_AUTH` / `KAC_SMOKE_A11Y` = `false` (ou apagar) e apagar os 2 secrets.
+  2. SQL: `delete from komodo_web_sessions where user_id='user_smoke_ci'; delete from kac_subscriptions where organization_id='53b19a65-0627-41eb-a662-48c2fee0a81a'; delete from komodo_tbl_usuarios where id='user_smoke_ci'; delete from kac_organizations where id='53b19a65-0627-41eb-a662-48c2fee0a81a';` (membros caem em cascata; conferir antes que a org não tem visitas).
+  3. Conferir md5 da visita real.

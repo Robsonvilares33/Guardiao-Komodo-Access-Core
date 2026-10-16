@@ -22,14 +22,22 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - run: node scripts/smoke.mjs https://guardiao-komodo-access-core.vercel.app
-  # PREPARADO, DESLIGADO: smoke autenticado. Precisa de um usuário dedicado de smoke (NÃO o admin) e dos secrets
-  # KAC_SMOKE_EMAIL / KAC_SMOKE_PASSWORD, além da variável de repositório KAC_SMOKE_AUTH=true. Nada disso existe ainda.
+  # Smoke autenticado SOMENTE LEITURA com usuário dedicado (org fictícia isolada; NÃO o admin).
+  # Ligado pela variável KAC_SMOKE_AUTH=true + secrets KAC_SMOKE_EMAIL / KAC_SMOKE_PASSWORD. Prova que a org real não é visível.
   smoke-auth:
-    if: vars.KAC_SMOKE_AUTH == 'true' && (github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success')
+    if: vars.KAC_SMOKE_AUTH == 'true' && (github.event_name == 'workflow_dispatch' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production'))
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - run: echo "Smoke autenticado ainda não implementado/ativado (requer aprovação + usuário dedicado)."
-  # PREPARADO, DESLIGADO: auditoria de acessibilidade (axe-core) nas páginas e modais da produção.
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: login, isolamento e logout (sem gravar)
+        env:
+          KAC_E2E_EMAIL: ${{ secrets.KAC_SMOKE_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.KAC_SMOKE_PASSWORD }}
+        run: node scripts/smoke-auth.mjs https://guardiao-komodo-access-core.vercel.app
+  # Auditoria de acessibilidade (axe-core) nas páginas e modais da produção.
   # Ligar: variável de repositório KAC_SMOKE_A11Y=true + secrets KAC_SMOKE_EMAIL / KAC_SMOKE_PASSWORD de um usuário
   # dedicado de smoke (NÃO o admin; papel em KAC_SMOKE_ROLE, padrão operador). Só lê páginas/abre modais; não grava dados.
   smoke-a11y:

@@ -21,3 +21,7 @@ test('restore-check.mjs: mesma cifra do workflow, md5 com TimeZone UTC, ordem 00
   assert.match(r,/SET TimeZone='UTC'/);assert.match(r,/'005_tenancy.sql','006_visit_history_audit.sql','008_supabase_auth.sql','007_billing.sql'/);
 });
 test('.gitignore bloqueia backups',()=>{const g=fs.existsSync(path.join(__dirname,'..','.gitignore'))?src('.gitignore'):'';assert.match(g,/kac_\*\.json/);assert.match(g,/\*\.json\.enc/);});
+test('smoke-auth: job ligado por variável, usa secrets do usuário dedicado, script só lê e prova isolamento',()=>{
+  const y=src('.github/workflows/post-deploy-smoke.yml');assert.match(y,/smoke-auth:\r?\n\s+if: vars\.KAC_SMOKE_AUTH == 'true'/);assert.match(y,/node scripts\/smoke-auth\.mjs/);assert.match(y,/secrets\.KAC_SMOKE_PASSWORD/);
+  const s=src('scripts/smoke-auth.mjs');assert.ok(!/visitantes[^'`]*['`],\{method:'(POST|PUT|PATCH|DELETE)'/.test(s));assert.match(s,/rows\.length===0/);assert.ok(!/console\.log\([^)]*(pw|password)/i.test(s));
+});
