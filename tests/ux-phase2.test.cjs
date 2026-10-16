@@ -24,23 +24,42 @@ test('cabeçalho: /organizacao devolve só o nome da PRÓPRIA org; sem sessão 4
   assert.deepEqual((await call('B','organizacao')).body.data,{name:'TESTE AUDITORIA Empresa B'});assert.equal((await call(null,'organizacao')).status,401);assert.equal((await call('N','organizacao')).status,403);assert.equal((await call('A','organizacao','POST')).status,405);});
 // VisitStatus no front
 const VS=require('../src/ui/VisitStatus.js');
-test('5 VisitStatus: rótulos e próxima ação; Saiu é final',()=>{assert.equal(VS.next(0),1);assert.equal(VS.next(1),2);assert.equal(VS.next(2),null);assert.deepEqual(VS.LABEL,['Agendado','Na portaria','Saiu']);assert.equal(VS.UNDO_MS,5000);});
-test('5 VisitStatus.advance: envia from; toast com Desfazer; desfazer envia undo; 409 não altera',async()=>{const calls=[];let undo=null;const toasts=[];const orig=VS.toast;VS.toast=(t,u)=>{toasts.push(t);undo=u;return{hide(){}}};
-  // advance usa o toast do próprio módulo: substitui via closure exportada
-  global.window=undefined;const repo={updateStatus:async(id,s,o)=>{calls.push([id,s,o]);}};let reloads=0;const reload=async()=>{reloads++;};
-  // Reexecuta o módulo com document falso para capturar o toast real
-  const vm=require('node:vm');const elems=[];const fakeDoc={getElementById:()=>null,createElement:t=>{const e={tagName:t,children:[],attrs:{},setAttribute(k,v){this.attrs[k]=v;},appendChild(c){this.children.push(c);},addEventListener(ev,fn){this.onclick=fn;},set textContent(v){this._t=v;if(v==='')this.children=[];},get textContent(){return this._t;}};elems.push(e);return e;},body:{appendChild(){}}};
-  const ctx={document:fakeDoc,setTimeout:(fn,ms)=>({fn,ms}),clearTimeout(){},module:{exports:{}}};ctx.globalThis=ctx;vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../src/ui/VisitStatus.js'),'utf8'),ctx);const V=ctx.module.exports;
-  const reg={id:'v1',nome:'Fulano',status:0};assert.equal(await V.advance(reg,repo,reload),1);assert.equal(JSON.stringify(calls[0]),JSON.stringify(['v1',1,{from:0}]));assert.equal(reg.status,1);
-  const undoBtn=elems.find(e=>e._t==='Desfazer');assert.ok(undoBtn,'botão Desfazer');await undoBtn.onclick();assert.equal(JSON.stringify(calls[1]),JSON.stringify(['v1',0,{from:1,undo:true}]));assert.equal(reg.status,0);
-  const bad={updateStatus:async()=>{const e=new Error('x');e.status=409;throw e;}};const r2={id:'v2',status:1};assert.equal(await V.advance(r2,bad,reload),null);assert.equal(r2.status,1);assert.ok(reloads>=3);
-  assert.equal(await V.advance({id:'v3',status:2},repo,reload),null);VS.toast=orig;});
+test('5 VisitStatus: rótulos e próxima ação; Saiu é final',()=>{assert.equal(VS.next(0),1);assert.equal(VS.next(1),2);assert.equal(VS.next(2),null);assert.deepEqual(VS.LABEL,['Agendado','Na portaria','Saiu']);assert.equal(VS.UNDO_MS,10000);});
+// DOM falso mínimo para VisitStatus (cartão + aviso)
+function loadVS(){const vm=require('node:vm');const timers=[];const byId={};
+  function mk(tag){const e={tagName:tag,children:[],attrs:{},listeners:{},hidden:false,disabled:false,className:'',dataset:{},_t:'',
+    setAttribute(k,v){this.attrs[k]=v;if(k==='id')byId[v]=this;},appendChild(c){this.children.push(c);c.parent=this;},addEventListener(ev,fn){(this.listeners[ev]=this.listeners[ev]||[]).push(fn);},
+    fire(ev){return Promise.all((this.listeners[ev]||[]).map(f=>f()));},querySelector(sel){const cls=sel.slice(1);const walk=n=>{for(const c of n.children){if((' '+c.className+' ').includes(' '+cls+' '))return c;const r=walk(c);if(r)return r;}return null;};return walk(this);},
+    closest(sel){let n=this;while(n){if((' '+n.className+' ').includes(' '+sel.slice(1)+' '))return n;n=n.parent;}return null;},
+    set textContent(v){this._t=v;if(v==='')this.children=[];},get textContent(){return this._t;},set id(v){byId[v]=this;}};return e;}
+  const doc={getElementById:id=>byId[id]||null,createElement:mk,body:{appendChild(){}}};
+  const ctx={document:doc,setTimeout:(fn,ms)=>{const t={fn,ms,cleared:false};timers.push(t);return t;},clearTimeout:t=>{if(t)t.cleared=true;},Date,Promise,module:{exports:{}}};ctx.globalThis=ctx;
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../src/ui/VisitStatus.js'),'utf8'),ctx);const V=ctx.module.exports;
+  const card=mk('div');card.className='card';const box=mk('div');box.className='status-box';card.appendChild(box);const btn=mk('button');box.appendChild(btn);
+  return{V,card,btn,timers,toast:()=>byId.kacToast};}
+const flush=()=>new Promise(r=>setImmediate(r));
+test('5 otimista: cartão e aviso mudam ANTES da API responder; botão fica desabilitado enquanto pendente; 2º toque ignorado',async()=>{const {V,card,btn,timers,toast}=loadVS();let release;const calls=[];
+  const repo={updateStatus:(id,s,o)=>{calls.push(JSON.stringify([id,s,o]));return new Promise(r=>{release=r;});}};const reg={id:'v1',nome:'Fulano',status:0};
+  const p=V.advance(reg,repo,async()=>{},btn);
+  assert.equal(reg.status,1,'estado local já mudou');const box=card.querySelector('.status-box');assert.equal(box.children[0].textContent,'Na portaria');assert.equal(box.children[1].textContent,'Saiu');assert.equal(box.children[1].disabled,true,'pendente = desabilitado');
+  assert.match(toast().children[0].textContent,/Fulano: Na portaria/);assert.equal(toast().children[1].textContent,'Desfazer');assert.equal(timers.at(-1).ms,10000);
+  assert.equal(await V.advance(reg,repo,async()=>{},btn),null,'toque duplo ignorado');assert.equal(calls.length,1);
+  release();assert.equal(await p,1);assert.equal(card.querySelector('.status-box').children[1].disabled,false);assert.equal(calls[0],JSON.stringify(['v1',1,{from:0}]));});
+test('5 erro/409: volta o estado no cartão e mostra erro',async()=>{const {V,card,btn,toast}=loadVS();const reg={id:'v2',nome:'B',status:1};
+  const repo={updateStatus:async()=>{const e=new Error('x');e.status=409;throw e;}};assert.equal(await V.advance(reg,repo,async()=>{},btn),null);
+  assert.equal(reg.status,1);assert.equal(card.querySelector('.status-box').children[0].textContent,'Na portaria');assert.match(toast().children[0].textContent,/outro aparelho/);
+  const repo2={updateStatus:async()=>{throw new Error('rede');}};assert.equal(await V.advance(reg,repo2,async()=>{},btn),null);assert.match(toast().children[0].textContent,/Não foi possível salvar "Saiu": rede/);});
+test('5 desfazer: auditado com undo:true e volta o cartão; Saiu é final',async()=>{const {V,card,btn,toast}=loadVS();const calls=[];const repo={updateStatus:async(id,s,o)=>{calls.push(JSON.stringify([id,s,o]));}};const reg={id:'v3',nome:'C',status:0};
+  await V.advance(reg,repo,async()=>{},btn);const undoBtn=toast().children[1];await undoBtn.fire('click');assert.equal(calls[1],JSON.stringify(['v3',0,{from:1,undo:true}]));assert.equal(reg.status,0);assert.equal(card.querySelector('.status-box').children[0].textContent,'Agendado');
+  assert.equal(await V.advance({id:'v4',status:2},repo,async()=>{},btn),null);});
+test('5 aviso: 10 s e pausa com mouse/foco, retoma ao sair',async()=>{const {V,timers,toast}=loadVS();V.toast('Oi',()=>{});const t=toast();const first=timers.at(-1);assert.equal(first.ms,10000);
+  await t.fire('mouseenter');assert.equal(first.cleared,true,'pausou');const n=timers.length;await t.fire('focusin');assert.equal(timers.length,n,'continua pausado');await t.fire('mouseleave');assert.equal(timers.length,n+1,'retomou');assert.ok(timers.at(-1).ms>=1000);});
 const src=f=>fs.readFileSync(path.join(__dirname,'..',f),'utf8');
 test('6/7/cabeçalho: HTML e CSS',()=>{for(const p of ['index.html','residencial.html']){const s=src(p);
   assert.match(s,/<nav class="bottom-nav" aria-label="Navegação principal">/);for(const a of ['agenda','search','new','dashboard','pdf','config','logout'])assert.match(s,new RegExp(`data-nav="${a}"`),p+a);
   assert.match(s,/<span id="orgName" class="org-name" hidden><\/span>/);assert.ok((s.match(/<details class="opt-section"><summary>[^<]+\(opcional\)<\/summary>/g)||[]).length>=4,p);
   const nm=s.indexOf('data-field="nome"'),firstOpt=s.indexOf('class="opt-section"');assert.ok(nm>0&&nm<firstOpt,p+': nome antes das seções opcionais');}
-  const css=src('src/ui/styles/main.css');assert.match(css,/\.bottom-nav \{ display: none; \}/);assert.match(css,/@media \(max-width: 768px\) \{\n  \.bottom-nav \{ display: flex;/);assert.match(css,/\.btn-status-next \{ min-height: 44px;/);
+  const css=src('src/ui/styles/main.css');assert.match(css,/\.bottom-nav \{ display: none; \}/);assert.match(css,/@media \(max-width: 768px\) \{\r?\n  \.bottom-nav \{ display: flex;/);assert.match(css,/\.btn-status-next \{ min-height: 44px;/);
   const js=src('src/ui/MobileShell.js')+src('src/ui/VisitStatus.js');assert.ok(!/innerHTML|insertAdjacentHTML|eval\(/.test(js));assert.match(src('src/ui/MobileShell.js'),/el\.textContent = n/);});
 test('MobileShell: só busca o nome no modo servidor com sessão; falha silenciosa',async()=>{const vm=require('node:vm');const el={hidden:true,textContent:'',title:''};let gets=0;
   const mk=(remote,auth,resp)=>({document:{readyState:'complete',getElementById:id=>id==='orgName'?el:null,querySelector:()=>null,querySelectorAll:()=>[]},authService:{isRemoteMode:()=>remote,isAuthenticated:()=>auth},apiService:{get:async()=>{gets++;if(resp instanceof Error)throw resp;return resp;}},MutationObserver:function(){this.observe=()=>{};},module:{exports:{}}});
