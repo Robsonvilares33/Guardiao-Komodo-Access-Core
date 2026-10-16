@@ -44,3 +44,9 @@ test('empresa: valida (422) e audita só nomes dos campos',async()=>{reset();ass
   const r=await call('PUT',['empresa'],adm(),{name:'Cond A Novo',kind:'condominio',cnpj:'11.222.333/0001-81',timezone:'America/Sao_Paulo'});assert.equal(r.status,200);assert.deepEqual(r.body.data.changed.sort(),['cnpj','name']);
   assert.equal(T.kac_organizations[0].cnpj,'11222333000181');assert.equal(T.kac_organizations[1].name,'Outra');assert.deepEqual(T.kac_audit_log.at(-1).meta.fields.sort(),['cnpj','name']);});
 test('auditoria: só a org, sem meta (PII), ator por e-mail',async()=>{reset();const r=await call('GET',['auditoria'],adm(),null,{limit:'10'});assert.equal(r.body.data.length,1);assert.equal(r.body.data[0].actor,'op@x.com');assert.ok(!r.raw.includes('PII'));assert.ok(!r.raw.includes('test-only'));});
+
+test('GET /auth/sessao: sem cookie → 401; cookie válido → só id/e-mail/papel/validade (sem token); outros métodos → 405',async()=>{reset();const crypto=require('node:crypto');const tok='tok_'+'a'.repeat(40);
+  T.komodo_web_sessions=[{token_hash:crypto.createHash('sha256').update(tok).digest('hex'),user_id:'u_op',expires_at:new Date(Date.now()+3600e3).toISOString()}];
+  const go=(m,cookie)=>{const r={statusCode:0,setHeader(){},end(v){this.body=v;}};const headers={'x-real-ip':'10.2.2.2'};if(cookie)headers.cookie=cookie;return Promise.resolve(handler({method:m,query:{route:['auth','sessao']},body:{},headers},r)).then(()=>({status:r.statusCode,raw:r.body||''}));};
+  assert.equal((await go('GET')).status,401);assert.equal((await go('POST')).status,405);
+  const r=await go('GET',`kac_session=${tok}`);assert.equal(r.status,200,r.raw);const d=JSON.parse(r.raw).data;assert.equal(d.user.email,'op@x.com');assert.ok(d.expiresAt>Date.now());assert.ok(!r.raw.includes(tok));});

@@ -45,9 +45,18 @@
             return;
         }
 
+        // Sem conexão: não fica preso em "Verificando sistema"; avisa e tenta de novo quando a internet voltar.
+        function offlineStop() { loadingLabel.textContent = 'SEM CONEXÃO — conecte-se à internet para entrar.'; overlay.setAttribute('role', 'alert'); try { window.dispatchEvent(new Event('kac:offline')); } catch (_) {} window.addEventListener('online', function () { window.location.reload(); }, { once: true }); }
+        if (navigator.onLine === false) { offlineStop(); return; }
+        // Aba nova com sessão de cookie ainda válida (ex.: veio do novo login via "Abrir o sistema"): retoma sem pedir senha de novo.
+        if (window.authService.isRemoteMode()) {
+            try { const d = await window.apiService.get('/auth/sessao'); if (d && d.user) { sessionStorage.setItem('komodo_session', JSON.stringify({ userId: d.user.id, email: d.user.email, role: d.user.role, expiresAt: d.expiresAt })); window.location.href = 'index.html'; return; } } catch (_) {}
+        }
+
         // Novo login (Fase C): mostra o atalho só se o servidor tiver o flag ligado.
         if (window.authService.isRemoteMode()) { fetch('/api/auth/supabase/config', { credentials: 'same-origin' }).then(function (r) { if (r.ok) document.getElementById('newLoginLink').hidden = false; }).catch(function () {}); }
-        const hasAdmin = await window.authService.hasAnyUser();
+        let hasAdmin;
+        try { hasAdmin = await window.authService.hasAnyUser(); } catch (e) { if (navigator.onLine === false || /conectar/.test(e.message || '')) { offlineStop(); return; } throw e; }
         overlay.style.display = 'none';
 
         if (hasAdmin) {
