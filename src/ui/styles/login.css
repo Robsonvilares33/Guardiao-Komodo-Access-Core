@@ -467,7 +467,7 @@ h1.header-title, h1.login-title { margin-top: 0; }
 h1.header-title { margin-bottom: 0; }
 
 /* UX item 10 — avisos PWA */
-.pwa-bar{position:fixed;left:.5rem;right:.5rem;top:.5rem;z-index:10000;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:space-between;padding:.6rem .8rem;border-radius:10px;font-size:.95rem;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+.pwa-bar{position:fixed;left:.5rem;right:.5rem;top:.5rem;z-index:2147483000;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:space-between;padding:.6rem .8rem;border-radius:10px;font-size:.95rem;box-shadow:0 4px 16px rgba(0,0,0,.35)}
 .pwa-bar[hidden]{display:none}
 .pwa-offline{background:#7c2d12;color:#fff}
 .pwa-update{background:#0f172a;color:#fff;top:auto;bottom:5rem}
