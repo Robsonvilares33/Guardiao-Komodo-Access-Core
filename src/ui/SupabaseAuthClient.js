@@ -19,7 +19,7 @@
     function setSession(s) { session = s && s.access_token ? { access_token: s.access_token, refresh_token: s.refresh_token || null } : null; schedule(); return session; }
     async function refresh() { if (!session || !session.refresh_token) throw new Error('Sem refresh token.'); var r = setSession(await gt('/token?grant_type=refresh_token', { method: 'POST', auth: false, body: { refresh_token: session.refresh_token } })); if (onChange) onChange('refreshed'); return r; }
     return {
-      async loadConfig() { var r = await f('/api/auth/supabase/config', { credentials: 'same-origin' }); if (r.status === 404) return null; var j = await json(r); if (!r.ok || !j || !j.data || !j.data.enabled || !j.data.url || !j.data.anonKey) return null; cfg = j.data; return cfg; },
+      async loadConfig() { var r = await f('/api/auth/supabase/config', { credentials: 'same-origin' }); this.configStatus = 'HTTP ' + r.status + (r.redirected ? ' (redirecionado)' : ''); if (r.status === 404) return null; var j = await json(r); if (!r.ok || !j || !j.data || !j.data.enabled || !j.data.url || !j.data.anonKey) { if (r.ok) this.configStatus += !j ? ' (resposta não-JSON)' : !j.data || !j.data.anonKey ? ' (sem chave pública)' : ' (config incompleta)'; return null; } cfg = j.data; return cfg; },
       config: function () { return cfg; },
       session: function () { return session; },
       claims: function () { return session ? claims(session.access_token) : null; },

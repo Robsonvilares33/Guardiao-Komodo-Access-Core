@@ -19,8 +19,8 @@
     $('btnOpenApp').hidden = !(st && st.linked && st.hasOrg); show('secReady');
   }
   async function start() {
-    var cfg = null; try { cfg = await c.loadConfig(); } catch (_) {}
-    if (!cfg) return show('secOff');
+    var cfg = null; try { cfg = await c.loadConfig(); } catch (e) { c.configStatus = 'falha de rede/CSP: ' + String(e && e.message || e).slice(0, 80); }
+    if (!cfg) { var d = $('offDetail'); if (d) d.textContent = 'Detalhe técnico: ' + (c.configStatus || 'sem resposta'); return show('secOff'); }
     if (location.hash) { await guard(async function () { c.fromRedirect(location.hash); }); history.replaceState(null, '', back()); if (c.session()) return guard(afterLogin); }
     show('secLogin');
   }
