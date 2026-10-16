@@ -45,6 +45,7 @@
       createInvite(email, role) { email = String(email || '').trim().toLowerCase(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Promise.reject(new Error('E-mail inválido.')); if (['admin', 'operator', 'viewer'].indexOf(role) < 0) return Promise.reject(new Error('Papel inválido.')); return api('/convites', 'POST', { email: email, role: role }); },
       inviteLink(base, token) { return String(base).replace(/[?#].*$/, '') + '?convite=' + encodeURIComponent(token); },
       me() { return api('/auth/supabase/me', 'GET'); },
+      admin(path, method, body) { path = String(path || ''); if (!/^\/admin\/[a-z]+(\/[A-Za-z0-9_.:@%-]+)?(\?[a-z0-9=&]*)?$/.test(path)) return Promise.reject(new Error('Rota inválida.')); return api(path, method || 'GET', body); },
       onboard(o) { o = o || {}; var name = String(o.name || '').trim(); if (name.length < 2 || name.length > 120) return Promise.reject(new Error('Informe o nome da empresa (2 a 120 caracteres).')); if (KINDS.indexOf(o.kind) < 0) return Promise.reject(new Error('Escolha o tipo.')); if (o.cnpj && !validCnpj(o.cnpj)) return Promise.reject(new Error('CNPJ inválido.')); return api('/auth/supabase/onboarding', 'POST', { name: name, kind: o.kind, cnpj: o.cnpj || null, timezone: o.timezone || 'America/Sao_Paulo' }); },
       openApp() { return api('/auth/supabase/session', 'POST', {}); },
       acceptInvite(token) { if (!INVITE_RE.test(String(token))) return Promise.reject(new Error('Convite inválido.')); return api('/convites/aceitar', 'POST', { token: token }); },

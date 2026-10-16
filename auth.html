@@ -6,6 +6,10 @@
   <meta name="robots" content="noindex">
   <title>Guardião Komodo - Conta</title>
   <link rel="stylesheet" href="src/ui/styles/auth.css">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#0d0d0d">
+    <link rel="icon" href="/assets/komodo-access-mark.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 </head>
 <body>
   <main class="auth-card">
@@ -80,24 +84,64 @@
       <button type="button" id="btnEnroll">Ativar MFA</button>
       <button type="button" id="btnInvite" hidden>Aceitar convite</button>
       <button type="button" id="btnLink" class="sec" title="Requer estar logado no login atual com o mesmo e-mail">Vincular ao meu usuário atual</button>
-      <details id="invBox">
-        <summary>Convidar pessoa (admin/owner)</summary>
-        <form id="formInvite">
-          <label for="invEmail">E-mail da pessoa</label><input id="invEmail" type="email" autocomplete="off" required>
-          <label for="invRole">Papel</label>
-          <select id="invRole"><option value="viewer">Visualizador</option><option value="operator" selected>Operador</option><option value="admin">Administrador (só owner)</option></select>
-          <button type="submit">Gerar convite</button>
-        </form>
-        <div id="invOut" hidden>
-          <label for="invLink">Link do convite (uso único, 72 h)</label><input id="invLink" readonly>
-          <p id="invExp"></p>
-          <button type="button" id="btnCopy" class="sec">Copiar link</button>
-        </div>
-      </details>
+      <button type="button" id="btnAdmin" hidden>Administração</button>
       <button type="button" id="btnOut" class="sec">Sair</button>
+    </section>
+    <section id="secAdmin" class="admin" hidden aria-labelledby="admTitle">
+      <h2 id="admTitle">Administração</h2>
+      <p class="adm-sub"><span id="admOrg"></span> · <span id="admMe"></span></p>
+      <nav class="adm-tabs" role="tablist" aria-label="Seções da administração">
+        <button type="button" role="tab" id="tab-equipe" aria-controls="pan-equipe" aria-selected="true">Equipe</button>
+        <button type="button" role="tab" id="tab-empresa" aria-controls="pan-empresa" aria-selected="false" tabindex="-1">Empresa</button>
+        <button type="button" role="tab" id="tab-seguranca" aria-controls="pan-seguranca" aria-selected="false" tabindex="-1">Segurança</button>
+        <button type="button" role="tab" id="tab-auditoria" aria-controls="pan-auditoria" aria-selected="false" tabindex="-1">Auditoria</button>
+      </nav>
+      <div role="tabpanel" id="pan-equipe" aria-labelledby="tab-equipe">
+        <h3>Membros</h3>
+        <ul id="admMembers" class="adm-list" aria-live="polite"></ul>
+        <h3>Convites pendentes</h3>
+        <ul id="admInvites" class="adm-list"></ul>
+        <details id="invBox">
+          <summary>Convidar pessoa</summary>
+          <form id="formInvite">
+            <label for="invEmail">E-mail da pessoa</label><input id="invEmail" type="email" autocomplete="off" required>
+            <label for="invRole">Papel</label>
+            <select id="invRole"><option value="viewer">Visualizador</option><option value="operator" selected>Operador</option><option value="admin">Administrador (só owner)</option></select>
+            <button type="submit">Gerar convite</button>
+          </form>
+          <div id="invOut" hidden>
+            <label for="invLink">Link do convite (uso único, 72 h)</label><input id="invLink" readonly>
+            <p id="invExp"></p>
+            <button type="button" id="btnCopy" class="sec">Copiar link</button>
+          </div>
+        </details>
+        </div>
+      <div role="tabpanel" id="pan-empresa" aria-labelledby="tab-empresa" hidden>
+        <form id="formOrg" novalidate>
+          <label for="orgNameIn">Nome da empresa</label><input id="orgNameIn" required maxlength="120" autocomplete="organization" aria-describedby="orgNameErr"><small id="orgNameErr" class="field-err" aria-live="polite"></small>
+          <label for="orgKind">Tipo</label><select id="orgKind"><option value="condominio">Condomínio</option><option value="predio">Prédio</option><option value="comercio">Comércio</option><option value="portaria">Portaria</option><option value="outro">Outro</option></select>
+          <label for="orgCnpj">CNPJ (opcional)</label><input id="orgCnpj" inputmode="numeric" maxlength="18" aria-describedby="orgCnpjErr"><small id="orgCnpjErr" class="field-err" aria-live="polite"></small>
+          <label for="orgTz">Fuso horário</label><select id="orgTz"><option value="America/Sao_Paulo">Brasília (America/Sao_Paulo)</option><option value="America/Manaus">Manaus</option><option value="America/Cuiaba">Cuiabá</option><option value="America/Fortaleza">Fortaleza</option><option value="America/Recife">Recife</option><option value="America/Belem">Belém</option><option value="America/Rio_Branco">Rio Branco</option><option value="America/Noronha">Fernando de Noronha</option></select>
+          <button type="submit" id="btnOrgSave">Salvar empresa</button>
+        </form>
+        <p id="admPlan"></p>
+      </div>
+      <div role="tabpanel" id="pan-seguranca" aria-labelledby="tab-seguranca" hidden>
+        <p id="admMfa"></p>
+        <p>Membros com o novo login: <strong id="admNewLogin"></strong>. Administradores precisam de MFA (verificação em duas etapas).</p>
+        <h3>Configurações deste aparelho</h3>
+        <p>Efeito de fundo e preferências visuais ficam em <a href="index.html">Configurações do app</a>. Nenhum dado pessoal é guardado offline.</p>
+      </div>
+      <div role="tabpanel" id="pan-auditoria" aria-labelledby="tab-auditoria" hidden>
+        <ol id="admAudit" class="adm-list"></ol>
+        <button type="button" id="btnAuditMore" class="sec" hidden>Carregar mais</button>
+      </div>
+      <button type="button" id="btnAdminBack" class="sec">Voltar</button>
     </section>
   </main>
   <script src="src/ui/SupabaseAuthClient.js"></script>
+  <script src="src/ui/AdminConsole.js"></script>
   <script src="src/ui/auth-init.js"></script>
+  <script src="src/ui/PwaShell.js"></script>
 </body>
 </html>

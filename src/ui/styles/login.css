@@ -465,3 +465,12 @@ body:not(.kac-fx) .radar-sweep, body.kac-fx-paused .radar-sweep { animation: non
 
 h1.header-title, h1.login-title { margin-top: 0; }
 h1.header-title { margin-bottom: 0; }
+
+/* UX item 10 — avisos PWA */
+.pwa-bar{position:fixed;left:.5rem;right:.5rem;top:.5rem;z-index:10000;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:space-between;padding:.6rem .8rem;border-radius:10px;font-size:.95rem;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+.pwa-bar[hidden]{display:none}
+.pwa-offline{background:#7c2d12;color:#fff}
+.pwa-update{background:#0f172a;color:#fff;top:auto;bottom:5rem}
+.pwa-bar button{min-height:44px;width:auto;margin:0;padding:.4rem .9rem;border-radius:8px;border:0;background:#f2d28a;color:#111;font-weight:700;cursor:pointer}
+.pwa-bar button.sec{background:transparent;color:#fff;border:1px solid #fff}
+.pwa-bar button:focus-visible{outline:3px solid #fff;outline-offset:2px}
