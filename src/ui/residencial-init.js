@@ -589,8 +589,7 @@
             var regId = btnStatus.getAttribute('data-id');
             var reg = state.dailyData.find(r => String(r.id) === regId);
             if (reg && !btnStatus.disabled) {
-                btnStatus.disabled = true;
-                await window.VisitStatus.advance(reg, window.VisitorRepository, async function () { if (window.renderController) await window.renderController.reloadDailyData(state.diaAtivo, 'residencial'); });
+                await window.VisitStatus.advance(reg, window.VisitorRepository, async function () { if (window.renderController) await window.renderController.reloadDailyData(state.diaAtivo, 'residencial'); }, btnStatus);
             }
         }
     });
