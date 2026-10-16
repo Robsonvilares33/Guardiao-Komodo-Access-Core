@@ -162,6 +162,8 @@ class DashboardManager {
     }
 
     async openDashboard() {
+        // UX fase 1: Chart.js só é baixado ao abrir o dashboard.
+        if (window.KacVendor) { try { await window.KacVendor.chart(); } catch (e) { console.warn('Chart.js indisponível:', e.message); } }
         // Mostra overlay primeiro com carregamento
         const overlay = document.getElementById('dashModalOverlay') || document.querySelector('#dashModalOverlay');
         if (overlay) {
@@ -187,8 +189,9 @@ class DashboardManager {
     }
 
     // Exporta os dados atuais do Dashboard
-    exportCurrentData() {
+    async exportCurrentData() {
         if (!this.currentGlobalData || !window.PdfExportService) return;
+        if (window.KacVendor) { try { await window.KacVendor.pdf(); } catch (e) { alert('Não foi possível carregar o módulo de PDF. Verifique a conexão.'); return; } }
         window.PdfExportService.exportAdvancedReport(this.currentGlobalData, "Relatório Analítico Completo", this.currentModulo.toUpperCase());
     }
 }

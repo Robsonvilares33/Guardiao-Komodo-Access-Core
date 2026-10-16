@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guardião Komodo - Residencial</title>
-    <script src="vendor/jspdf-4.2.1/jspdf.umd.min.js"></script>
-    <script src="vendor/jspdf-autotable-5.0.8/jspdf.plugin.autotable.min.js"></script>
-    <script src="vendor/chart.js-4.5.1/chart.umd.js"></script>
     <link rel="stylesheet" href="src/ui/styles/design-tokens.css">
     <link rel="stylesheet" href="src/ui/styles/main.css">
 </head>
@@ -30,7 +27,8 @@
             <div class="logo-container">
                 <img src="assets/komodo-access-mark.svg" alt="Guardião Komodo" class="logo-img">
             </div>
-            <div class="header-title">KOMODO ACCESS</div>
+            <h1 class="header-title">KOMODO ACCESS</h1>
+                <span id="orgName" class="org-name" hidden></span>
         </div>
         <div class="search-container">
             <input aria-label="Buscar visitas" type="text" id="globalSearch" class="search-bar" name="search_query_off" placeholder="Busca global de segurança..." autocomplete="new-password">
@@ -38,22 +36,23 @@
         <div class="kac-inline-b4edaa7885">
             <a href="index.html" class="btn-outline">Empresarial</a>
             <button type="button" class="btn-gold" id="btnOpenModal">MORADOR E VISITA</button>
-            <button type="button" class="btn-icon" id="btnOpenConfig" title="Configurações IA">⚙️</button>
-            <button type="button" class="btn-icon" id="btnLogout" title="Sair do Sistema">🚪</button>
+            <button type="button" class="btn-icon" id="btnOpenConfig" aria-label="Configurações" title="Configurações"><span aria-hidden="true">⚙️</span></button>
+            <button type="button" class="btn-icon" id="btnLogout" aria-label="Sair do sistema" title="Sair do Sistema"><span aria-hidden="true">🚪</span></button>
         </div>
         <div id="apiStatus" class="api-status checking" role="status" aria-live="polite">Verificando conexão</div>
     </header>
 
+    <main id="main">
     <div class="calendar-nav">
         <div class="month-title">MAIO</div>
-        <div class="week-tabs" id="tabs">
-            <div class="tab" data-dia="seg">Segunda</div>
-            <div class="tab" data-dia="ter">Terça</div>
-            <div class="tab" data-dia="qua">Quarta</div>
-            <div class="tab active" data-dia="qui">Quinta</div>
-            <div class="tab" data-dia="sex">Sexta</div>
-            <div class="tab" data-dia="sab">Sábado</div>
-            <div class="tab" data-dia="dom">Domingo</div>
+        <div class="week-tabs" id="tabs" role="tablist" aria-label="Dias da semana">
+            <div class="tab" data-dia="seg" role="tab" tabindex="-1" aria-selected="false">Segunda</div>
+            <div class="tab" data-dia="ter" role="tab" tabindex="-1" aria-selected="false">Terça</div>
+            <div class="tab" data-dia="qua" role="tab" tabindex="-1" aria-selected="false">Quarta</div>
+            <div class="tab active" data-dia="qui" role="tab" tabindex="0" aria-selected="true">Quinta</div>
+            <div class="tab" data-dia="sex" role="tab" tabindex="-1" aria-selected="false">Sexta</div>
+            <div class="tab" data-dia="sab" role="tab" tabindex="-1" aria-selected="false">Sábado</div>
+            <div class="tab" data-dia="dom" role="tab" tabindex="-1" aria-selected="false">Domingo</div>
         </div>
         <div class="kac-inline-1d6d9e5b9f">
             <button class="btn-outline kac-inline-21349d3fb7" id="btnOpenDashboard">📊 ABRIR DASHBOARD</button>
@@ -76,6 +75,21 @@
         <div id="cardsContainer" class="kac-inline-d2288b8be9" tabindex="-1" aria-label="Agenda de visitas"></div>
     </div>
 
+    </main>
+    <nav class="bottom-nav" aria-label="Navegação principal">
+        <button type="button" data-nav="agenda"><span aria-hidden="true">📅</span> Agenda</button>
+        <button type="button" data-nav="search"><span aria-hidden="true">🔍</span> Buscar</button>
+        <button type="button" data-nav="new" class="bn-primary"><span aria-hidden="true">＋</span> Nova visita</button>
+        <details class="bn-more">
+            <summary><span aria-hidden="true">☰</span> Mais</summary>
+            <div class="bn-menu">
+                <button type="button" data-nav="dashboard">Dashboard</button>
+                <button type="button" data-nav="pdf">Exportar PDF do turno</button>
+                <button type="button" data-nav="config">Configurações</button>
+                <button type="button" data-nav="logout">Sair</button>
+            </div>
+        </details>
+    </nav>
     <!-- ====== MODAL DE CADASTRO ====== -->
     <komodo-modal id="mainModalOverlay" title="CADASTRO RESIDENCIAL">
         <div id="modalContent">
@@ -90,12 +104,12 @@
                 <form id="form-visitante" data-prevent-submit="true">
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Nome do Visitante</label>
-                        <input aria-label="Nome" type="text" class="form-control" data-field="nome" placeholder="Ex: Carlos Silva">
+                        <label for="resF1">Nome do Visitante</label>
+                        <input id="resF1" aria-label="Nome" type="text" class="form-control" data-field="nome" placeholder="Ex: Carlos Silva">
                     </div>
                     <div class="form-group kac-inline-cd7e46ee9c">
-                        <label>Documento</label>
-                        <input aria-label="Documento (RG ou CPF)" type="text" class="form-control" data-field="doc" placeholder="RG ou CPF">
+                        <label for="resF2">Documento</label>
+                        <input id="resF2" aria-label="Documento (RG ou CPF)" type="text" class="form-control" data-field="doc" placeholder="RG ou CPF">
                     </div>
                 </div>
 
@@ -113,14 +127,15 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Unidade de Destino</label>
-                    <input aria-label="Unidade" type="text" class="form-control" data-field="unidade" placeholder="Ex: Bloco A - Apt 304 ou Casa 12">
+                    <label for="resF3">Unidade de Destino</label>
+                    <input id="resF3" aria-label="Unidade" type="text" class="form-control" data-field="unidade" placeholder="Ex: Bloco A - Apt 304 ou Casa 12">
                 </div>
 
                 <!-- PLACA VISITANTE -->
-                <div class="form-group">
+                <details class="opt-section"><summary>Veículo (opcional)</summary>
+            <div class="form-group">
                     <div class="label-row">
-                        <label>Veículo do Visitante</label>
+                        <label for="resP101">Veículo do Visitante</label>
                         <div class="btn-toggle-group" data-group="veiculoVis">
                             <span class="kac-inline-d3ce392dae">selecionar</span>
                             <button class="btn-toggle active" type="button" data-val="Carro" data-target="Vis">Carro</button>
@@ -141,19 +156,22 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <input aria-label="Placa do veículo" type="text" class="form-control" data-field="placa" placeholder="Placa (Ex: ABC-1234)" data-uppercase="true">
+                        <input id="resP101" aria-label="Placa do veículo" type="text" class="form-control" data-field="placa" placeholder="Placa (Ex: ABC-1234)" data-uppercase="true">
                         <input aria-label="Cor do veículo" type="text" class="form-control kac-inline-61f874a6fe" data-field="cor" placeholder="Cor (Ex: Preto)">
                     </div>
                 </div>
+            </details>
 
                 <!-- ACOMPANHANTE VISITANTE -->
-                <div class="form-group">
-                    <label>Acompanhantes</label>
-                    <input aria-label="Acompanhantes" type="text" class="form-control" data-field="acompanhantes" placeholder="Qtd ou Nome dos Acompanhantes (Deixe vazio se 0)">
+                <details class="opt-section"><summary>Acompanhante (opcional)</summary>
+            <div class="form-group">
+                    <label for="resF4">Acompanhantes</label>
+                    <input id="resF4" aria-label="Acompanhantes" type="text" class="form-control" data-field="acompanhantes" placeholder="Qtd ou Nome dos Acompanhantes (Deixe vazio se 0)">
                 </div>
+            </details>
                 <div class="form-group">
                     <div class="label-row">
-                        <label>Veículo do Acompanhante</label>
+                        <label for="resP102">Veículo do Acompanhante</label>
                         <div class="btn-toggle-group" data-group="veiculoVisAcomp">
                             <span class="kac-inline-d3ce392dae">selecionar</span>
                             <button class="btn-toggle active" type="button" data-val="Carro" data-target="VisAcomp">Carro</button>
@@ -173,14 +191,14 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <input aria-label="Placa do acompanhante" type="text" class="form-control" data-field="placaAcomp" placeholder="Placa do Acompanhante" data-uppercase="true">
+                        <input id="resP102" aria-label="Placa do acompanhante" type="text" class="form-control" data-field="placaAcomp" placeholder="Placa do Acompanhante" data-uppercase="true">
                         <input aria-label="Cor do veículo do acompanhante" type="text" class="form-control kac-inline-61f874a6fe" data-field="corAcomp" placeholder="Cor (Ex: Prata)">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Observação / Motivo</label>
-                    <textarea class="form-control" data-field="observacao" placeholder="Ex: Encanador autorizado pelo morador da casa 12..."></textarea>
+                    <label for="resF5">Observação / Motivo</label>
+                    <textarea id="resF5" class="form-control" data-field="observacao" placeholder="Ex: Encanador autorizado pelo morador da casa 12..."></textarea>
                 </div>
                 </form>
             </div>
@@ -190,23 +208,23 @@
                 <form id="form-morador" data-prevent-submit="true">
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Nome do Morador</label>
-                        <input aria-label="Nome" type="text" class="form-control" data-field="nome" placeholder="Ex: Roberto Almeida">
+                        <label for="resF6">Nome do Morador</label>
+                        <input id="resF6" aria-label="Nome" type="text" class="form-control" data-field="nome" placeholder="Ex: Roberto Almeida">
                     </div>
                     <div class="form-group kac-inline-cd7e46ee9c">
-                        <label>Documento</label>
-                        <input aria-label="Documento (RG ou CPF)" type="text" class="form-control" data-field="doc" placeholder="RG ou CPF">
+                        <label for="resF7">Documento</label>
+                        <input id="resF7" aria-label="Documento (RG ou CPF)" type="text" class="form-control" data-field="doc" placeholder="RG ou CPF">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Unidade (Bloco/Apt ou Lote)</label>
-                        <input aria-label="Unidade" type="text" class="form-control" data-field="unidade" placeholder="Ex: Bloco A - Apt 102">
+                        <label for="resF8">Unidade (Bloco/Apt ou Lote)</label>
+                        <input id="resF8" aria-label="Unidade" type="text" class="form-control" data-field="unidade" placeholder="Ex: Bloco A - Apt 102">
                     </div>
                     <div class="form-group">
-                        <label>Parentesco</label>
-                        <select aria-label="Parentesco" class="form-control kac-inline-675d68a2c1" data-field="parentesco">
+                        <label for="resF9">Parentesco</label>
+                        <select id="resF9" aria-label="Parentesco" class="form-control kac-inline-675d68a2c1" data-field="parentesco">
                             <option value="Titular">Titular</option>
                             <option value="Cônjuge">Cônjuge</option>
                             <option value="Filho(a)">Filho(a)</option>
@@ -216,9 +234,10 @@
                 </div>
 
                 <!-- PLACA MORADOR -->
-                <div class="form-group">
+                <details class="opt-section"><summary>Veículo (opcional)</summary>
+            <div class="form-group">
                     <div class="label-row">
-                        <label>Veículo Autorizado</label>
+                        <label for="resP103">Veículo Autorizado</label>
                         <div class="btn-toggle-group" data-group="veiculoMor">
                             <span class="kac-inline-d3ce392dae">selecionar</span>
                             <button class="btn-toggle active" type="button" data-val="Carro" data-target="Mor">Carro</button>
@@ -238,19 +257,22 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <input aria-label="Placa do veículo" type="text" class="form-control" data-field="placa" placeholder="Placa (Ex: DEF-5678)" data-uppercase="true">
+                        <input id="resP103" aria-label="Placa do veículo" type="text" class="form-control" data-field="placa" placeholder="Placa (Ex: DEF-5678)" data-uppercase="true">
                         <input aria-label="Cor do veículo" type="text" class="form-control kac-inline-61f874a6fe" data-field="cor" placeholder="Cor (Ex: Preto)">
                     </div>
                 </div>
+            </details>
 
                 <!-- ACOMPANHANTE MORADOR -->
-                <div class="form-group">
-                    <label>Acompanhantes</label>
-                    <input aria-label="Acompanhantes" type="text" class="form-control" data-field="acompanhantes" placeholder="Qtd ou Nome dos Acompanhantes (Deixe vazio se 0)">
+                <details class="opt-section"><summary>Acompanhante (opcional)</summary>
+            <div class="form-group">
+                    <label for="resF10">Acompanhantes</label>
+                    <input id="resF10" aria-label="Acompanhantes" type="text" class="form-control" data-field="acompanhantes" placeholder="Qtd ou Nome dos Acompanhantes (Deixe vazio se 0)">
                 </div>
+            </details>
                 <div class="form-group">
                     <div class="label-row">
-                        <label>Veículo do Acompanhante</label>
+                        <label for="resP104">Veículo do Acompanhante</label>
                         <div class="btn-toggle-group" data-group="veiculoMorAcomp">
                             <span class="kac-inline-d3ce392dae">selecionar</span>
                             <button class="btn-toggle active" type="button" data-val="Carro" data-target="MorAcomp">Carro</button>
@@ -270,7 +292,7 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <input aria-label="Placa do acompanhante" type="text" class="form-control" data-field="placaAcomp" placeholder="Placa do Acompanhante" data-uppercase="true">
+                        <input id="resP104" aria-label="Placa do acompanhante" type="text" class="form-control" data-field="placaAcomp" placeholder="Placa do Acompanhante" data-uppercase="true">
                         <input aria-label="Cor do veículo do acompanhante" type="text" class="form-control kac-inline-61f874a6fe" data-field="corAcomp" placeholder="Cor (Ex: Prata)">
                     </div>
                 </div>
@@ -278,6 +300,7 @@
             </div>
 
             <!-- ================= CÂMERA GLOBAL ================= -->
+            <details class="opt-section"><summary>Foto (opcional)</summary>
             <div class="form-group kac-inline-54d32d80db">
                 <div class="photo-box" id="photoBox">📷 + Adicionar Foto (Webcam ou Arquivo)</div>
                 <input type="file" id="fileUploader" accept="image/*" capture="environment" class="kac-inline-c8be1ccba6">
@@ -299,6 +322,7 @@
                     </div>
                 </div>
             </div>
+            </details>
 
             <div class="modal-actions">
                 <button type="button" class="btn-cancel" id="btnCancelar">Cancelar</button>
@@ -312,16 +336,17 @@
         <div class="modal-content kac-inline-1f985d32be">
             <div class="modal-title kac-inline-2dd6ad922a">⚙️ KLA - CONFIGURAÇÃO</div>
             <div class="form-group">
-                <label>Provedor de IA (gerenciado no servidor)</label>
+                <label for="configAiProvider">Provedor de IA (gerenciado no servidor)</label>
                 <select aria-label="Provedor de IA" id="configAiProvider" class="form-control kac-inline-7c0f2718b2" disabled>
                     <option value="groq">Groq (proxy seguro do servidor)</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Chave de IA — gerenciada no servidor (não inserir no navegador)</label>
+                <label for="configApiKey">Chave de IA — gerenciada no servidor (não inserir no navegador)</label>
                 <input aria-label="Chave da API de IA" type="password" id="configApiKey" class="form-control kac-inline-8eace7f643" placeholder="Configurada apenas no servidor" disabled readonly>
             </div>
             <div class="modal-actions kac-inline-0db319c0e8">
+                <label class="fx-toggle"><input type="checkbox" id="fxToggle"> Fundo animado (gasta mais bateria)</label>
                 <button type="button" class="btn-cancel" data-action="close-config" data-target="configModalOverlay">Fechar</button>
                 <button type="button" class="btn-gold" id="btnSaveConfig">Salvar Config</button>
             </div>
@@ -356,11 +381,11 @@
     </div>
 
     <!-- KOMODO AI ASSISTANT -->
-    <button type="button" class="btn-floating-ai" id="btnToggleAi">🤖</button>
+    <button type="button" class="btn-floating-ai" id="btnToggleAi" aria-label="Abrir assistente de IA"><span aria-hidden="true">🤖</span></button>
     <div class="ai-panel" id="aiPanel">
         <div class="ai-header">
             <div class="ai-title">🤖 KOMODO AI</div>
-            <button class="ai-close" id="btnCloseAi">✖</button>
+            <button class="ai-close" id="btnCloseAi" aria-label="Fechar assistente"><span aria-hidden="true">✖</span></button>
         </div>
         <div class="ai-body" id="chat-messages">
             <div class="ai-msg bot">Sistemas operantes. O que deseja consultar sobre os moradores e visitantes do condomínio?</div>
@@ -368,7 +393,7 @@
         </div>
         <div class="ai-footer">
             <input aria-label="Pergunta para a IA" type="text" class="ai-input" id="chat-input" placeholder="Pergunte algo à IA..." autocomplete="off">
-            <button class="ai-send" id="btnSendAi">➤</button>
+            <button class="ai-send" id="btnSendAi" aria-label="Enviar pergunta"><span aria-hidden="true">➤</span></button>
         </div>
     </div>
 
@@ -395,6 +420,11 @@
     <script src="src/db/DatabaseService.js"></script>
     <script src="src/services/AuthService.js"></script>
     <script src="src/ui/components/ParticlesEngine.js"></script>
+  <script src="src/ui/KomodoFx.js"></script>
+  <script src="src/ui/LazyVendor.js"></script>
+  <script src="src/ui/DayTabs.js"></script>
+  <script src="src/ui/VisitStatus.js"></script>
+  <script src="src/ui/MobileShell.js"></script>
     
     <script src="src/services/OcrService.js"></script>
     <script src="src/services/PdfExportService.js"></script>

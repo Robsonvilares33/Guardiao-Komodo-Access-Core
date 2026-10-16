@@ -32,7 +32,7 @@ class ApiService {
       if (response.status === 401 && !endpoint.startsWith('/auth/login') && !endpoint.startsWith('/auth/bootstrap')) {
         try { sessionStorage.removeItem('komodo_session'); } catch {}
       }
-      throw new Error(message);
+      const err = new Error(message); err.status = response.status; if (data?.code) err.code = data.code; throw err;
     }
     return data.data;
   }
