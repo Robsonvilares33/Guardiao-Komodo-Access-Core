@@ -1,6 +1,7 @@
 'use strict';
 // Mercado Pago sandbox: tudo com fetch simulado (sem rede, sem chaves reais).
 const test=require('node:test');const assert=require('node:assert/strict');
+delete process.env.MP_SANDBOX_SELLER_ACCESS_TOKEN;delete process.env.MP_SANDBOX_SELLER_PUBLIC_KEY; // isola do ambiente da máquina
 const MP=require('../lib/mercadopago.cjs');const B=require('../lib/billing.cjs');
 const SECRET='s'.repeat(64);const ORG='00000000-0000-4000-8000-000000000001';
 const ENV={MP_TEST_ACCESS_TOKEN:'TEST-123-abc',MP_TEST_PUBLIC_KEY:'TEST-pub-xyz',MP_WEBHOOK_SECRET:SECRET};
