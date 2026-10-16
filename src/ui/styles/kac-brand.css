@@ -70,3 +70,8 @@ html body.gk-paused *{animation-play-state:paused!important}
   .gk-emblem .gk-shine,#gkParticles,.gk-float{display:none!important}
   html body .btn-gold::after{display:none}
 }
+/* v3: admin a 390px — cartão nunca passa da tela; as 4 abas cabem (rolagem horizontal só como reserva) */
+html body main.auth-card{box-sizing:border-box;max-width:100%;min-width:0}
+html body main.auth-card *{min-width:0}
+html body .adm-tabs{max-width:100%;overflow-x:auto;gap:0}
+html body .adm-tabs [role=tab]{flex:1 1 auto;padding:.5rem .35rem;font-size:.9375rem;white-space:nowrap;min-height:48px}
