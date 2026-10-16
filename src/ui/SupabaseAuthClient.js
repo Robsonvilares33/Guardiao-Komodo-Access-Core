@@ -5,6 +5,10 @@
   function b64url(s) { s = String(s).replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return typeof atob === 'function' ? atob(s) : Buffer.from(s, 'base64').toString('binary'); }
   function claims(token) { try { return JSON.parse(b64url(String(token).split('.')[1])); } catch (_) { return null; } }
   function parseHash(hash) { var out = {}; String(hash || '').replace(/^#/, '').split('&').forEach(function (kv) { if (!kv) return; var i = kv.indexOf('='); var k = decodeURIComponent(i < 0 ? kv : kv.slice(0, i)); var v = i < 0 ? '' : decodeURIComponent(kv.slice(i + 1).replace(/\+/g, ' ')); out[k] = v; }); return out; }
+  // GoTrue REST devolve totp.qr_code como SVG cru ("<?xml…<svg…>"), não data URI (o SDK supabase-js é quem prefixa).
+  // Converte para data URI codificado (aceito por img-src data:). Data URI de imagem já pronto passa; qualquer outra coisa → null.
+  function qrSrc(q) { q = String(q || '').trim(); if (/^data:image\/svg\+xml;base64,/i.test(q) || /^data:image\/(png|gif|jpeg);base64,/i.test(q)) return q; var m = /^data:image\/svg\+xml(;[^,]*)?,/i.exec(q); var svg = m ? q.slice(m[0].length) : q; if (m && /%3Csvg/i.test(svg)) { try { svg = decodeURIComponent(svg); } catch (_) { return null; } } if (!/^(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*<svg[\s>]/i.test(svg)) return null; return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); }
+  function groupSecret(s) { return String(s || '').replace(/[^A-Za-z2-7=]/g, '').toUpperCase().replace(/(.{4})(?=.)/g, '$1 '); }
   var KINDS = ['condominio', 'predio', 'comercio', 'portaria', 'outro'];
   function validCnpj(v) { var d = String(v || '').replace(/[.\-\/\s]/g, ''); if (!/^\d{14}$/.test(d) || /^(\d)\1{13}$/.test(d)) return false; function dv(n) { var w = n === 12 ? [5,4,3,2,9,8,7,6,5,4,3,2] : [6,5,4,3,2,9,8,7,6,5,4,3,2]; var s = 0; for (var i = 0; i < n; i++) s += w[i] * Number(d[i]); s = s % 11; return s < 2 ? 0 : 11 - s; } return dv(12) === Number(d[12]) && dv(13) === Number(d[13]); }
   var INVITE_RE = /^[A-Za-z0-9_-]{40,64}$/;
@@ -31,7 +35,9 @@
       async signIn(email, password) { return setSession(await gt('/token?grant_type=password', { method: 'POST', auth: false, body: { email: email, password: password } })); },
       googleUrl(redirectTo) { return cfg.url + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(redirectTo); },
       async factors() { var u = await gt('/user'); return (u.factors || []).filter(function (x) { return x.factor_type === 'totp'; }); },
-      enroll() { return gt('/factors', { method: 'POST', body: { factor_type: 'totp', friendly_name: 'KAC ' + new Date().toISOString().slice(0, 10) } }); },
+      unenroll(factorId) { return gt('/factors/' + encodeURIComponent(factorId), { method: 'DELETE' }); },
+      // Reentrada: remove fatores TOTP não verificados (QR antigo abandonado) antes de cadastrar outro; nome único evita 422 mfa_factor_name_conflict.
+      async enroll() { var fs = await this.factors(); for (var i = 0; i < fs.length; i++) { if (fs[i].status !== 'verified') await this.unenroll(fs[i].id); } var r = await gt('/factors', { method: 'POST', body: { factor_type: 'totp', friendly_name: 'KAC ' + new Date(now()).toISOString().slice(0, 16).replace('T', ' ') + ' ' + Math.random().toString(36).slice(2, 6) } }); var t = r.totp || {}; return { id: r.id, qrSrc: qrSrc(t.qr_code), secret: String(t.secret || ''), uri: /^otpauth:\/\/totp\//.test(String(t.uri || '')) ? t.uri : null }; },
       async verify(factorId, code) { if (!/^\d{6}$/.test(String(code))) throw new Error('Código deve ter 6 dígitos.'); var c = await gt('/factors/' + encodeURIComponent(factorId) + '/challenge', { method: 'POST' }); return setSession(await gt('/factors/' + encodeURIComponent(factorId) + '/verify', { method: 'POST', body: { challenge_id: c.id, code: String(code) } })); },
       link() { return api('/auth/supabase/link', 'POST'); },
       refresh: refresh,
@@ -45,5 +51,5 @@
       async signOut() { if (session) { try { await gt('/logout', { method: 'POST' }); } catch (_) {} } setSession(null); }
     };
   }
-  root.SupabaseAuthClient = { create: create, _util: { claims: claims, parseHash: parseHash, inviteFrom: inviteFrom, validCnpj: validCnpj, KINDS: KINDS } };
+  root.SupabaseAuthClient = { create: create, _util: { qrSrc: qrSrc, groupSecret: groupSecret, claims: claims, parseHash: parseHash, inviteFrom: inviteFrom, validCnpj: validCnpj, KINDS: KINDS } };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -18,3 +18,7 @@ input[type=range]{padding:0;min-height:44px}button:disabled{opacity:.5;cursor:no
 .field-err { display: block; color: #ff6b6b; min-height: 1.1em; }
 #secOnboard select, #secOnboard input:not([type=radio]) { width: 100%; min-height: 44px; }
 #secLoading p { opacity: .8; }
+/* MFA: chave de configuração legível e copiável no celular */
+.mfa-secret { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: .08em; font-size: 1rem; min-height: 44px; }
+.mfa-setup small { display: block; color: #b8c4d6; margin-top: 4px; }
+.mfa-setup a { display: inline-block; min-height: 44px; line-height: 44px; }

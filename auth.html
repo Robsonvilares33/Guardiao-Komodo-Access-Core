@@ -27,6 +27,13 @@
       <h2>Verificação em duas etapas</h2>
       <p id="mfaHint"></p>
       <img id="mfaQr" alt="QR code para o app autenticador" width="200" height="200" hidden>
+      <div id="mfaSetup" class="mfa-setup" hidden>
+        <p><a id="mfaUri" href="#" hidden>Abrir no app autenticador deste celular</a></p>
+        <label for="mfaSecret">Não consegue ler o QR? Digite esta chave no app</label>
+        <input id="mfaSecret" class="mfa-secret" readonly autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="mfaSecretHelp">
+        <small id="mfaSecretHelp">Tipo: baseada em tempo (TOTP), 6 dígitos.</small>
+        <button type="button" id="btnCopySecret" class="sec">Copiar chave</button>
+      </div>
       <form id="formMfa">
         <label for="mfaCode">Código</label><input id="mfaCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>
         <button type="submit">Verificar</button>

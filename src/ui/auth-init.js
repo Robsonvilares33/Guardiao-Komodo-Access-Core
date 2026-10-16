@@ -9,9 +9,10 @@
   function show(id) { ['secLoading', 'secOff', 'secLogin', 'secMfa', 'secReady', 'secNoOrg', 'secOnboard'].forEach(function (s) { $(s).hidden = s !== id; }); var h = $(id).querySelector('h2'); if (h) { h.tabIndex = -1; h.focus(); } }
   function msg(t, bad) { var m = $('authMsg'); m.textContent = t || ''; m.className = bad ? 'auth-msg bad' : 'auth-msg'; }
   async function guard(fn) { msg(''); try { await fn(); } catch (e) { msg(e.message || 'Erro.', true); } }
+  function clearSetup() { var i = $('mfaQr'); i.removeAttribute('src'); i.hidden = true; $('mfaSecret').value = ''; $('mfaSetup').hidden = true; var a = $('mfaUri'); a.removeAttribute('href'); a.hidden = true; }
   async function afterLogin() {
     var fs = await c.factors(); var verified = fs.filter(function (x) { return x.status === 'verified'; });
-    if (c.aal() !== 'aal2' && verified.length) { pendingFactor = verified[0].id; $('mfaQr').hidden = true; $('mfaHint').textContent = 'Digite o código de 6 dígitos do seu app autenticador.'; return show('secMfa'); }
+    if (c.aal() !== 'aal2' && verified.length) { pendingFactor = verified[0].id; clearSetup(); $('mfaHint').textContent = 'Digite o código de 6 dígitos do seu app autenticador.'; return show('secMfa'); }
     $('who').textContent = (c.claims() || {}).email || ''; $('mfaState').textContent = c.aal() === 'aal2' ? 'MFA ativo nesta sessão (aal2).' : 'MFA não configurado. Obrigatório para administradores.';
     $('btnEnroll').hidden = c.aal() === 'aal2'; $('btnInvite').hidden = !invite;
     var st = null; try { st = (await c.me()).data; } catch (_) {}
@@ -30,8 +31,9 @@
     $('formLogin').addEventListener('submit', function (e) { e.preventDefault(); guard(async function () { await c.signIn($('email').value.trim(), $('password').value); $('password').value = ''; await afterLogin(); }); });
     $('btnSignup').addEventListener('click', function () { guard(async function () { await c.signUp($('email').value.trim(), $('password').value, back()); $('password').value = ''; msg('Enviamos um link de confirmação para o seu e-mail.'); }); });
     $('btnGoogle').addEventListener('click', function () { location.assign(c.googleUrl(back())); });
-    $('btnEnroll').addEventListener('click', function () { guard(async function () { var r = await c.enroll(); pendingFactor = r.id; var img = $('mfaQr'); img.src = r.totp.qr_code; img.hidden = false; $('mfaHint').textContent = 'Leia o QR code no app autenticador e digite o código de 6 dígitos.'; show('secMfa'); }); });
-    $('formMfa').addEventListener('submit', function (e) { e.preventDefault(); guard(async function () { await c.verify(pendingFactor, $('mfaCode').value.trim()); $('mfaCode').value = ''; $('mfaQr').removeAttribute('src'); await afterLogin(); }); });
+    $('btnEnroll').addEventListener('click', function () { guard(async function () { var b = $('btnEnroll'); b.disabled = true; var r; try { r = await c.enroll(); } finally { b.disabled = false; } pendingFactor = r.id; var img = $('mfaQr'); if (r.qrSrc) { img.src = r.qrSrc; img.hidden = false; } else { img.removeAttribute('src'); img.hidden = true; } $('mfaSecret').value = U.groupSecret(r.secret); var a = $('mfaUri'); if (r.uri) { a.href = r.uri; a.hidden = false; } else { a.removeAttribute('href'); a.hidden = true; } $('mfaSetup').hidden = !r.secret; $('mfaHint').textContent = r.qrSrc ? 'Leia o QR code no app autenticador (ou digite a chave abaixo) e informe o código de 6 dígitos.' : 'Digite a chave abaixo no app autenticador e informe o código de 6 dígitos.'; show('secMfa'); }); });
+    $('btnCopySecret').addEventListener('click', function () { guard(async function () { var v = $('mfaSecret').value.replace(/\s/g, ''); try { await navigator.clipboard.writeText(v); } catch (_) { $('mfaSecret').focus(); $('mfaSecret').select(); throw new Error('Não foi possível copiar. A chave foi selecionada: copie manualmente.'); } msg('Chave copiada.'); }); });
+    $('formMfa').addEventListener('submit', function (e) { e.preventDefault(); guard(async function () { await c.verify(pendingFactor, $('mfaCode').value.trim()); $('mfaCode').value = ''; clearSetup(); await afterLogin(); }); });
     async function openApp() { var r = await c.openApp(); var d = r.data; try { sessionStorage.setItem('komodo_session', JSON.stringify({ userId: d.user.id, email: d.user.email, role: d.user.role, expiresAt: d.expiresAt })); } catch (_) {} try { sessionStorage.setItem('kac_newlogin', '1'); } catch (_) {} location.assign('index.html'); }
     $('btnOpenApp').addEventListener('click', function () { guard(openApp); });
     $('btnLinkNoOrg').addEventListener('click', function () { guard(async function () { await c.link(); msg('Conta vinculada ao seu usuário atual.'); await afterLogin(); }); });
