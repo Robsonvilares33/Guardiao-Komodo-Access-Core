@@ -6,6 +6,7 @@
     <title>Guardião Komodo - Access Core</title>
     <link rel="stylesheet" href="src/ui/styles/design-tokens.css">
     <link rel="stylesheet" href="src/ui/styles/main.css">
+    <link rel="stylesheet" href="src/ui/styles/kac-theme.css">
     <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials">
     <meta name="theme-color" content="#0d0d0d">
     <link rel="icon" href="/assets/komodo-access-mark.svg" type="image/svg+xml">
@@ -31,17 +32,17 @@
             <div class="logo-container">
                 <img src="assets/komodo-access-mark.svg" alt="Guardião Komodo" class="logo-img">
             </div>
-            <h1 class="header-title">KOMODO ACCESS</h1>
+            <h1 class="header-title">Guardião Komodo</h1>
                 <span id="orgName" class="org-name" hidden></span>
         </div>
         <div class="search-container">
-            <input aria-label="Buscar visitas" type="text" id="globalSearch" class="search-bar" name="search_query_off" placeholder="Busca global de segurança..." autocomplete="new-password">
+            <input aria-label="Buscar visitas" type="text" id="globalSearch" class="search-bar" name="search_query_off" placeholder="Buscar visitante, placa ou documento" autocomplete="new-password">
         </div>
         <div class="kac-inline-b4edaa7885">
             <a href="residencial.html" class="btn-outline">Residencial</a>
-            <button type="button" class="btn-gold" id="btnOpenModal">CLIENTE E VISITA</button>
-            <button type="button" class="btn-icon" id="btnOpenConfig" aria-label="Configurações" title="Configurações"><span aria-hidden="true">⚙️</span></button>
-            <button type="button" class="btn-icon" id="btnLogout" aria-label="Sair do sistema" title="Sair do Sistema"><span aria-hidden="true">🚪</span></button>
+            <button type="button" class="btn-gold" id="btnOpenModal">Nova visita</button>
+            <button type="button" class="btn-icon" id="btnOpenConfig" aria-label="Configurações" title="Configurações"><svg class="kac-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+            <button type="button" class="btn-icon" id="btnLogout" aria-label="Sair do sistema" title="Sair do Sistema"><svg class="kac-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
         </div>
         <div id="apiStatus" class="api-status checking" role="status" aria-live="polite">Verificando conexão</div>
     </header>
@@ -59,21 +60,21 @@
             <div class="tab" data-dia="dom" role="tab" tabindex="-1" aria-selected="false">Domingo</div>
         </div>
         <div class="kac-inline-1d6d9e5b9f">
-            <button class="btn-outline kac-inline-21349d3fb7" id="btnOpenDashboard">📊 ABRIR DASHBOARD</button>
-            <button class="btn-outline kac-inline-1da9facb4d" id="btnExportPDF">📥 EXPORTAR PDF (TURNO)</button>
+            <button class="btn-outline kac-inline-21349d3fb7" id="btnOpenDashboard">Painel</button>
+            <button class="btn-outline kac-inline-1da9facb4d" id="btnExportPDF">Exportar PDF do turno</button>
         </div>
     </div>
 
     <div class="daily-view" id="dailyView">
         <div class="quick-add-module" id="quickAddModule">
-            <div class="quick-add-title">⚡ Agendamento Inteligente</div>
+            <div class="quick-add-title">Agendar rápido</div>
             <div class="quick-add-row">
                 <input aria-label="Horário do agendamento rápido" type="time" class="quick-input" value="09:00" id="quickTime">
                 <div class="kac-inline-2cf2955a81">
                     <input aria-label="Cadastro rápido" type="text" id="quickInput" class="quick-input kac-inline-69d66e5b2e" placeholder="Digite o nome para puxar do Banco de Dados..." autocomplete="off">
                     <div class="autocomplete-dropdown" id="quickDropdown"></div>
                 </div>
-                <button class="btn-gold kac-inline-198dd89477" id="btnQuickAdd">ADD</button>
+                <button class="btn-gold kac-inline-198dd89477" id="btnQuickAdd">Adicionar</button>
             </div>
         </div>
         <div id="cardsContainer" class="kac-inline-d2288b8be9" tabindex="-1" aria-label="Agenda de visitas"></div>
@@ -81,11 +82,11 @@
 
     </main>
     <nav class="bottom-nav" aria-label="Navegação principal">
-        <button type="button" data-nav="agenda"><span aria-hidden="true">📅</span> Agenda</button>
-        <button type="button" data-nav="search"><span aria-hidden="true">🔍</span> Buscar</button>
-        <button type="button" data-nav="new" class="bn-primary"><span aria-hidden="true">＋</span> Nova visita</button>
+        <button type="button" data-nav="agenda"><svg class="kac-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg> Agenda</button>
+        <button type="button" data-nav="search"><svg class="kac-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg> Buscar</button>
+        <button type="button" data-nav="new" class="bn-primary"><svg class="kac-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg> Nova visita</button>
         <details class="bn-more">
-            <summary><span aria-hidden="true">☰</span> Mais</summary>
+            <summary><svg class="kac-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Mais</summary>
             <div class="bn-menu">
                 <button type="button" data-nav="dashboard">Dashboard</button>
                 <button type="button" data-nav="pdf">Exportar PDF do turno</button>

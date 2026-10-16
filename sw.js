@@ -4,9 +4,9 @@
    Sempre REDE PRIMEIRO (HTML, JS e CSS): depois de um deploy nunca serve código velho; o cache só é usado sem conexão.
    Atualização segura: a nova versão espera ("waiting") até o usuário tocar em "Atualizar" (mensagem SKIP_WAITING). */
 'use strict';
-var VERSION = 'kac-shell-2026-10-16-3';
+var VERSION = 'kac-shell-2026-10-16-vi1';
 var SHELL = ['/index.html', '/residencial.html', '/login.html', '/auth.html', '/manifest.webmanifest',
-  '/src/ui/styles/design-tokens.css', '/src/ui/styles/main.css', '/src/ui/styles/login.css', '/src/ui/styles/auth.css',
+  '/src/ui/styles/design-tokens.css', '/src/ui/styles/main.css', '/src/ui/styles/login.css', '/src/ui/styles/auth.css', '/src/ui/styles/kac-theme.css',
   '/src/ui/PwaShell.js', '/assets/icon-192.png', '/assets/icon-512.png', '/assets/komodo-access-mark.svg'];
 var STATIC_RE = /^\/(src|assets|vendor)\/[^?]*\.(js|css|png|svg|webp|woff2?|ico)$/;
 var PAGE_RE = /^\/(index|residencial|login|auth)\.html$|^\/$/;

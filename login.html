@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guardião Komodo - Autenticação</title>
     <link rel="stylesheet" href="src/ui/styles/login.css">
+    <link rel="stylesheet" href="src/ui/styles/kac-theme.css">
     <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials">
     <meta name="theme-color" content="#0d0d0d">
     <link rel="icon" href="/assets/komodo-access-mark.svg" type="image/svg+xml">
@@ -25,25 +26,25 @@
         <div class="login-card">
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="spinner"></div>
-                <div id="loadingLabel" class="kac-inline-40ffa29c3d">AUTENTICANDO...</div>
+                <div id="loadingLabel" class="kac-inline-40ffa29c3d">Entrando…</div>
             </div>
 
             <img src="assets/komodo-access-mark.svg" alt="Logo Guardião Komodo" class="logo-img">
-            <h1 class="login-title">KOMODO CORE</h1>
-            <div class="login-subtitle" id="screenSubtitle">Acesso Restrito / Sovereign KLA</div>
+            <h1 class="login-title">Guardião Komodo</h1>
+            <div class="login-subtitle" id="screenSubtitle">Portaria e controle de acesso</div>
 
             <!-- Tela de LOGIN (mostrada quando já existe administrador cadastrado) -->
             <form id="loginForm" class="kac-inline-c8be1ccba6">
                 <div class="form-group">
-                    <label for="inputEmail">E-mail do Operador</label>
+                    <label for="inputEmail">E-mail</label>
                     <input type="email" id="inputEmail" class="form-control" placeholder="operador@example.com" required autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" aria-describedby="errorMsg">
                 </div>
                 <div class="form-group">
-                    <label for="inputSenha">Senha de Acesso</label>
+                    <label for="inputSenha">Senha</label>
                     <div class="pw-row"><input type="password" id="inputSenha" class="form-control" placeholder="••••••••" required autocomplete="current-password" aria-describedby="errorMsg"><button type="button" class="btn-pw btn-outline" data-pw-toggle="inputSenha" aria-pressed="false" aria-label="Mostrar senha">👁</button></div>
-                    <div class="error-msg" id="errorMsg" role="alert">❌ ACESSO NEGADO: CREDENCIAIS INVÁLIDAS</div>
+                    <div class="error-msg" id="errorMsg" role="alert">E-mail ou senha incorretos. Confira e tente de novo.</div>
                 </div>
-                <button type="submit" class="btn-gold" id="btnLogin">Entrar no Sistema</button>
+                <button type="submit" class="btn-gold" id="btnLogin">Entrar</button>
                 <p id="newLoginLink" hidden><a href="auth.html">Entrar com Google ou com conta nova</a></p>
             </form>
 
@@ -68,7 +69,7 @@
                 <div class="form-group">
                     <label for="bsSenha2">Confirmar Senha</label>
                     <input type="password" id="bsSenha2" class="form-control" placeholder="••••••••" required minlength="8" autocomplete="new-password" aria-describedby="bsErrorMsg">
-                    <div class="error-msg" id="bsErrorMsg" role="alert">❌ Não foi possível criar o administrador.</div>
+                    <div class="error-msg" id="bsErrorMsg" role="alert">Não foi possível criar o administrador.</div>
                 </div>
                 <button type="submit" class="btn-gold" id="btnBootstrap">Criar Administrador</button>
             </form>
