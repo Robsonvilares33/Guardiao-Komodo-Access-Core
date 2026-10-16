@@ -59,3 +59,4 @@ Guardados em `/workspace/backups` (box, pasta 700/arquivos 600) e `C:\Users\yyy\
   1. Variáveis de repositório `KAC_SMOKE_AUTH` / `KAC_SMOKE_A11Y` = `false` (ou apagar) e apagar os 2 secrets.
   2. SQL: `delete from komodo_web_sessions where user_id='user_smoke_ci'; delete from kac_subscriptions where organization_id='53b19a65-0627-41eb-a662-48c2fee0a81a'; delete from komodo_tbl_usuarios where id='user_smoke_ci'; delete from kac_organizations where id='53b19a65-0627-41eb-a662-48c2fee0a81a';` (membros caem em cascata; conferir antes que a org não tem visitas).
   3. Conferir md5 da visita real.
+- 2026-10-16: backup `kac_pre009_*` antes da migração 009 (somente leitura, modo 600, fora do repositório).

@@ -19,3 +19,9 @@ Todas as migrações estão em `docs/master/migrations/` com rollback e são tes
 2. Aplicar 005 → testar o app ao vivo (login, CRUD, agenda) → aplicar 006 → testar → aplicar 007.
 3. Só depois alterar a API para gravar `organization_id` da sessão.
 4. Critério de sucesso: contagens iguais, advisor sem ERROR, E2E OK. Em caso de falha: rollback na ordem inversa.
+
+## 009 — Onboarding guiado de empresa (aplicada em produção em 2026-10-16, ~13:20 BRT)
+- Aditiva: colunas `kind`, `cnpj`, `created_by_auth_user` em `kac_organizations` (nulas nas linhas existentes), índice único parcial `uq_kac_org_created_by_auth` (1 org por conta), função `kac_onboard_org` (SECURITY DEFINER, EXECUTE só `service_role`).
+- Backup prévio: `kac_pre009_*.json` (SHA-256 1a5a626e…cc42f8). Ensaio PGlite sobre o backup: 40/40 (`tests/pglite/prod009-onboarding.mjs`).
+- Verificado após aplicar: md5 de `komodo_acessos` inalterado, contagens iguais (users 2, orgs 2, memberships 2, subscriptions 2, audit 78, history 80), anon/authenticated sem EXECUTE.
+- Rollback: `migrations/009_onboarding_rollback.sql` (apague antes as orgs criadas por onboarding, se houver).

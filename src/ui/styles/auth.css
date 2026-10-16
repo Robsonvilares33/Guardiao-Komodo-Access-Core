@@ -12,3 +12,9 @@ summary{cursor:pointer;margin-top:14px;min-height:44px;line-height:44px}summary:
 .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:600;background:#26334d}.badge.suggest{background:#1f6f43}.badge.review{background:#8a5a00}.badge.discard{background:#7a2530}
 .cands{padding-left:18px}.cands li{margin:4px 0}.row3{display:flex;gap:8px;flex-wrap:wrap}.row3 button{flex:1 1 30%}
 input[type=range]{padding:0;min-height:44px}button:disabled{opacity:.5;cursor:not-allowed}
+/* Onboarding (mobile-first) */
+#secOnboard fieldset { border: 1px solid currentColor; border-radius: 8px; padding: .5rem .75rem; margin: .75rem 0; }
+#secOnboard fieldset label { display: flex; align-items: center; gap: .5rem; min-height: 44px; }
+.field-err { display: block; color: #ff6b6b; min-height: 1.1em; }
+#secOnboard select, #secOnboard input:not([type=radio]) { width: 100%; min-height: 44px; }
+#secLoading p { opacity: .8; }

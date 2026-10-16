@@ -5,6 +5,8 @@
   function b64url(s) { s = String(s).replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return typeof atob === 'function' ? atob(s) : Buffer.from(s, 'base64').toString('binary'); }
   function claims(token) { try { return JSON.parse(b64url(String(token).split('.')[1])); } catch (_) { return null; } }
   function parseHash(hash) { var out = {}; String(hash || '').replace(/^#/, '').split('&').forEach(function (kv) { if (!kv) return; var i = kv.indexOf('='); var k = decodeURIComponent(i < 0 ? kv : kv.slice(0, i)); var v = i < 0 ? '' : decodeURIComponent(kv.slice(i + 1).replace(/\+/g, ' ')); out[k] = v; }); return out; }
+  var KINDS = ['condominio', 'predio', 'comercio', 'portaria', 'outro'];
+  function validCnpj(v) { var d = String(v || '').replace(/[.\-\/\s]/g, ''); if (!/^\d{14}$/.test(d) || /^(\d)\1{13}$/.test(d)) return false; function dv(n) { var w = n === 12 ? [5,4,3,2,9,8,7,6,5,4,3,2] : [6,5,4,3,2,9,8,7,6,5,4,3,2]; var s = 0; for (var i = 0; i < n; i++) s += w[i] * Number(d[i]); s = s % 11; return s < 2 ? 0 : 11 - s; } return dv(12) === Number(d[12]) && dv(13) === Number(d[13]); }
   var INVITE_RE = /^[A-Za-z0-9_-]{40,64}$/;
   function inviteFrom(search) { var m = /[?&]convite=([^&]+)/.exec(String(search || '')); var t = m ? decodeURIComponent(m[1]) : ''; return INVITE_RE.test(t) ? t : null; }
   function create(opts) {
@@ -37,10 +39,11 @@
       createInvite(email, role) { email = String(email || '').trim().toLowerCase(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Promise.reject(new Error('E-mail inválido.')); if (['admin', 'operator', 'viewer'].indexOf(role) < 0) return Promise.reject(new Error('Papel inválido.')); return api('/convites', 'POST', { email: email, role: role }); },
       inviteLink(base, token) { return String(base).replace(/[?#].*$/, '') + '?convite=' + encodeURIComponent(token); },
       me() { return api('/auth/supabase/me', 'GET'); },
+      onboard(o) { o = o || {}; var name = String(o.name || '').trim(); if (name.length < 2 || name.length > 120) return Promise.reject(new Error('Informe o nome da empresa (2 a 120 caracteres).')); if (KINDS.indexOf(o.kind) < 0) return Promise.reject(new Error('Escolha o tipo.')); if (o.cnpj && !validCnpj(o.cnpj)) return Promise.reject(new Error('CNPJ inválido.')); return api('/auth/supabase/onboarding', 'POST', { name: name, kind: o.kind, cnpj: o.cnpj || null, timezone: o.timezone || 'America/Sao_Paulo' }); },
       openApp() { return api('/auth/supabase/session', 'POST', {}); },
       acceptInvite(token) { if (!INVITE_RE.test(String(token))) return Promise.reject(new Error('Convite inválido.')); return api('/convites/aceitar', 'POST', { token: token }); },
       async signOut() { if (session) { try { await gt('/logout', { method: 'POST' }); } catch (_) {} } setSession(null); }
     };
   }
-  root.SupabaseAuthClient = { create: create, _util: { claims: claims, parseHash: parseHash, inviteFrom: inviteFrom } };
+  root.SupabaseAuthClient = { create: create, _util: { claims: claims, parseHash: parseHash, inviteFrom: inviteFrom, validCnpj: validCnpj, KINDS: KINDS } };
 })(typeof window !== 'undefined' ? window : globalThis);

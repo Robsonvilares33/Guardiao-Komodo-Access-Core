@@ -125,7 +125,10 @@ class AuthService {
   }
 
   requireAuth(redirectTo = 'login.html') {
-    if (!this.isAuthenticated()) window.location.href = redirectTo;
+    if (this.isAuthenticated()) return;
+    // Novo login (Fase C): a dica só existe se o flag estava ligado e houve login Supabase nesta aba (tokens ficam só em memória).
+    let hint = false; try { hint = sessionStorage.getItem('kac_newlogin') === '1'; } catch (_) {}
+    window.location.href = hint ? 'auth.html' : redirectTo;
   }
 }
 window.authService = new AuthService();

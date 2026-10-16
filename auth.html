@@ -11,7 +11,8 @@
   <main class="auth-card">
     <h1>Guardião Komodo</h1>
     <p id="authMsg" class="auth-msg" role="status" aria-live="polite"></p>
-    <section id="secOff"><h2>Indisponível</h2><p>Este acesso ainda não está habilitado. Use o <a href="login.html">login atual</a>.</p><p><small id="offDetail"></small></p></section>
+    <section id="secLoading" aria-busy="true"><h2>Carregando…</h2><p>Verificando o acesso.</p></section>
+    <section id="secOff" hidden><h2>Indisponível</h2><p>Este acesso ainda não está habilitado. Use o <a href="login.html">login atual</a>.</p><p><small id="offDetail"></small></p></section>
     <section id="secLogin" hidden>
       <h2>Entrar</h2>
       <form id="formLogin">
@@ -37,11 +38,32 @@
       <ul>
         <li>Recebeu um <strong>convite</strong>? Abra o link do convite e clique em "Aceitar convite".</li>
         <li>Já usa o sistema com e-mail e senha? Entre no <a href="login.html">login atual</a> e depois volte aqui para vincular esta conta.</li>
-        <li>Caso contrário, peça um convite ao administrador da sua empresa.</li>
+        <li>Primeiro acesso de uma empresa nova? Clique em "Criar minha empresa".</li>
       </ul>
+      <button type="button" id="btnCreateOrg">Criar minha empresa</button>
       <button type="button" id="btnInviteNoOrg" hidden>Aceitar convite</button>
       <button type="button" id="btnLinkNoOrg" class="sec">Vincular ao meu usuário atual</button>
       <button type="button" id="btnSignOutNoOrg" class="sec">Sair</button>
+    </section>
+    <section id="secOnboard" hidden>
+      <h2>Criar sua empresa</h2>
+      <p>Você será o <strong>proprietário</strong> (plano Free). Depois, ative a verificação em duas etapas para administrar.</p>
+      <form id="formOnboard" novalidate>
+        <label for="obName">Nome da empresa</label><input id="obName" autocomplete="organization" minlength="2" maxlength="120" required aria-describedby="obNameErr"><small id="obNameErr" class="field-err" aria-live="polite"></small>
+        <fieldset><legend>Tipo</legend>
+          <label><input type="radio" name="obKind" value="condominio" required> Condomínio</label>
+          <label><input type="radio" name="obKind" value="predio"> Prédio</label>
+          <label><input type="radio" name="obKind" value="comercio"> Comércio</label>
+          <label><input type="radio" name="obKind" value="portaria"> Portaria</label>
+          <label><input type="radio" name="obKind" value="outro"> Outro</label>
+          <small id="obKindErr" class="field-err" aria-live="polite"></small>
+        </fieldset>
+        <label for="obCnpj">CNPJ (opcional)</label><input id="obCnpj" inputmode="numeric" autocomplete="off" maxlength="18" placeholder="00.000.000/0000-00" aria-describedby="obCnpjErr"><small id="obCnpjErr" class="field-err" aria-live="polite"></small>
+        <label for="obTz">Fuso horário</label>
+        <select id="obTz"><option value="America/Sao_Paulo" selected>Brasília (America/Sao_Paulo)</option><option value="America/Manaus">Manaus</option><option value="America/Cuiaba">Cuiabá</option><option value="America/Belem">Belém</option><option value="America/Fortaleza">Fortaleza</option><option value="America/Recife">Recife</option><option value="America/Bahia">Salvador</option><option value="America/Porto_Velho">Porto Velho</option><option value="America/Rio_Branco">Rio Branco</option><option value="America/Noronha">Fernando de Noronha</option></select>
+        <button type="submit" id="btnObSubmit">Criar empresa</button>
+        <button type="button" id="btnObCancel" class="sec">Voltar</button>
+      </form>
     </section>
     <section id="secReady" hidden>
       <h2>Conectado</h2>

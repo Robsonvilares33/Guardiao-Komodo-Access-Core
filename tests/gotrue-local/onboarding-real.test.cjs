@@ -1,0 +1,36 @@
+'use strict';
+// Onboarding guiado contra GoTrue REAL local + Mailpit: conta nova verificada → cria empresa → MFA TOTP real → ponte de sessão.
+// A RPC kac_onboard_org é emulada aqui (o SQL real é ensaiado em tests/pglite/prod009-onboarding.mjs). Sem GOTRUE_LOCAL_URL: pulado.
+const test=require('node:test');const assert=require('node:assert/strict');const crypto=require('node:crypto');
+const G=process.env.GOTRUE_LOCAL_URL,MP=process.env.MAILPIT_URL||'http://127.0.0.1:8025';const skip=!G&&'GOTRUE_LOCAL_URL não definido';const realFetch=global.fetch;
+const run=crypto.randomBytes(4).toString('hex');const E=`teste.auditoria.onb.${run}@example.com`;const PW='Teste-Auditoria-'+crypto.randomBytes(6).toString('hex');
+const T={komodo_web_sessions:[],komodo_tbl_usuarios:[],kac_memberships:[],kac_organizations:[],kac_audit_log:[],komodo_acessos:[]};const created=new Set();const rpcArgs=[];
+function res(s,b){return{ok:s<300,status:s,text:async()=>b==null?'':JSON.stringify(b)};}
+function rpc(a){rpcArgs.push(a);if(created.has(a.p_auth_user_id))return{status:'limit_reached'};const ex=T.komodo_tbl_usuarios.find(u=>u.auth_user_id===a.p_auth_user_id);if(ex&&T.kac_memberships.some(m=>m.user_id===ex.id))return{status:'already_member'};
+  const org=crypto.randomUUID();T.komodo_tbl_usuarios.push({id:a.p_new_user_id,email:a.p_email,papel:'admin',auth_user_id:a.p_auth_user_id});T.kac_organizations.push({id:org,name:a.p_name,kind:a.p_kind,plan:'free'});
+  T.kac_memberships.push({organization_id:org,user_id:a.p_new_user_id,role:'owner',created_at:'1'});T.kac_audit_log.push({organization_id:org,action:'org.create'});created.add(a.p_auth_user_id);return{status:'created',organization_id:org,user_id:a.p_new_user_id};}
+const gt=(p,o={})=>realFetch(G+p,{...o,headers:{'Content-Type':'application/json',...(o.headers||{})}});const json=async r=>{const t=await r.text();try{return JSON.parse(t);}catch{return t;}};
+async function mailFor(email){for(let i=0;i<30;i++){const l=await (await realFetch(`${MP}/api/v1/search?query=${encodeURIComponent('to:'+email)}`)).json();for(const m of l.messages||[]){const d=await (await realFetch(`${MP}/api/v1/message/${m.ID}`)).json();const k=(String(d.Text||'')+String(d.HTML||'')).match(/https?:\/\/[^\s"'<>]*verify\?token=[^\s"'<>]*/);if(k)return k[0].replace(/&amp;/g,'&');}await new Promise(r=>setTimeout(r,200));}return null;}
+function b32(s){const A='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let bits='';for(const c of s.replace(/=+$/,'').toUpperCase())bits+=A.indexOf(c).toString(2).padStart(5,'0');const out=[];for(let i=0;i+8<=bits.length;i+=8)out.push(parseInt(bits.slice(i,i+8),2));return Buffer.from(out);}
+function totp(secret){const c=Buffer.alloc(8);c.writeBigUInt64BE(BigInt(Math.floor(Date.now()/30000)));const h=crypto.createHmac('sha1',b32(secret)).update(c).digest();const o=h[19]&15;return String(((h.readUInt32BE(o)&0x7fffffff)%1e6)).padStart(6,'0');}
+let handler;function call(route,{method='GET',body={},bearer}={}){const r={statusCode:0,headers:{},setHeader(k,v){this.headers[k]=v;},end(v){this.body=v;}};const headers={'x-real-ip':'127.0.0.1'};if(bearer)headers.authorization='Bearer '+bearer;return Promise.resolve(handler({method,query:{route:route.split('/')},body,headers},r)).then(()=>({status:r.statusCode,headers:r.headers,body:r.body?JSON.parse(r.body):null}));}
+test.before(()=>{if(skip)return;process.env.SUPABASE_URL='https://local-test.supabase.co';process.env.SUPABASE_SERVICE_ROLE_KEY='local-only-not-a-real-key';process.env.KAC_SUPABASE_AUTH='on';
+  global.fetch=async(url,o={})=>{const u=new URL(url);if(u.hostname!=='local-test.supabase.co')return realFetch(url,o);if(u.pathname.startsWith('/auth/v1/'))return realFetch(G+u.pathname.slice(8)+u.search,o);
+    if(u.pathname.endsWith('/rpc/kac_onboard_org'))return res(200,rpc(JSON.parse(o.body)));const t=u.pathname.split('/').pop(),m=o.method||'GET';const rows=T[t];if(!rows)return res(404,{});const body=o.body?JSON.parse(o.body):null;if(m==='POST'){rows.push(...body);return res(201,null);}
+    const sel=rows.filter(r=>[...u.searchParams].every(([k,v])=>['select','order','limit','and'].includes(k)||!v.startsWith('eq.')||String(r[k])===v.slice(3)));return res(200,sel);};
+  handler=require('../../api/[...route].js');});
+test.after(()=>{global.fetch=realFetch;delete process.env.KAC_SUPABASE_AUTH;delete process.env.SUPABASE_URL;delete process.env.SUPABASE_SERVICE_ROLE_KEY;});
+const S={};
+test('1 conta nova real (signup + link do Mailpit) → me: sem empresa',{skip},async()=>{assert.equal((await gt('/signup',{method:'POST',body:JSON.stringify({email:E,password:PW})})).status,200);const link=await mailFor(E);assert.ok(link);
+  const u=new URL(link);const r=await realFetch(G+u.pathname.replace(/^\/auth\/v1/,'')+u.search,{redirect:'manual'});S.t1=new URLSearchParams((r.headers.get('location')||'').split('#')[1]||'').get('access_token');assert.ok(S.t1);
+  const me=await call('auth/supabase/me',{bearer:S.t1});assert.deepEqual(me.body.data,{linked:false,hasOrg:false,email:E});});
+test('2 onboarding cria empresa (owner/Free) com identidade do GoTrue; 2ª tentativa → 409 limit_reached; CNPJ inválido → 422',{skip},async()=>{
+  assert.equal((await call('auth/supabase/onboarding',{method:'POST',bearer:S.t1,body:{name:'TESTE AUDITORIA Cond',kind:'condominio',cnpj:'11222333000182'}})).status,422);
+  const r=await call('auth/supabase/onboarding',{method:'POST',bearer:S.t1,body:{name:'TESTE AUDITORIA Cond',kind:'condominio',cnpj:'11.222.333/0001-81'}});assert.equal(r.status,201);assert.equal(rpcArgs.at(-1).p_email,E);assert.equal(rpcArgs.at(-1).p_timezone,'America/Sao_Paulo');
+  assert.equal(T.kac_memberships.at(-1).role,'owner');assert.equal(T.kac_organizations.at(-1).plan,'free');
+  const again=await call('auth/supabase/onboarding',{method:'POST',bearer:S.t1,body:{name:'Outra',kind:'outro'}});assert.equal(again.status,409);assert.equal(T.kac_organizations.length,1);});
+test('3 owner sem MFA: me.mfaRequired e /session → 403 mfa_required (nenhum cookie)',{skip},async()=>{const me=await call('auth/supabase/me',{bearer:S.t1});assert.equal(me.body.data.hasOrg,true);assert.equal(me.body.data.mfaRequired,true);
+  const s=await call('auth/supabase/session',{method:'POST',bearer:S.t1});assert.equal(s.status,403);assert.equal(s.body.code,'mfa_required');assert.equal(T.komodo_web_sessions.length,0);});
+test('4 TOTP real (enroll/challenge/verify no GoTrue) → aal2 → /session cria cookie HttpOnly',{skip},async()=>{const H={Authorization:'Bearer '+S.t1};const f=await json(await gt('/factors',{method:'POST',headers:H,body:JSON.stringify({factor_type:'totp',friendly_name:'KAC teste '+run})}));assert.ok(f.id,'GoTrue local aceita MFA: '+JSON.stringify(f).slice(0,120));
+  const ch=await json(await gt(`/factors/${f.id}/challenge`,{method:'POST',headers:H}));const v=await json(await gt(`/factors/${f.id}/verify`,{method:'POST',headers:H,body:JSON.stringify({challenge_id:ch.id,code:totp(f.totp.secret)})}));assert.ok(v.access_token);
+  const me=await call('auth/supabase/me',{bearer:v.access_token});assert.equal(me.body.data.mfaRequired,false);const s=await call('auth/supabase/session',{method:'POST',bearer:v.access_token});assert.equal(s.status,200);assert.match(s.headers['Set-Cookie'],/HttpOnly; SameSite=Strict/);assert.equal(T.komodo_web_sessions.length,1);});
