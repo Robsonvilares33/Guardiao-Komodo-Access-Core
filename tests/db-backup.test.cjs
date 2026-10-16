@@ -7,7 +7,7 @@ test('workflow db-backup: diário, só leitura, guardado por secrets, cifrado, 1
   assert.match(y,/schedule:\r?\n\s+- cron: '17 6 \* \* \*'/);assert.match(y,/permissions:\r?\n\s+contents: read/);
   assert.match(y,/ready=true/);assert.match(y,/steps\.guard\.outputs\.ready == 'true'/);
   assert.match(y,/openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -salt/);assert.match(y,/-pass env:BACKUP_PASSPHRASE/);
-  assert.match(y,/retention-days: 14/);assert.match(y,/rm -f "\$RUNNER_TEMP"\/bk\/\*\.json/);
+  assert.match(y,/retention-days: 14/);assert.match(y,/rm -f "\$RUNNER_TEMP\/bk\/kac_\$STAMP\.json"/);assert.ok(!/rm -f [^\n]*\*\.json/.test(y),"não apagar o manifesto");
   const up=y.slice(y.indexOf('upload-artifact'));assert.ok(!/\/bk\/\*\.json\s*$/m.test(up)&&!/\.json\r?\n/.test(up.replace(/manifest\.json|\.json\.enc(\.sha256)?/g,'')),'artefato só com .enc, .sha256 e manifesto');
   assert.ok(!/echo .*\$\{?(SUPABASE_SERVICE_ROLE_KEY|BACKUP_PASSPHRASE)/.test(y),'nunca ecoa segredos');
 });

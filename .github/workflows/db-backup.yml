@@ -55,7 +55,7 @@ jobs:
           node scripts/backup/restore-check.mjs "$RUNNER_TEMP/bk/kac_$STAMP.json.enc" "$RUNNER_TEMP/bk/kac_$STAMP.manifest.json"
       - name: Apagar texto claro
         if: always() && steps.guard.outputs.ready == 'true'
-        run: rm -f "$RUNNER_TEMP"/bk/*.json
+        run: rm -f "$RUNNER_TEMP/bk/kac_$STAMP.json"   # só o texto claro; o manifesto (sem dados) é publicado
       - name: Publicar artefato CIFRADO (14 dias)
         if: steps.guard.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
