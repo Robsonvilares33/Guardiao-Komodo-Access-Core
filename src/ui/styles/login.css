@@ -455,3 +455,13 @@ html body .kac-inline-65b777e9bf {
 /* Fase D — acessibilidade */
 button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #ffd166;outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.radar-sweep,.bg-ring,#particles-canvas{animation:none!important;transition:none!important}}
+/* UX fase 1 */
+body:not(.kac-fx) #particles-canvas { display: none; }
+body:not(.kac-fx) .radar-sweep, body.kac-fx-paused .radar-sweep { animation: none; }
+.pw-row { display: flex; gap: .5rem; align-items: stretch; }
+.pw-row .form-control { flex: 1; }
+.btn-pw { min-width: 44px; min-height: 44px; }
+.field-err { display: block; min-height: 1.1em; color: #ff8a8a; }
+
+h1.header-title, h1.login-title { margin-top: 0; }
+h1.header-title { margin-bottom: 0; }

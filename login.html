@@ -17,7 +17,7 @@
     <canvas id="particles-canvas"></canvas>
     <div class="hero-overlay"></div>
 
-    <div class="login-wrapper">
+    <main class="login-wrapper">
         <div class="login-card">
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="spinner"></div>
@@ -25,19 +25,19 @@
             </div>
 
             <img src="assets/komodo-access-mark.svg" alt="Logo Guardião Komodo" class="logo-img">
-            <div class="login-title">KOMODO CORE</div>
+            <h1 class="login-title">KOMODO CORE</h1>
             <div class="login-subtitle" id="screenSubtitle">Acesso Restrito / Sovereign KLA</div>
 
             <!-- Tela de LOGIN (mostrada quando já existe administrador cadastrado) -->
             <form id="loginForm" class="kac-inline-c8be1ccba6">
                 <div class="form-group">
-                    <label>E-mail do Operador</label>
-                    <input type="email" id="inputEmail" class="form-control" placeholder="operador@example.com" required autocomplete="off">
+                    <label for="inputEmail">E-mail do Operador</label>
+                    <input type="email" id="inputEmail" class="form-control" placeholder="operador@example.com" required autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" aria-describedby="errorMsg">
                 </div>
                 <div class="form-group">
-                    <label>Senha de Acesso</label>
-                    <input type="password" id="inputSenha" class="form-control" placeholder="••••••••" required>
-                    <div class="error-msg" id="errorMsg">❌ ACESSO NEGADO: CREDENCIAIS INVÁLIDAS</div>
+                    <label for="inputSenha">Senha de Acesso</label>
+                    <div class="pw-row"><input type="password" id="inputSenha" class="form-control" placeholder="••••••••" required autocomplete="current-password" aria-describedby="errorMsg"><button type="button" class="btn-pw btn-outline" data-pw-toggle="inputSenha" aria-pressed="false" aria-label="Mostrar senha">👁</button></div>
+                    <div class="error-msg" id="errorMsg" role="alert">❌ ACESSO NEGADO: CREDENCIAIS INVÁLIDAS</div>
                 </div>
                 <button type="submit" class="btn-gold" id="btnLogin">Entrar no Sistema</button>
                 <p id="newLoginLink" hidden><a href="auth.html">Entrar com Google ou com conta nova</a></p>
@@ -49,29 +49,29 @@
                     Primeiro acesso: crie a conta de administrador do sistema.
                 </div>
                 <div class="form-group">
-                    <label>E-mail do Administrador</label>
-                    <input type="email" id="bsEmail" class="form-control" placeholder="admin@komodo.com" required autocomplete="off">
+                    <label for="bsEmail">E-mail do Administrador</label>
+                    <input type="email" id="bsEmail" class="form-control" placeholder="admin@komodo.com" required autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false">
                 </div>
                 <div class="form-group" id="bootstrapSecretGroup" style="display:none">
-                    <label>Chave de configuração do servidor</label>
+                    <label for="bsBootstrapSecret">Chave de configuração do servidor</label>
                     <input type="password" id="bsBootstrapSecret" class="form-control" autocomplete="off" spellcheck="false">
                     <div class="hint-msg">Informe a chave fornecida pelo administrador do ambiente. Ela não será salva no navegador.</div>
                 </div>
                 <div class="form-group">
-                    <label>Senha (mín. 8 caracteres)</label>
-                    <input type="password" id="bsSenha" class="form-control" placeholder="••••••••" required minlength="8">
+                    <label for="bsSenha">Senha (mín. 8 caracteres)</label>
+                    <input type="password" id="bsSenha" class="form-control" placeholder="••••••••" required minlength="8" autocomplete="new-password">
                 </div>
                 <div class="form-group">
-                    <label>Confirmar Senha</label>
-                    <input type="password" id="bsSenha2" class="form-control" placeholder="••••••••" required minlength="8">
-                    <div class="error-msg" id="bsErrorMsg">❌ Não foi possível criar o administrador.</div>
+                    <label for="bsSenha2">Confirmar Senha</label>
+                    <input type="password" id="bsSenha2" class="form-control" placeholder="••••••••" required minlength="8" autocomplete="new-password" aria-describedby="bsErrorMsg">
+                    <div class="error-msg" id="bsErrorMsg" role="alert">❌ Não foi possível criar o administrador.</div>
                 </div>
                 <button type="submit" class="btn-gold" id="btnBootstrap">Criar Administrador</button>
             </form>
 
             <div class="auth-footer">Guardião Komodo • Komodo Access</div>
         </div>
-    </div>
+    </main>
 
     <!-- Ordem importa: cordova (plugins nativos) -> DB -> Auth -> Partículas -> lógica da tela -->
     <script src="cordova.js"></script>
@@ -79,6 +79,7 @@
     <script src="src/services/ApiService.js"></script>
     <script src="src/services/AuthService.js"></script>
     <script src="src/ui/components/ParticlesEngine.js"></script>
+    <script src="src/ui/KomodoFx.js"></script>
 
     <script src="src/ui/login-init.js"></script>
 </body>

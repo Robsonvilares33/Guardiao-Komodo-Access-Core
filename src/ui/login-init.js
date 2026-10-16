@@ -15,7 +15,9 @@
 
     document.addEventListener('DOMContentLoaded', async function () {
         // Partículas de fundo (motor compartilhado)
-        if (window.KomodoParticles) window.KomodoParticles.init('particles-canvas');
+        if (window.KomodoFx) window.KomodoFx.init('particles-canvas');
+        // Mostrar/ocultar senha (UX fase 1, item 8)
+        document.querySelectorAll('[data-pw-toggle]').forEach(function (b) { b.addEventListener('click', function () { var i = document.getElementById(b.getAttribute('data-pw-toggle')); var show = i.type === 'password'; i.type = show ? 'text' : 'password'; b.setAttribute('aria-pressed', show ? 'true' : 'false'); b.setAttribute('aria-label', show ? 'Ocultar senha' : 'Mostrar senha'); }); });
         if (window.authService.isRemoteMode()) {
             document.getElementById('bsSenha').minLength = 12;
             document.getElementById('bsSenha2').minLength = 12;
