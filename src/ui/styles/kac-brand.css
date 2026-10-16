@@ -1,0 +1,72 @@
+/* KAC Visual Identity v2 — identidade do site guardiao-komodo-web aplicada ao sistema.
+   Paleta: ouro #c2a057 / #dfbe76 / #b59461 · preto #0d0d0d · azul-noite #1a1a2e / #141424 / #34364f · fonte Poppins (auto-hospedada).
+   Efeitos da marca: emblema 3D (perspectiva + inclinação com o dedo/mouse/giroscópio), brilho dourado pulsando,
+   anéis girando, reflexo metálico, partículas douradas (só na entrada) e ícones flutuantes. Tudo desliga com "reduzir movimento". */
+@font-face{font-family:'Poppins';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/poppins-400-latin.woff2) format('woff2')}
+@font-face{font-family:'Poppins';font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/poppins-600-latin.woff2) format('woff2')}
+@font-face{font-family:'Poppins';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/poppins-700-latin.woff2) format('woff2')}
+@font-face{font-family:'Poppins';font-style:normal;font-weight:800;font-display:swap;src:url(/assets/fonts/poppins-800-latin.woff2) format('woff2')}
+:root{
+  --kac-bg:#0d0d0d; --kac-surface:#141424; --kac-surface-2:#1a1a2e; --kac-border:#34364f;
+  --kac-text:#ffffff; --kac-muted:#a0a0a0;
+  --kac-primary:#c2a057; --kac-primary-hover:#dfbe76; --kac-primary-dark:#b59461; --kac-on-primary:#0d0d0d;
+  --kac-gold-grad:linear-gradient(135deg,#c2a057,#b59461); --kac-glass:rgba(194,160,87,.15);
+  --kac-font:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --gold-dark:#b59461; --glass-border:var(--kac-glass);
+}
+html body{background:radial-gradient(ellipse at 30% 0%,rgba(194,160,87,.07),transparent 55%),radial-gradient(ellipse at 80% 100%,rgba(52,54,79,.35),transparent 60%),#0d0d0d fixed;letter-spacing:0}
+html body h1,html body h2,html body .header-title,html body .login-title,html body .month-title{font-weight:800;letter-spacing:-.3px}
+html body .login-title,html body .auth-brand h1{background:linear-gradient(180deg,#f3dfa8,#c2a057 60%,#9c7b3e);-webkit-background-clip:text;background-clip:text;color:transparent}
+/* Botão dourado do site (gradiente + reflexo que atravessa) */
+html body .btn-gold,html body button.primary,html body .bn-primary,html body .auth-card button:not(.sec):not(.danger):not([role=tab]){
+  background:var(--kac-gold-grad)!important;color:var(--kac-on-primary)!important;position:relative;overflow:hidden;
+  transition:transform .4s cubic-bezier(.16,1,.3,1),box-shadow .4s cubic-bezier(.16,1,.3,1)!important}
+html body .btn-gold::after,html body .auth-card button:not(.sec):not(.danger):not([role=tab])::after{content:'';position:absolute;inset:0;left:-100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);transition:left .6s;pointer-events:none}
+html body .btn-gold:hover,html body .auth-card button:not(.sec):not(.danger):not([role=tab]):hover{transform:translateY(-2px)!important;box-shadow:0 12px 40px rgba(194,160,87,.35)!important}
+html body .btn-gold:hover::after,html body .auth-card button:not(.sec):not(.danger):not([role=tab]):hover::after{left:100%}
+html body .btn-outline:hover,html body .auth-card button.sec:hover{border-color:var(--kac-primary);color:var(--kac-primary-hover)}
+/* Cartões de vidro com borda dourada */
+html body .login-card,html body .auth-card,html body .modal-content,html body .quick-add-module{background:linear-gradient(180deg,rgba(26,26,46,.92),rgba(20,20,36,.96))!important;
+  border:1px solid var(--kac-glass)!important;box-shadow:0 20px 60px rgba(0,0,0,.55),0 0 0 1px rgba(194,160,87,.05) inset!important}
+html body header{background:rgba(13,13,13,.88)!important;border:0!important;border-bottom:1px solid rgba(194,160,87,.18)!important;box-shadow:0 4px 30px rgba(0,0,0,.5)!important}
+html body .bottom-nav{background:rgba(13,13,13,.94);border-top:1px solid rgba(194,160,87,.18)}
+html body input:focus,html body select:focus,html body textarea:focus{border-color:var(--kac-primary)!important;box-shadow:0 0 0 3px rgba(194,160,87,.18)}
+html body .visit-card,html body .day-cell,html body .card{border-color:var(--kac-glass)}
+/* ===== Emblema 3D ===== */
+.gk-emblem{position:relative;display:inline-grid;place-items:center;perspective:700px;-webkit-tap-highlight-color:transparent}
+.gk-emblem .gk-tilt{position:relative;transform-style:preserve-3d;transition:transform .25s cubic-bezier(.16,1,.3,1);will-change:transform;
+  transform:rotateX(var(--gk-rx,0deg)) rotateY(var(--gk-ry,0deg))}
+html body .gk-emblem img.logo-img,.gk-emblem img{display:block;transform:translateZ(30px);animation:gkPulse 4s ease-in-out infinite!important;
+  filter:drop-shadow(0 0 22px rgba(194,160,87,.35)) drop-shadow(0 10px 14px rgba(0,0,0,.6))!important;object-fit:contain;background:none}
+.gk-emblem .gk-shine{position:absolute;inset:6% 12%;transform:translateZ(31px);pointer-events:none;border-radius:40% 40% 50% 50%;mix-blend-mode:overlay;
+  background:linear-gradient(105deg,transparent 35%,rgba(255,240,200,.55) 48%,transparent 60%) no-repeat;background-size:250% 100%;animation:gkShine 6s ease-in-out infinite}
+.gk-emblem .gk-ring{position:absolute;border-radius:50%;pointer-events:none;border:1px solid rgba(194,160,87,.2);transform:translateZ(0)}
+.gk-emblem .gk-r1{width:128%;height:128%;border-style:dashed;border-color:rgba(194,160,87,.28);animation:gkRing 25s linear infinite}
+.gk-emblem .gk-r2{width:152%;height:152%;border-color:rgba(194,160,87,.16);animation:gkRing 35s linear infinite reverse}
+.gk-emblem .gk-r3{width:176%;height:176%;border-style:dotted;border-color:rgba(194,160,87,.14);animation:gkRing 50s linear infinite}
+.gk-emblem.gk-sm .gk-r2,.gk-emblem.gk-sm .gk-r3{display:none}
+.gk-emblem.gk-sm .gk-r1{width:118%;height:118%}
+@keyframes gkPulse{0%,100%{filter:drop-shadow(0 0 22px rgba(194,160,87,.3)) drop-shadow(0 10px 14px rgba(0,0,0,.6))}50%{filter:drop-shadow(0 0 40px rgba(194,160,87,.55)) drop-shadow(0 10px 14px rgba(0,0,0,.6))}}
+@keyframes gkRing{to{transform:rotate(360deg)}}
+@keyframes gkShine{0%,55%{background-position:150% 0}85%,100%{background-position:-60% 0}}
+/* tamanhos */
+html body .login-card .gk-emblem{margin:18px auto 14px}
+html body .login-card .gk-emblem img{width:150px;height:auto;max-width:none}
+html body .auth-brand{flex-direction:column;text-align:center;gap:10px}
+html body .auth-brand .gk-emblem{margin:20px auto 6px}
+html body .auth-brand .gk-emblem img{width:120px;height:auto}
+html body header .gk-emblem img.logo-img{width:46px;height:auto;filter:drop-shadow(0 2px 8px rgba(194,160,87,.4))!important}
+/* partículas da entrada e ícones flutuantes */
+#gkParticles{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.gk-float{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.gk-float svg{position:absolute;width:30px;height:30px;stroke:#fff;fill:none;stroke-width:1.5;opacity:.07;animation:gkFloat 9s ease-in-out infinite}
+@keyframes gkFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-30px) rotate(8deg)}}
+html body .login-wrapper,html body main.auth-card{position:relative;z-index:1}
+html body.gk-paused *{animation-play-state:paused!important}
+@media (prefers-reduced-motion:reduce){
+  .gk-emblem .gk-tilt{transform:none!important;transition:none!important}
+  .gk-emblem img,.gk-emblem .gk-ring,.gk-emblem .gk-shine,.gk-float svg{animation:none!important}
+  .gk-emblem .gk-shine,#gkParticles,.gk-float{display:none!important}
+  html body .btn-gold::after{display:none}
+}

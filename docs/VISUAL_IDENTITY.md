@@ -36,3 +36,9 @@ SVG de traço 2 px no estilo Lucide, desenhados no próprio HTML, sem dependênc
 
 ## Voz e tom
 Português simples e direto, tratando por "você". Verbos curtos: Entrar, Salvar, Nova visita. Erros dizem o que houve e o que fazer, por exemplo "E-mail ou senha incorretos. Confira e tente de novo.". Nada de "ACESSO NEGADO", "Sovereign" ou "Operador".
+
+## v2 — identidade do site guardiao-komodo-web
+Paleta do site: ouro #c2a057/#dfbe76/#b59461, preto #0d0d0d, azul-noite #1a1a2e/#141424/#34364f, Poppins (auto-hospedada em assets/fonts, latin 400/600/700/800).
+Logo: emblema raster 3D (assets/brand/*.webp). Efeitos (src/ui/KomodoBrand3D.js + src/ui/styles/kac-brand.css): perspectiva + inclinação com dedo/mouse e balanço lento,
+brilho dourado pulsando (4s), 3 anéis girando (25/35/50s), reflexo metálico, botão dourado com reflexo, partículas douradas só nas telas de entrada, ícones flutuantes.
+Tudo desligado com prefers-reduced-motion e pausado com aba oculta. Sem CDN (CSP intacta). Nenhuma lógica alterada.
