@@ -50,3 +50,23 @@ test('login offline: não trava em "Verificando sistema"; avisa e dispara o avis
   assert.match(src('src/services/ApiService.js'),/AbortController/);assert.match(src('src/ui/PwaShell.js'),/\/api\/health/);for(const f of ['main.css','login.css','auth.css'])assert.match(src('src/ui/styles/'+f),/\.pwa-bar\{[^}]*z-index:2147483000/);});
 test('login retoma sessão de cookie numa aba nova (novo login → Abrir o sistema → index direto)',()=>{const js=src('src/ui/login-init.js');assert.match(js,/apiService\.get\('\/auth\/sessao'\)/);});
 test('MFA: QR com falha de carga some e orienta a usar a chave (sem ícone quebrado)',()=>{assert.match(src('src/ui/auth-init.js'),/img\.onerror = function \(\) \{ img\.removeAttribute\('src'\); img\.hidden = true;/);});
+test('MFA (a): [hidden] vence img{display:block} — QR nunca aparece para fator já verificado; QR só fica visível após carregar',()=>{const css=src('src/ui/styles/auth.css');assert.match(css,/\[hidden\]\{display:none!important\}/);
+  const js=src('src/ui/auth-init.js');assert.match(js,/img\.onload = function \(\) \{ if \(img\.naturalWidth > 0\) img\.hidden = false;/);assert.match(js,/img\.hidden = true; if \(r\.qrSrc\) \{ img\.src = r\.qrSrc; \}/);
+  const al=js.slice(js.indexOf('async function afterLogin'),js.indexOf('async function start'));assert.ok(!/enroll/.test(al),'login nunca chama enroll');});
+test('MFA (b): nenhum submit recarrega a página; erro de código explícito em português; botão bloqueia duplo envio',()=>{const js=src('src/ui/auth-init.js');assert.match(js,/document\.addEventListener\('submit', function \(e\) \{ e\.preventDefault\(\); \}, true\)/);assert.match(js,/if \(btn\.disabled\) return; btn\.disabled = true;/);});
+const b64=o=>Buffer.from(JSON.stringify(o)).toString('base64url');const tok=(n,exp)=>'h.'+b64({sub:'u',aal:n,exp})+'.s';
+function mkClient(handlers){delete require.cache[require.resolve('../src/ui/SupabaseAuthClient.js')];require('../src/ui/SupabaseAuthClient.js');let pending=[];const timers={set:(fn)=>{pending.push(fn);return pending.length;},clear:()=>{}};
+  const f=async(url,o={})=>{const k=(o.method||'GET')+' '+new URL(url,'https://x').pathname;const h=handlers[k];if(!h)return {ok:false,status:404,json:async()=>({})};const [st,body]=await h(o);return {ok:st<300,status:st,json:async()=>body};};
+  const c=globalThis.SupabaseAuthClient.create({fetch:f,timers,now:()=>Date.now()});return {c,fire:()=>{const p=pending;pending=[];p.forEach(fn=>fn());}};}
+test('MFA (b): refresh antigo em voo durante o verify NÃO derruba a sessão nova (sem reset silencioso)',async()=>{let releaseRefresh;const exp=Math.floor(Date.now()/1000)+30;
+  const H={'GET /api/auth/supabase/config':async()=>[200,{data:{enabled:true,url:'https://p.supabase.co',anonKey:'a'}}],
+    'POST /auth/v1/token':async(o)=>{const b=JSON.parse(o.body);if(b.refresh_token)return new Promise(r=>{releaseRefresh=()=>r([400,{msg:'Invalid Refresh Token: Already Used'}]);});return [200,{access_token:tok('aal1',exp),refresh_token:'r1'}];},
+    'POST /auth/v1/factors/f1/challenge':async()=>[200,{id:'ch'}],'POST /auth/v1/factors/f1/verify':async()=>[200,{access_token:tok('aal2',exp+3600),refresh_token:'r2'}]};
+  const {c,fire}=mkClient(H);await c.loadConfig();await c.signIn('a@b.c','x');let ev=[];c.onSessionChange(e=>ev.push(e));
+  fire();await new Promise(r=>setTimeout(r,5));await c.verify('f1','123456');releaseRefresh();await new Promise(r=>setTimeout(r,5));
+  assert.deepEqual(ev,[]);assert.equal(c.aal(),'aal2');});
+test('MFA (b): código errado → mensagem clara (status preservado), sessão mantida',async()=>{const exp=Math.floor(Date.now()/1000)+3600;
+  const H={'GET /api/auth/supabase/config':async()=>[200,{data:{enabled:true,url:'https://p.supabase.co',anonKey:'a'}}],'POST /auth/v1/token':async()=>[200,{access_token:tok('aal1',exp),refresh_token:'r1'}],
+    'POST /auth/v1/factors/f1/challenge':async()=>[200,{id:'ch'}],'POST /auth/v1/factors/f1/verify':async()=>[422,{msg:'Invalid TOTP code entered'}]};
+  const {c}=mkClient(H);await c.loadConfig();await c.signIn('a@b.c','x');await assert.rejects(c.verify('f1','000000'),e=>/Código inválido ou expirado/.test(e.message)&&e.status===422);assert.ok(c.session());assert.equal(c.aal(),'aal1');
+  await assert.rejects(c.verify(null,'123456'),/Fator MFA não encontrado/);});
