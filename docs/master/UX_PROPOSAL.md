@@ -89,3 +89,6 @@ Fase 2 (sugerida): itens 5, 6 e 7 (operação de portaria). Fase 3: itens 9 e 10
 - Nada de tokens/dados pessoais em `localStorage`/cache; DOM só via `textContent`; CSP sem script inline.
 - Toda ação nova passa pela API com escopo da org da sessão e auditoria.
 - Funções novas atrás de flag até validação no Preview.
+
+## 5. Backlog (pedidos após a fase 1)
+- **Nome da empresa no cabeçalho após o login** (pedido do Robson, 16/10/2026): mostrar o nome da organização da sessão ao lado do título do app (texto via textContent, truncado com reticências no celular, nome completo em title/aria). Fonte: dado da própria sessão (org da sessão), sem expor outras orgs. Teste: login em 2 orgs diferentes mostra cada nome só na sua sessão; leitor de tela anuncia; 360 px sem quebrar o cabeçalho.
