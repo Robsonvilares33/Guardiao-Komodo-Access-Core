@@ -1,0 +1,33 @@
+name: lgpd-purge
+# INSTALAR: copiar para .github/workflows/lgpd-purge.yml (o token do agente não tem o escopo "workflow"; Robson faz pelo GitHub).
+# LGPD (achado 3): expurgo diário conforme a retenção de cada empresa (padrão 12 meses para visitas/histórico/auditoria;
+# sessões vencidas e tentativas de login com mais de 1 dia). Chama a RPC kac_purge_expired (migração 010) com service_role.
+# Só roda no branch padrão (agendamentos do GitHub) E com a variável de repositório KAC_PURGE_ENABLED=true (ligar só após aplicar a 010).
+# Roda 1 h depois do backup diário, para sempre existir cópia cifrada do dia anterior. Sem custo (GitHub Actions grátis). Nunca imprime segredos.
+on:
+  schedule:
+    - cron: '17 7 * * *'   # 04:17 em São Paulo
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: lgpd-purge
+  cancel-in-progress: false
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: ${{ vars.KAC_PURGE_ENABLED == 'true' }}
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - name: Expurgo (só contagens na saída)
+        run: |
+          set -euo pipefail
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then echo "secrets ausentes — nada feito"; exit 0; fi
+          code=$(curl -sS -o out.json -w '%{http_code}' -X POST "$SUPABASE_URL/rest/v1/rpc/kac_purge_expired" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" -H 'Content-Type: application/json' -d '{}')
+          echo "status=$code"; if [ "$code" != "200" ]; then echo "falhou"; exit 1; fi
+          python3 -c "import json;d=json.load(open('out.json'));print({k:int(d.get(k,0)) for k in ('visits','audit','sessions','attempts')})"
+          rm -f out.json

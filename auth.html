@@ -132,6 +132,13 @@
       <div role="tabpanel" id="pan-seguranca" aria-labelledby="tab-seguranca" hidden>
         <p id="admMfa"></p>
         <p>Membros com o novo login: <strong id="admNewLogin"></strong>. Administradores precisam de MFA (verificação em duas etapas).</p>
+        <h3>Privacidade (LGPD): pedido de um visitante</h3>
+        <form id="formTitular" novalidate>
+          <label for="titNome">Nome completo do visitante</label><input id="titNome" autocomplete="off" maxlength="120">
+          <label for="titPlaca">ou placa</label><input id="titPlaca" autocomplete="off" maxlength="10" autocapitalize="characters">
+          <div class="row3"><button type="submit" id="btnTitExport">Exportar dados</button><button type="button" id="btnTitDelete" class="danger">Apagar dados</button></div>
+          <p class="hint">Exporta ou apaga todas as visitas dessa pessoa nesta empresa. A exclusão é definitiva e fica registrada na auditoria. <a href="privacidade-visitante.html">Aviso ao visitante</a></p>
+        </form>
         <h3>Configurações deste aparelho</h3>
         <p>Efeito de fundo e preferências visuais ficam em <a href="index.html">Configurações do app</a>. Nenhum dado pessoal é guardado offline.</p>
       </div>

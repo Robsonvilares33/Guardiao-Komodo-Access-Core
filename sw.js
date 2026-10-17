@@ -10,7 +10,7 @@ var SHELL = ['/index.html', '/residencial.html', '/login.html', '/auth.html', '/
   '/assets/brand/guardiao-komodo-logo-256.webp', '/assets/brand/guardiao-komodo-logo-128.webp', '/assets/fonts/poppins-400-latin.woff2', '/assets/fonts/poppins-700-latin.woff2',
   '/src/ui/PwaShell.js', '/assets/icon-192.png', '/assets/icon-512.png', '/assets/favicon-64.png', '/assets/komodo-access-mark.svg'];
 var STATIC_RE = /^\/(src|assets|vendor)\/[^?]*\.(js|css|png|svg|webp|woff2?|ico)$/;
-var PAGE_RE = /^\/(index|residencial|login|auth)\.html$|^\/$/;
+var PAGE_RE = /^\/(index|residencial|login|auth|privacidade-visitante)\.html$|^\/$/;
 function cacheable(req, url) {
   if (req.method !== 'GET' || url.origin !== self.location.origin) return false;
   if (url.pathname.indexOf('/api/') === 0 || url.pathname === '/api' || url.pathname === '/sw.js') return false;
