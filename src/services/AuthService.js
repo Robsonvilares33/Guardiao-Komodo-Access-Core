@@ -113,6 +113,7 @@ class AuthService {
   isAuthenticated() { return Boolean(this.getSession()); }
 
   logout() {
+    try { if (window.komodoOffline) window.komodoOffline.clear().catch(() => {}); } catch (_) {} // achado 4: nada fica no aparelho após sair
     const session = this.getSession();
     if (this.isRemoteMode() && session && window.apiService) {
       // Inicia a revogação antes de apagar o token local.
