@@ -60,3 +60,15 @@ Guardados em `/workspace/backups` (box, pasta 700/arquivos 600) e `C:\Users\yyy\
   2. SQL: `delete from komodo_web_sessions where user_id='user_smoke_ci'; delete from kac_subscriptions where organization_id='53b19a65-0627-41eb-a662-48c2fee0a81a'; delete from komodo_tbl_usuarios where id='user_smoke_ci'; delete from kac_organizations where id='53b19a65-0627-41eb-a662-48c2fee0a81a';` (membros caem em cascata; conferir antes que a org não tem visitas).
   3. Conferir md5 da visita real.
 - 2026-10-16: backup `kac_pre009_*` antes da migração 009 (somente leitura, modo 600, fora do repositório).
+
+### Migrations 010 e 011 (aplicadas em 17/10/2026, 18:14 e 18:14 BRT, aprovadas pelo Robson)
+- **Backup pré-010** `kac_pre010_20261017T181325` (cifrado AES-256, sha256 do texto 42fbb174…a2746): foi feito e conferido, mas **se perdeu** quando a box foi substituída logo depois da aplicação. Não existe mais cópia.
+  - Contagens naquele momento: audit_log 117, invites 0, memberships 3, organizations 3, payment_events 0, plans 3, subscriptions 3, visit_history 108, acessos 1, login_attempts 4, usuarios 3, web_sessions 19.
+- **Backup pós-011** `kac_post011_20261017T181731.json.enc` (sha256 do texto c34926e5…be27), guardado em dois lugares:
+  - box: `/workspace/backups`, permissão 600;
+  - PC: `C:\Users\yyy\Documents\kac_backups`.
+  - A chave fica em outra pasta: `C:\Users\yyy\Documents\kac_backup_keys\kac_post011_20261017T181731.key` e `/home/box/.kac_backup_key` (600). Guardar também num cofre de senhas.
+  - Para abrir: `openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in <arquivo>.enc -pass file:<chave>`.
+- **Histórico órfão apagado pela 010:** 108 linhas, todas de visitas já excluídas; a visita real não tinha histórico. 80 delas existem no `kac_pre009_20261016T131733.json`. As 28 mais novas eram do E2E na org de teste e não têm cópia.
+- **md5 das visitas** antes e depois das duas migrations: `cc9fe7b3edad64f6423b865a40a729af`.
+- **Rollback:** `011_rate_limit_indexes_rollback.sql` e depois `010_lgpd_retention_rollback.sql`.

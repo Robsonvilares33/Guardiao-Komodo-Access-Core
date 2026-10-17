@@ -22,7 +22,11 @@ Sem merge na main. Nenhuma env ou flag de produção foi alterada, e as flags co
 | 16 Info | — | RLS sem policy nas tabelas só do servidor é intencional (nega tudo; só o service_role acessa). |
 | Produto | — | `PRODUCT_DESIGN_NEXT.md`: visitantes recorrentes (~3 d), convite por QR (~4–5 d), alerta ao anfitrião (~3 d). |
 
-## Pendente de aprovação do Robson
+## Status das migrations (17/10/2026)
+- **010 e 011:** APLICADAS em produção com a aprovação do Robson (ver `BACKUP_RESTORE.md`). O expurgo NÃO foi executado e o workflow NÃO foi instalado.
+- **012** (`012_history_visit_idx.sql`): PREPARADA, não aplicada. É o índice da FK nova da 010, apontado pelo advisor como INFO. Ensaio no PGlite: PASS.
+
+## Detalhes de cada migration
 ### Migration 010 — LGPD (`010_lgpd_retention.sql`, sha256 e113cc05…)
 - **O que muda:**
   - adiciona `kac_organizations.retention_months` (padrão 12);
