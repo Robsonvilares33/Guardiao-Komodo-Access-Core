@@ -1,0 +1,26 @@
+// Uso: node tests/pglite/mig011-ratelimit.mjs (requer @electric-sql/pglite, dev). Banco descartável. Ensaio 001–010 → 011 → rollback → 011.
+import { PGlite } from '@electric-sql/pglite'; import fs from 'node:fs';
+const R=process.env.KAC_DOCS||new URL('../../docs',import.meta.url).pathname, M=R+'/master/migrations';
+const db=new PGlite(); const out=[]; const ok=(n,c,x='')=>out.push(`${c===true?'PASS':'FAIL'} ${n}${x?' — '+x:''}`);
+const q=async(s)=>(await db.query(s)).rows; const one=async s=>Object.values((await q(s))[0])[0]; const tryq=async s=>{try{await db.exec(s);return true;}catch{return false;}};
+await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;`);
+for(const f of ['proposed_supabase_migration_001.sql','proposed_supabase_migration_002_web_auth.sql','proposed_supabase_migration_003_atomic_auth.sql','proposed_supabase_migration_004_data.sql']) await db.exec(fs.readFileSync(R+'/'+f,'utf8'));
+for(const f of ['005_tenancy.sql','006_visit_history_audit.sql','008_supabase_auth.sql','007_billing.sql','009_onboarding.sql','010_lgpd_retention.sql']) await db.exec(fs.readFileSync(M+'/'+f,'utf8'));
+await db.exec(`INSERT INTO komodo_acessos(id,modulo,dia,hora,nome,status,organization_id) VALUES ('v1','empresarial','seg','09:00','X',0,'00000000-0000-4000-8000-000000000001')`);
+const md5=async()=>one(`select md5(string_agg(t::text,',' order by t.id)) from komodo_acessos t`);const m0=await md5();
+const SQL=fs.readFileSync(M+'/011_rate_limit_indexes.sql','utf8');await db.exec(SQL);ok('011 aplica',true);ok('visitas intactas (md5)',(await md5())===m0);
+const T="'2026-10-17T12:00:10Z'";await db.exec('SET ROLE service_role');
+const hits=[];for(let i=0;i<4;i++)hits.push((await q(`select public.kac_rate_hit('t:abc',60,3,${T}::timestamptz) r`))[0].r);
+ok('3 dentro, a 4ª bloqueada',JSON.stringify(hits)==='[true,true,true,false]',JSON.stringify(hits));
+ok('janela nova zera',(await q(`select public.kac_rate_hit('t:abc',60,3,'2026-10-17T12:01:01Z'::timestamptz) r`))[0].r===true);
+ok('buckets independentes',(await q(`select public.kac_rate_hit('t:xyz',60,3,${T}::timestamptz) r`))[0].r===true);
+ok('bucket inválido recusado',!(await tryq(`select public.kac_rate_hit('x',60,3)`)));
+await db.exec('RESET ROLE');
+await db.exec('SET ROLE service_role');const pr=(await q(`select public.kac_purge_expired(now()+interval '3 days') r`))[0].r;await db.exec('RESET ROLE');
+ok('expurgo da 010 limpa contadores antigos',(await one(`select count(*)::int from kac_rate_hits`))===0,JSON.stringify(pr));
+await db.exec('SET ROLE anon');ok('anon não executa',!(await tryq(`select public.kac_rate_hit('t:abc',60,3)`)));await db.exec('RESET ROLE');
+await db.exec('SET ROLE authenticated');ok('authenticated não lê a tabela',!(await tryq(`select * from kac_rate_hits`)));await db.exec('RESET ROLE');
+const idx=await one(`select count(*)::int from pg_indexes where indexname in ('komodo_web_sessions_user_id_idx','kac_invites_created_by_idx','kac_subscriptions_plan_id_idx')`);ok('3 índices criados',idx===3);
+await db.exec(fs.readFileSync(M+'/011_rate_limit_indexes_rollback.sql','utf8'));ok('rollback remove tudo',(await one(`select count(*)::int from pg_proc where proname='kac_rate_hit'`))===0&&(await one(`select count(*)::int from pg_indexes where indexname like '%_idx' and indexname in ('komodo_web_sessions_user_id_idx','kac_invites_created_by_idx','kac_subscriptions_plan_id_idx')`))===0);
+await db.exec(SQL);await db.exec(SQL);ok('011 reaplica (idempotente)',true);ok('visitas intactas no fim (md5)',(await md5())===m0);
+console.log(out.join('\n'));const f=out.filter(x=>x.startsWith('FAIL')).length;console.log('fail=',f);process.exit(f?1:0);

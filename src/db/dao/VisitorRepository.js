@@ -48,7 +48,17 @@ class VisitorRepository {
     const body = { status: newStatus };
     if (opts.from !== undefined) body.from = opts.from;
     if (opts.undo === true) body.undo = true;
-    if (this._remote()) return window.apiService.put('/visitantes/' + encodeURIComponent(id) + '/status', body);
+    if (this._remote()) {
+      try { return await window.apiService.put('/visitantes/' + encodeURIComponent(id) + '/status', body); }
+      catch (e) {
+        // Achado 4: sem rede → fila cifrada no aparelho; envia sozinho quando a conexão voltar.
+        const off = window.komodoOffline; if (!off || !window.KomodoOffline.isNetworkError(e) || opts.undo === true) throw e;
+        await off.enqueue({ id, status: newStatus, from: opts.from });
+        const ld = this._lastDay; if (ld) { try { await off.patchDay(ld.modulo, ld.k, id, Number(newStatus)); } catch (_) {} }
+        try { window.dispatchEvent(new CustomEvent('kac:offline-queued')); } catch (_) {}
+        return { id, status: Number(newStatus), queued: true };
+      }
+    }
     const status = Number(newStatus);
     if (!Number.isInteger(status) || status < 0 || status > 2) throw new Error('Status inválido.');
     if (opts.from !== undefined) { await window.dbService.init(); const cur = (await window.dbService.query('SELECT status FROM komodo_acessos WHERE id = ?', [id]))[0]; if (cur && Number(cur.status || 0) !== Number(opts.from)) { const e = new Error('Status alterado em outro aparelho.'); e.status = 409; throw e; } }
@@ -60,7 +70,14 @@ class VisitorRepository {
     // API web filtra por dia da semana (seg..dom), não por data ISO completa.
     const day = String(dateString || '').trim().toLowerCase();
     const date = this._dateFor(day);
-    if (this._remote()) return window.apiService.get('/visitantes/' + encodeURIComponent(modulo) + '/' + encodeURIComponent(day) + (date ? '?data=' + date : ''));
+    if (this._remote()) {
+      const off = window.komodoOffline, k = day + ':' + (date || '');
+      try { const rows = await window.apiService.get('/visitantes/' + encodeURIComponent(modulo) + '/' + encodeURIComponent(day) + (date ? '?data=' + date : ''));
+        this._lastDay = { modulo, k };
+        if (off) off.cacheDay(modulo, k, Array.isArray(rows) ? rows : (rows?.data || [])).catch(() => {});
+        return rows; }
+      catch (e) { this._lastDay = { modulo, k }; const cached = off && window.KomodoOffline.isNetworkError(e) ? await off.readDay(modulo, k) : null; if (cached) { cached.offline = true; return cached; } throw e; }
+    }
     const rows = await this._localQuery(modulo);
     return rows.filter(row => row.dia === dateString && (!date || !row.data || row.data === date));
   }
@@ -87,3 +104,11 @@ class VisitorRepository {
   }
 }
 window.VisitorRepository = VisitorRepository;
+
+// Achado 4: ao voltar a conexão (e ao abrir o app), envia a fila offline em ordem; conflitos (409) viram aviso, nada é sobrescrito.
+if (typeof window !== 'undefined' && window.addEventListener) {
+  const kacFlush = async () => { const off = window.komodoOffline; if (!off || !VisitorRepository._remote() || navigator.onLine === false) return;
+    try { const r = await off.flush(op => window.apiService.put('/visitantes/' + encodeURIComponent(op.id) + '/status', op.from === undefined ? { status: op.status } : { status: op.status, from: op.from }));
+      if (r.sent || r.conflicts || r.failed) window.dispatchEvent(new CustomEvent('kac:offline-synced', { detail: r })); } catch (_) {} };
+  window.addEventListener('online', kacFlush); window.addEventListener('load', () => setTimeout(kacFlush, 1500));
+}

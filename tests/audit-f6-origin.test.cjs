@@ -1,0 +1,10 @@
+'use strict';
+// Achado 12: POST/PUT/DELETE de outra origem → 403 antes de qualquer consulta (login CSRF).
+const test=require('node:test');const assert=require('node:assert/strict');
+const orig=global.fetch;process.env.SUPABASE_URL='https://mock-project.supabase.co';process.env.SUPABASE_SERVICE_ROLE_KEY='test-only-not-a-real-key';
+let calls=0;global.fetch=async()=>{calls++;return new Response('[]',{status:200,headers:{'content-type':'application/json'}});};test.after(()=>{global.fetch=orig;});
+const handler=require('../api/[...route].js');const {sameOrigin:so}=handler;
+function call(method,headers,route='auth/login'){return new Promise(ok=>{const res={statusCode:200,headers:{},setHeader(k,v){this.headers[k]=v;},status(c){this.statusCode=c;return this;},json(b){ok({status:this.statusCode,body:b});return this;},end(b){ok({status:this.statusCode,body:b?JSON.parse(b):null});},send(b){ok({status:this.statusCode,body:b});}};handler({method,headers,query:{route:route.split('/')},body:'{"email":"a@x.com","password":"x"}'},res);});}
+test('regra',()=>{const H='kac.vercel.app';assert.equal(so({headers:{host:H}}),true);assert.equal(so({headers:{host:H,origin:'https://kac.vercel.app'}}),true);assert.equal(so({headers:{host:H,origin:'https://evil.example'}}),false);assert.equal(so({headers:{host:H,origin:'null'}}),false);assert.equal(so({headers:{host:H,'sec-fetch-site':'cross-site'}}),false);assert.equal(so({headers:{host:'x',origin:'https://kac.vercel.app','x-forwarded-host':H}}),true);assert.equal(so({headers:{host:H,origin:'https://kac.vercel.app.evil.example'}}),false);});
+test('login de outra origem → 403 sem tocar no banco',async()=>{calls=0;const r=await call('POST',{host:'kac.vercel.app',origin:'https://evil.example','content-type':'text/plain'});assert.equal(r.status,403);assert.equal(r.body.code,'bad_origin');assert.equal(calls,0);});
+test('GET de outra origem não é afetado',async()=>{const r=await call('GET',{host:'kac.vercel.app',origin:'https://evil.example'},'health');assert.equal(r.status,200);});

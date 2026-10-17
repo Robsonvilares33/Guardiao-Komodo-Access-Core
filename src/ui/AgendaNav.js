@@ -63,8 +63,10 @@
       mk('agendaViewFuture', 'Próximos', 'Agendamentos futuros', () => showView('futuro')),
       mk('agendaViewHistory', 'Histórico', 'Registros anteriores', () => showView('historico')));
     const label = el('div', { id: 'agendaViewLabel', className: 'agenda-view-label' });
-    tabs.insertAdjacentElement('afterend', bar);
-    bar.insertAdjacentElement('afterend', label);
+    // Achado 8 (CLS): o espaço já vem reservado no HTML (#agendaNavSlot); sem ele, insere após as abas como antes.
+    const slot = document.getElementById('agendaNavSlot');
+    if (slot) slot.append(bar, label);
+    else { tabs.insertAdjacentElement('afterend', bar); bar.insertAdjacentElement('afterend', label); }
     // Ao clicar numa aba, sincroniza o seletor de data com a semana em exibição.
     tabs.addEventListener('click', e => {
       const t = e.target.closest('.tab'); if (!t) return;

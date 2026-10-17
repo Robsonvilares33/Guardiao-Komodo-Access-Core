@@ -7,9 +7,11 @@
   const KEYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
   const WEEK_ORDER = { seg: 0, ter: 1, qua: 2, qui: 3, sex: 4, sab: 5, dom: 6 };
 
+  // Criar Intl.DateTimeFormat é caro; um por fuso basta.
+  const FMT = {};
+  function fmt(timeZone) { return FMT[timeZone] || (FMT[timeZone] = new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })); }
   function todayParts(now = new Date(), timeZone = TZ) {
-    const parts = new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })
-      .formatToParts(now).reduce((acc, p) => { acc[p.type] = p.value; return acc; }, {});
+    const parts = fmt(timeZone).formatToParts(now).reduce((acc, p) => { acc[p.type] = p.value; return acc; }, {});
     const year = Number(parts.year), month = Number(parts.month), day = Number(parts.day);
     // Data civil pura (UTC ao meio-dia) para fazer aritmética de dias sem efeito de fuso.
     const civil = new Date(Date.UTC(year, month - 1, day, 12));

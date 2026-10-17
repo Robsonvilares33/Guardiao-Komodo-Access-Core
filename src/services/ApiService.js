@@ -23,7 +23,7 @@ class ApiService {
       const ctl = typeof AbortController === 'function' ? new AbortController() : null; const tm = ctl ? setTimeout(() => ctl.abort(), 12000) : null; if (ctl) options.signal = ctl.signal;
       try { response = await fetch(this.baseUrl + endpoint, options); } finally { if (tm) clearTimeout(tm); }
     } catch {
-      throw new Error('Não foi possível conectar ao serviço local. Verifique se ele está iniciado.');
+      const e = new Error('Não foi possível conectar ao serviço local. Verifique se ele está iniciado.'); e.network = true; throw e;
     }
     if (response.status === 204) return null;
     let data;

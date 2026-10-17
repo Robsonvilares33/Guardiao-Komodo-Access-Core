@@ -1,0 +1,76 @@
+/* KAC Visual Identity v1 — proposta (work/visual-identity). Carregado por último em todas as páginas.
+   Uma só paleta, uma só escala de tipo e espaçamento. Não altera lógica. */
+:root{
+  --kac-bg:#0f1115; --kac-surface:#181b21; --kac-surface-2:#22262e; --kac-border:#343a46;
+  --kac-text:#f3f4f6; --kac-muted:#a7adb8;
+  --kac-primary:#d4b26a; --kac-primary-hover:#e2c385; --kac-on-primary:#141414;
+  --kac-success:#34d399; --kac-danger:#f87171; --kac-warning:#fbbf24; --kac-info:#7cb4ff; --kac-focus:#ffd166;
+  --kac-font:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --kac-fs-xs:.8125rem; --kac-fs-sm:.875rem; --kac-fs-md:1rem; --kac-fs-lg:1.25rem; --kac-fs-xl:1.5rem;
+  --kac-sp-1:4px; --kac-sp-2:8px; --kac-sp-3:12px; --kac-sp-4:16px; --kac-sp-6:24px; --kac-sp-8:32px;
+  --kac-r-sm:8px; --kac-r-md:12px; --kac-r-lg:16px; --kac-tap:48px;
+  /* mapeia os tokens antigos para os novos */
+  --gold:var(--kac-primary); --gold-hover:var(--kac-primary-hover); --gold-dark:#b8964f; --dark:var(--kac-bg);
+  --dark-card:var(--kac-surface); --text:var(--kac-text); --text-muted:var(--kac-muted);
+  --glass-border:var(--kac-border); --danger:var(--kac-danger); --success:var(--kac-success); --info:var(--kac-info); --radius:var(--kac-r-md);
+  --komodo-color-primary:var(--kac-primary); --komodo-color-bg:var(--kac-bg); --komodo-color-surface:var(--kac-surface);
+  --komodo-text-main:var(--kac-text); --komodo-text-muted:var(--kac-muted);
+  color-scheme:dark;
+}
+html body{background:var(--kac-bg);color:var(--kac-text);font-family:var(--kac-font);font-size:var(--kac-fs-md);line-height:1.45}
+*{font-family:var(--kac-font)}
+/* Fundo calmo: sem radar/partículas (foco e bateria do tablet) */
+html body #particles-canvas,html body .bg-radar-container,html body .hero-overlay{display:none!important}
+/* Logo: marca + nome, sem pulsar */
+html body .logo-img{animation:none!important;filter:none!important}
+/* Títulos: sentence case, sem caixa alta espaçada */
+html body .header-title,html body .login-title,html body .month-title,html body .modal-title,html body .modal-title-text,html body .quick-add-title{letter-spacing:0!important;text-transform:none!important}
+html body .header-title,html body .login-title{color:var(--kac-text);font-size:var(--kac-fs-lg);font-weight:700}
+html body .login-subtitle{text-transform:none;letter-spacing:0;font-size:var(--kac-fs-sm);color:var(--kac-muted);font-weight:500}
+html body .month-title{font-size:var(--kac-fs-xl);font-weight:700;color:var(--kac-text)}
+html body .form-group label,html body label{text-transform:none!important;letter-spacing:0!important;font-size:var(--kac-fs-sm);color:var(--kac-text);font-weight:600}
+/* Botões: 3 variantes, 48px, sentence case */
+html body .btn-gold,html body button.primary,html body .bn-primary{background:var(--kac-primary)!important;color:var(--kac-on-primary)!important;border:0;border-radius:var(--kac-r-sm);
+  min-height:var(--kac-tap);font-size:var(--kac-fs-md);font-weight:700;text-transform:none!important;letter-spacing:0!important;box-shadow:none!important;transform:none!important}
+html body .btn-gold:hover{background:var(--kac-primary-hover)!important}
+html body .btn-outline,html body .btn-cancel,html body .tab{background:transparent;color:var(--kac-text);border:1px solid var(--kac-border);border-radius:var(--kac-r-sm);
+  min-height:44px;text-transform:none!important;letter-spacing:0!important;font-weight:600;box-shadow:none}
+html body .tab.active,html body .tab[aria-selected=true]{background:var(--kac-primary);color:var(--kac-on-primary);border-color:var(--kac-primary)}
+html body :focus-visible{outline:3px solid var(--kac-focus)!important;outline-offset:2px}
+/* Campos */
+html body input,html body select,html body textarea,html body .form-control,html body .search-bar,html body .quick-input{background:var(--kac-bg);color:var(--kac-text);
+  border:1px solid var(--kac-border);border-radius:var(--kac-r-sm);font-size:var(--kac-fs-md);min-height:var(--kac-tap)}
+html body input::placeholder,html body textarea::placeholder{color:#7d8492}
+/* Superfícies */
+html body .login-card,html body .auth-card,html body .modal-content,html body .quick-add-module,html body header{background:var(--kac-surface)!important;backdrop-filter:none!important;
+  border:1px solid var(--kac-border)!important;box-shadow:0 8px 24px rgba(0,0,0,.35)!important}
+html body .login-card::before{display:none}
+html body .quick-add-module{border-style:solid!important;border-radius:var(--kac-r-lg)}
+/* Mensagens de estado */
+html body .error-msg,html body .auth-msg.bad,html body .field-err{color:var(--kac-danger);text-transform:none;letter-spacing:0;font-size:var(--kac-fs-sm);font-weight:600}
+html body .auth-msg{color:var(--kac-success)}
+html body .api-status{font-size:var(--kac-fs-xs);text-transform:none;letter-spacing:0}
+/* Barra inferior */
+html body .bottom-nav{background:var(--kac-surface);border-top:1px solid var(--kac-border)}
+html body .bottom-nav button,html body .bottom-nav summary{color:var(--kac-muted);font-size:var(--kac-fs-xs);font-weight:600}
+html body .bottom-nav [aria-current=page],html body .bottom-nav button:first-child{color:var(--kac-primary)}
+html body .kac-ico{width:22px;height:22px;display:block;margin:0 auto 2px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+html body .btn-icon .kac-ico{margin:0}
+/* auth.html: mesma identidade (era azul) */
+html body button{border-radius:var(--kac-r-sm)}
+html body .auth-card button{background:var(--kac-primary);color:var(--kac-on-primary);font-weight:700;min-height:var(--kac-tap)}
+html body .auth-card button.sec,html body .adm-tabs [role=tab]{background:transparent;color:var(--kac-text);border:1px solid var(--kac-border)}
+html body .adm-tabs [role=tab]{border:0;border-bottom:3px solid transparent}
+html body .adm-tabs [role=tab][aria-selected=true]{color:var(--kac-primary);border-bottom-color:var(--kac-primary)}
+html body .auth-card button.danger{background:transparent;color:var(--kac-danger);border:1px solid var(--kac-danger)}
+html body a{color:var(--kac-primary)}
+html body .auth-brand{display:flex;align-items:center;gap:var(--kac-sp-3);margin-bottom:var(--kac-sp-4)}
+html body .auth-brand img{width:40px;height:40px;background:none;margin:0}
+/* Onboarding: rádios como cartões tocáveis (antes: bolinha solta à esquerda) */
+html body #secOnboard fieldset{border:1px solid var(--kac-border);border-radius:var(--kac-r-md);display:grid;grid-template-columns:1fr 1fr;gap:var(--kac-sp-2);padding:var(--kac-sp-3)}
+html body #secOnboard fieldset legend{padding:0 var(--kac-sp-1);font-weight:600}
+html body #secOnboard fieldset label{border:1px solid var(--kac-border);border-radius:var(--kac-r-sm);padding:0 var(--kac-sp-3);margin:0;justify-content:flex-start;cursor:pointer}
+html body #secOnboard fieldset label:has(input:checked){border-color:var(--kac-primary);background:rgba(212,178,106,.12)}
+html body #secOnboard input[type=radio]{width:20px;min-height:20px;height:20px;accent-color:var(--kac-primary);margin:0}
+html body .pwa-offline{background:#3b2a0a;color:var(--kac-text);border:1px solid var(--kac-warning)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

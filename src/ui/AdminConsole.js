@@ -53,6 +53,15 @@
       if ($('orgNameErr').textContent || $('orgCnpjErr').textContent) throw new Error('Revise os campos destacados.');
       var b = $('btnOrgSave'); b.disabled = true; var r; try { r = await c.admin('/admin/empresa', 'PUT', data); } finally { b.disabled = false; }
       msg(r.data && r.data.changed && r.data.changed.length ? 'Empresa atualizada.' : 'Nada mudou.'); $('admOrg').textContent = data.name.trim(); }); });
+    // LGPD (achado 3): exportar/apagar dados de um titular. O arquivo é gerado no aparelho (Blob), sem passar por terceiros.
+    function titular() { var n = $('titNome').value.trim(), p = $('titPlaca').value.trim(); if (!n && !p) throw new Error('Informe o nome completo ou a placa.'); return { nome: n || null, placa: p || null }; }
+    $('formTitular').addEventListener('submit', function (e) { e.preventDefault(); guard(async function () {
+      var r = await c.admin('/admin/titular/exportar', 'POST', titular()); var d = r.data || { visits: [] };
+      var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' })); a.download = 'dados-titular.json'; document.body.appendChild(a); a.click(); a.remove();
+      msg((d.visits || []).length + ' visita(s) exportada(s).'); }); });
+    $('btnTitDelete').addEventListener('click', function () { guard(async function () {
+      var t = titular(); if (!root.confirm('Apagar definitivamente todas as visitas de "' + (t.nome || t.placa) + '"? Não dá para desfazer.')) return;
+      var r = await c.admin('/admin/titular/apagar', 'POST', Object.assign(t, { confirmar: true })); msg((r.data && r.data.apagadas || 0) + ' visita(s) apagada(s).'); }); });
     return {
       load: async function () {
         var d = (await c.admin('/admin/resumo')).data; me = d.me; lastAudit = null;
