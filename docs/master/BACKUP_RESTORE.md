@@ -72,3 +72,7 @@ Guardados em `/workspace/backups` (box, pasta 700/arquivos 600) e `C:\Users\yyy\
 - **Histórico órfão apagado pela 010:** 108 linhas, todas de visitas já excluídas; a visita real não tinha histórico. 80 delas existem no `kac_pre009_20261016T131733.json`. As 28 mais novas eram do E2E na org de teste e não têm cópia.
 - **md5 das visitas** antes e depois das duas migrations: `cc9fe7b3edad64f6423b865a40a729af`.
 - **Rollback:** `011_rate_limit_indexes_rollback.sql` e depois `010_lgpd_retention_rollback.sql`.
+
+### Migration 012 (aplicada em 17/10/2026, 18:40 BRT, aprovada pelo Robson)
+- Backup antes da 012: `kac_pre012_20261017T184035.json.enc` (sha256 do texto 6e47cb83…). Está na box em `/workspace/backups` (permissão 600) e no PC em `C:\Users\yyy\Documents\kac_backups`. Cifrado com a mesma chave do backup pós-011, sem arquivo de chave novo.
+- md5 das visitas antes e depois: `cc9fe7b3edad64f6423b865a40a729af`. Índice `kac_visit_history_visit_id_idx` criado. Rollback: `012_history_visit_idx_rollback.sql`.

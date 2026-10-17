@@ -24,7 +24,7 @@ Sem merge na main. Nenhuma env ou flag de produção foi alterada, e as flags co
 
 ## Status das migrations (17/10/2026)
 - **010 e 011:** APLICADAS em produção com a aprovação do Robson (ver `BACKUP_RESTORE.md`). O expurgo NÃO foi executado e o workflow NÃO foi instalado.
-- **012** (`012_history_visit_idx.sql`): PREPARADA, não aplicada. É o índice da FK nova da 010, apontado pelo advisor como INFO. Ensaio no PGlite: PASS.
+- **012** (`012_history_visit_idx.sql`): APLICADA em 17/10 às 18:40 BRT, com aprovação do Robson. É o índice da FK nova da 010, apontado pelo advisor como INFO. Ensaio no PGlite: PASS.
 
 ## Detalhes de cada migration
 ### Migration 010 — LGPD (`010_lgpd_retention.sql`, sha256 e113cc05…)
