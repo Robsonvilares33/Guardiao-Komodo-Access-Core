@@ -51,6 +51,9 @@ async function audit(session,action,entityId,meta={},entity='visit'){try{await d
 async function legacyAdmin(u){if(u.papel==='admin')return true;const m=await db(MEMBERS,{query:`select=role&user_id=eq.${encodeURIComponent(u.id)}`});return (m||[]).some(x=>['owner','admin'].includes(x.role));}
 // Achado 2: apagar visita depende do papel NA EMPRESA (owner/admin). Sem membership (legado puro), vale o papel antigo.
 // Achado 5: só letras, números, espaço e . - / ' @ — vírgula, parênteses, aspas, *, %, _ e \ não chegam ao filtro or() do PostgREST.
+// Achado 12 (CSRF): escrita só da própria origem. Sem Origin (servidor→servidor, webhooks, apps nativos) segue; o navegador sempre manda Origin em POST.
+const WRITE_METHODS=new Set(['POST','PUT','PATCH','DELETE']);
+function sameOrigin(req){const h=req.headers||{};if(String(h['sec-fetch-site']||'')==='cross-site')return false;const o=h.origin;if(o===undefined||o==='')return true;let host;try{host=new URL(String(o)).host.toLowerCase();}catch{return false;}const own=String(h['x-forwarded-host']||h.host||'').split(',')[0].trim().toLowerCase();return !!own&&host===own;}
 function safeSearch(v){return clean(v,80).normalize('NFC').replace(/[^\p{L}\p{N} .\-\/'@]/gu,' ').replace(/\s+/g,' ').trim();}
 function canDeleteVisit(s){return s.orgRole?['owner','admin'].includes(String(s.orgRole)):s.role==='admin';}
 function cookie(token,age,secure){return `kac_session=${token}; HttpOnly; SameSite=Strict; Path=/api; Max-Age=${age}${secure?'; Secure':''}`;}
@@ -84,6 +87,7 @@ async function phaseC(req,res,route,body){
 module.exports=async function handler(req,res){
   res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Cache-Control','no-store');res.setHeader('Pragma','no-cache');
   if(req.method==='OPTIONS'){res.setHeader('Allow','GET,POST,PUT,DELETE,OPTIONS');return reply(res,204,{});}
+  if(WRITE_METHODS.has(req.method)&&!sameOrigin(req))return reply(res,403,{success:false,code:'bad_origin',message:'Origem não permitida.'});
   const part=req.query?.route;const routeValue=Array.isArray(part)?part.join('/'):String(part||'');const route='/'+routeValue.replace(/^\/+|\/+$/g,'');const body=bodyOf(req);const secure=String(req.headers['x-forwarded-proto']||'').split(',')[0].trim()==='https';
   try{
     if(req.method==='GET'&&route==='/health')return reply(res,200,{success:true,data:{status:'online',service:'komodo-access-api',timestamp:new Date().toISOString()}});
@@ -127,4 +131,4 @@ module.exports=async function handler(req,res){
 
 const ADMIN=require('../lib/admin-api.cjs').createAdmin({db,reply,audit,bearerSession,ONB,clean});
 module.exports.clientIp=clientIp;
-module.exports.safeSearch=safeSearch;module.exports._embed=EMBED;module.exports.sessionFor=sessionFor;module.exports.canDeleteVisit=canDeleteVisit;
+module.exports.safeSearch=safeSearch;module.exports.sameOrigin=sameOrigin;module.exports._embed=EMBED;module.exports.sessionFor=sessionFor;module.exports.canDeleteVisit=canDeleteVisit;
