@@ -28,11 +28,22 @@ function clean(v,n=500) { return String(v ?? '').trim().replace(/\s+/g,' ').slic
 function bodyOf(req) { if (req.body && typeof req.body === 'object') return req.body; if (typeof req.body === 'string') { try { return JSON.parse(req.body); } catch {} } return {}; }
 function config() { const url=String(process.env.SUPABASE_URL||'').replace(/\/$/,''); const key=String(process.env.SUPABASE_SERVICE_ROLE_KEY||''); if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)||!key) throw new Error('SERVER_CONFIG'); return {url,key}; }
 async function db(table,{method='GET',query='',body,prefer,actor}={}) { const c=config(); const headers={apikey:c.key,Authorization:`Bearer ${c.key}`,Accept:'application/json'}; if(actor)headers['x-kac-actor']=String(actor).slice(0,80); if(body!==undefined)headers['Content-Type']='application/json'; if(prefer)headers.Prefer=prefer; const r=await fetch(`${c.url}/rest/v1/${table}${query?'?'+query:''}`,{method,headers,body:body===undefined?undefined:JSON.stringify(body)}); const raw=await r.text(); let data=null; try{data=raw?JSON.parse(raw):null;}catch{} if(!r.ok){const e=new Error('DATABASE_ERROR');e.status=r.status;e.code=data?.code;throw e;} return data; }
-async function withOrg(u,extra={}){ const m=await db(MEMBERS,{query:`select=organization_id,role&user_id=eq.${encodeURIComponent(u.id)}&order=created_at.asc&limit=1`}); const org=m?.[0]?.organization_id; return {userId:u.id,email:u.email,role:u.papel||'operador',orgId:UUID_RE.test(String(org||''))?org:null,orgRole:m?.[0]?.role||null,...extra}; }
-async function cookieSession(req) { const token=tokenFrom(req); if(!token)return null; const hash=sha(token); const found=await db(SESSIONS,{query:`select=user_id,expires_at&token_hash=eq.${hash}&limit=1`}); const s=found?.[0]; if(!s||Date.parse(s.expires_at)<=Date.now()){if(s)await db(SESSIONS,{method:'DELETE',query:`token_hash=eq.${hash}`});return null;} const users=await db(USERS,{query:`select=id,email,papel&id=eq.${encodeURIComponent(s.user_id)}&limit=1`}); const u=users?.[0]; return u?withOrg(u,{via:'cookie',expiresAt:Date.parse(s.expires_at)}):null; }
+async function withOrg(u,extra={}){ const m=await db(MEMBERS,{query:`select=organization_id,role&user_id=eq.${encodeURIComponent(u.id)}&order=created_at.asc&limit=1`}); return orgSession(u,m,extra); }
+function orgSession(u,ms,extra={}){ const m=(Array.isArray(ms)?ms.slice():[]).sort((x,y)=>String(x.created_at||'').localeCompare(String(y.created_at||'')))[0]; const org=m?.organization_id; return {userId:u.id,email:u.email,role:u.papel||'operador',orgId:UUID_RE.test(String(org||''))?org:null,orgRole:m?.role||null,...extra}; }
+// Achado 5: sessão + usuário + empresa numa só ida ao banco (embedding do PostgREST pelas FKs existentes, sem migration).
+// Se o embedding falhar (400/PGRST200) cai no caminho antigo de 3 consultas e não tenta de novo nesta instância.
+const EMBED={ok:true}; const USER_EMBED=`id,email,papel,kac_memberships(organization_id,role,created_at)`;
+async function embedded(table,query){ if(!EMBED.ok)return undefined; try{return await db(table,{query});}catch(e){if(e.status===400||e.status===404){EMBED.ok=false;return undefined;}throw e;} }
+async function cookieSession(req) { const token=tokenFrom(req); if(!token)return null; const hash=sha(token);
+  const one=await embedded(SESSIONS,`select=user_id,expires_at,komodo_tbl_usuarios(${USER_EMBED})&token_hash=eq.${hash}&limit=1`);
+  const found=one!==undefined?one:await db(SESSIONS,{query:`select=user_id,expires_at&token_hash=eq.${hash}&limit=1`}); const s=found?.[0];
+  if(!s||Date.parse(s.expires_at)<=Date.now()){if(s)await db(SESSIONS,{method:'DELETE',query:`token_hash=eq.${hash}`});return null;}
+  const extra={via:'cookie',expiresAt:Date.parse(s.expires_at)}; const eu=s.komodo_tbl_usuarios;
+  if(eu&&Array.isArray(eu.kac_memberships))return orgSession(eu,eu.kac_memberships,extra);
+  const users=await db(USERS,{query:`select=id,email,papel&id=eq.${encodeURIComponent(s.user_id)}&limit=1`}); const u=users?.[0]; return u?withOrg(u,extra):null; }
 // Identidade Supabase validada no GoTrue (só com o flag ligado). Exige e-mail verificado.
 async function supabaseIdentity(req){ if(!SA.enabled())return null; const t=SA.bearerFrom(req); if(!t)return null; const c=config(); const id=await SA.verifyAccessToken(t,{url:c.url,key:c.key}); return id&&id.emailVerified?id:null; }
-async function bearerSession(req){ const id=await supabaseIdentity(req); if(!id)return null; const users=await db(USERS,{query:`select=id,email,papel&auth_user_id=eq.${encodeURIComponent(id.authUserId)}&limit=1`}); const u=users?.[0]; if(!u)return null; const s=await withOrg(u,{via:'supabase',aal:id.aal}); s.mfaRequired=SA.mfaRequired(id,{appRole:s.role,orgRole:s.orgRole}); return s; }
+async function bearerSession(req){ const id=await supabaseIdentity(req); if(!id)return null; const q=`auth_user_id=eq.${encodeURIComponent(id.authUserId)}&limit=1`; const one=await embedded(USERS,`select=${USER_EMBED}&${q}`); const users=one!==undefined?one:await db(USERS,{query:`select=id,email,papel&${q}`}); const u=users?.[0]; if(!u)return null; const extra={via:'supabase',aal:id.aal}; const s=Array.isArray(u.kac_memberships)?orgSession(u,u.kac_memberships,extra):await withOrg(u,extra); s.mfaRequired=SA.mfaRequired(id,{appRole:s.role,orgRole:s.orgRole}); return s; }
 async function sessionFor(req) { return (await cookieSession(req)) || (await bearerSession(req)); }
 // Trilha de auditoria (escopo: org da sessão). Falha de auditoria é registrada no log do servidor e não desfaz a operação.
 async function audit(session,action,entityId,meta={},entity='visit'){try{await db(AUDIT,{method:'POST',body:[{organization_id:session.orgId,actor_user_id:session.userId,action,entity,entity_id:entityId,meta}],prefer:'return=minimal'});}catch(e){console.error('Komodo audit error:',e.status||e.message);}}
@@ -116,4 +127,4 @@ module.exports=async function handler(req,res){
 
 const ADMIN=require('../lib/admin-api.cjs').createAdmin({db,reply,audit,bearerSession,ONB,clean});
 module.exports.clientIp=clientIp;
-module.exports.safeSearch=safeSearch;module.exports.canDeleteVisit=canDeleteVisit;
+module.exports.safeSearch=safeSearch;module.exports._embed=EMBED;module.exports.sessionFor=sessionFor;module.exports.canDeleteVisit=canDeleteVisit;
