@@ -20,13 +20,13 @@ html body{background:radial-gradient(ellipse at 30% 0%,rgba(194,160,87,.07),tran
 html body h1,html body h2,html body .header-title,html body .login-title,html body .month-title{font-weight:800;letter-spacing:-.3px}
 html body .login-title,html body .auth-brand h1{background:linear-gradient(180deg,#f3dfa8,#c2a057 60%,#9c7b3e);-webkit-background-clip:text;background-clip:text;color:transparent}
 /* Botão dourado do site (gradiente + reflexo que atravessa) */
-html body .btn-gold,html body button.primary,html body .bn-primary,html body .auth-card button:not(.sec):not(.danger):not([role=tab]){
+html body .btn-gold,html body button.primary,html body .bn-primary,html body .auth-card button:not(.sec):not(.danger):not([role=tab]):not(.pw-eye){
   background:var(--kac-gold-grad)!important;color:var(--kac-on-primary)!important;position:relative;overflow:hidden;
   transition:transform .4s cubic-bezier(.16,1,.3,1),box-shadow .4s cubic-bezier(.16,1,.3,1)!important}
-html body .btn-gold::after,html body .auth-card button:not(.sec):not(.danger):not([role=tab])::after{content:'';position:absolute;inset:0;left:-100%;
+html body .btn-gold::after,html body .auth-card button:not(.sec):not(.danger):not([role=tab]):not(.pw-eye)::after{content:'';position:absolute;inset:0;left:-100%;
   background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);transition:left .6s;pointer-events:none}
-html body .btn-gold:hover,html body .auth-card button:not(.sec):not(.danger):not([role=tab]):hover{transform:translateY(-2px)!important;box-shadow:0 12px 40px rgba(194,160,87,.35)!important}
-html body .btn-gold:hover::after,html body .auth-card button:not(.sec):not(.danger):not([role=tab]):hover::after{left:100%}
+html body .btn-gold:hover,html body .auth-card button:not(.sec):not(.danger):not([role=tab]):not(.pw-eye):hover{transform:translateY(-2px)!important;box-shadow:0 12px 40px rgba(194,160,87,.35)!important}
+html body .btn-gold:hover::after,html body .auth-card button:not(.sec):not(.danger):not([role=tab]):not(.pw-eye):hover::after{left:100%}
 html body .btn-outline:hover,html body .auth-card button.sec:hover{border-color:var(--kac-primary);color:var(--kac-primary-hover)}
 /* Cartões de vidro com borda dourada */
 html body .login-card,html body .auth-card,html body .modal-content,html body .quick-add-module{background:linear-gradient(180deg,rgba(26,26,46,.92),rgba(20,20,36,.96))!important;

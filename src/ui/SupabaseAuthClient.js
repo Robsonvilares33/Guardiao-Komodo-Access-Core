@@ -11,14 +11,31 @@
   function groupSecret(s) { return String(s || '').replace(/[^A-Za-z2-7=]/g, '').toUpperCase().replace(/(.{4})(?=.)/g, '$1 '); }
   var KINDS = ['condominio', 'predio', 'comercio', 'portaria', 'outro'];
   function validCnpj(v) { var d = String(v || '').replace(/[.\-\/\s]/g, ''); if (!/^\d{14}$/.test(d) || /^(\d)\1{13}$/.test(d)) return false; function dv(n) { var w = n === 12 ? [5,4,3,2,9,8,7,6,5,4,3,2] : [6,5,4,3,2,9,8,7,6,5,4,3,2]; var s = 0; for (var i = 0; i < n; i++) s += w[i] * Number(d[i]); s = s % 11; return s < 2 ? 0 : 11 - s; } return dv(12) === Number(d[12]) && dv(13) === Number(d[13]); }
+  // Mensagens do Supabase Auth (GoTrue) em português simples. Usa o código quando existe; senão o texto em inglês; senão um aviso genérico.
+  var GOOGLE_HINT = ' Se você criou a conta com o Google, use "Entrar com Google".';
+  function ptError(status, code, raw) {
+    var c = String(code || '').toLowerCase(), m = String(raw || '');
+    if (c === 'invalid_credentials' || /invalid login credentials/i.test(m)) return 'E-mail ou senha incorretos.' + GOOGLE_HINT;
+    if (c === 'email_not_confirmed' || /email not confirmed/i.test(m)) return 'Seu e-mail ainda não foi confirmado. Abra o link que enviamos para o seu e-mail (veja também o spam) e tente de novo.';
+    if (c === 'user_already_exists' || c === 'email_exists' || /already (been )?registered|already exists/i.test(m)) return 'Este e-mail já tem conta. Use "Entrar" ou "Entrar com Google".';
+    if (c === 'weak_password' || /password should|weak password|password is too/i.test(m)) return 'Senha fraca. Use pelo menos 12 caracteres, misturando letras, números e símbolos, e evite senhas comuns.';
+    if (status === 429 || /^over_.*rate_limit$/.test(c) || /rate limit|too many/i.test(m)) return 'Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente de novo.';
+    if (c === 'signup_disabled' || /signups? not allowed/i.test(m)) return 'O cadastro de novas contas está desativado. Peça um convite ao administrador.';
+    if (c === 'email_address_invalid' || /unable to validate email|invalid format|email address .* invalid/i.test(m)) return 'E-mail inválido. Confira o endereço digitado.';
+    if (c === 'validation_failed' && /password/i.test(m)) return 'Informe a senha.';
+    if (c === 'session_expired' || c === 'session_not_found' || c === 'refresh_token_not_found' || status === 401 || status === 403) return 'Sua sessão expirou. Entre novamente.';
+    if (/[\u00C0-\u00FF]|\b(não|senha|código|tente)\b/i.test(m)) return m;
+    return 'Não foi possível concluir agora. Tente de novo em instantes. Se continuar, use "Entrar com Google" ou fale com o administrador.';
+  }
   var INVITE_RE = /^[A-Za-z0-9_-]{40,64}$/;
   function inviteFrom(search) { var m = /[?&]convite=([^&]+)/.exec(String(search || '')); var t = m ? decodeURIComponent(m[1]) : ''; return INVITE_RE.test(t) ? t : null; }
   function create(opts) {
     opts = opts || {}; var f = opts.fetch || root.fetch.bind(root); var cfg = null; var session = null;
     var timers = opts.timers || { set: function (fn, ms) { return setTimeout(fn, ms); }, clear: function (t) { clearTimeout(t); } }; var now = opts.now || Date.now; var timer = null; var onChange = null;
     function err(r, j) { var e = new Error((j && (j.msg || j.message || j.error_description || j.error)) || ('HTTP ' + r.status)); e.status = r.status; e.code = j && (j.code || j.error_code); return e; }
+    function gtErr(r, j) { var e = err(r, j); e.raw = e.message; e.message = ptError(e.status, e.code, e.raw); return e; }
     async function json(r) { try { return await r.json(); } catch (_) { return null; } }
-    async function gt(path, o) { o = o || {}; var h = { apikey: cfg.anonKey, 'Content-Type': 'application/json' }; if (o.auth !== false && session) h.Authorization = 'Bearer ' + session.access_token; var r = await f(cfg.url + '/auth/v1' + path, { method: o.method || 'GET', headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); var j = await json(r); if (!r.ok) throw err(r, j); return j; }
+    async function gt(path, o) { o = o || {}; var h = { apikey: cfg.anonKey, 'Content-Type': 'application/json' }; if (o.auth !== false && session) h.Authorization = 'Bearer ' + session.access_token; var r = await f(cfg.url + '/auth/v1' + path, { method: o.method || 'GET', headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); var j = await json(r); if (!r.ok) throw gtErr(r, j); return j; }
     async function api(path, method, body) { if (!session) throw new Error('Sem sessão Supabase.'); var r = await f('/api' + path, { method: method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token }, body: body ? JSON.stringify(body) : undefined }); var j = await json(r); if (!r.ok) throw err(r, j); return j; }
     // Renovação automática: agenda refresh 60 s antes do exp do JWT (mín. 5 s). Falha → sessão encerrada (novo login).
     function schedule() { if (timer) { timers.clear(timer); timer = null; } if (!session || !session.refresh_token) return; var c = claims(session.access_token); if (!c || !c.exp) return; var ms = Math.max(5000, c.exp * 1000 - now() - 60000); timer = timers.set(function () { var used = session; refresh().catch(function () { if (session !== used) return; /* sessão já foi trocada (ex.: verify do MFA): ignora a falha do refresh antigo */ setSession(null); if (onChange) onChange('expired'); }); }, ms); }
@@ -52,5 +69,5 @@
       async signOut() { if (session) { try { await gt('/logout', { method: 'POST' }); } catch (_) {} } setSession(null); }
     };
   }
-  root.SupabaseAuthClient = { create: create, _util: { qrSrc: qrSrc, groupSecret: groupSecret, claims: claims, parseHash: parseHash, inviteFrom: inviteFrom, validCnpj: validCnpj, KINDS: KINDS } };
+  root.SupabaseAuthClient = { create: create, _util: { qrSrc: qrSrc, groupSecret: groupSecret, claims: claims, parseHash: parseHash, inviteFrom: inviteFrom, ptError: ptError, validCnpj: validCnpj, KINDS: KINDS } };
 })(typeof window !== 'undefined' ? window : globalThis);

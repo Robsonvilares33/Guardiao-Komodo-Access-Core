@@ -4,9 +4,9 @@
    Sempre REDE PRIMEIRO (HTML, JS e CSS): depois de um deploy nunca serve código velho; o cache só é usado sem conexão.
    Atualização segura: a nova versão espera ("waiting") até o usuário tocar em "Atualizar" (mensagem SKIP_WAITING). */
 'use strict';
-var VERSION = 'kac-shell-2026-10-17-f5';
+var VERSION = 'kac-shell-2026-10-17-f6';
 var SHELL = ['/index.html', '/residencial.html', '/login.html', '/auth.html', '/manifest.webmanifest',
-  '/src/ui/styles/design-tokens.css', '/src/ui/styles/main.css', '/src/ui/styles/login.css', '/src/ui/styles/auth.css', '/src/ui/styles/kac-theme.css', '/src/ui/styles/kac-brand.css', '/src/ui/KomodoBrand3D.js',
+  '/src/ui/styles/design-tokens.css', '/src/ui/styles/main.css', '/src/ui/styles/login.css', '/src/ui/styles/auth.css', '/src/ui/styles/kac-theme.css', '/src/ui/styles/kac-brand.css', '/src/ui/KomodoBrand3D.js', '/src/ui/PasswordToggle.js',
   '/assets/brand/guardiao-komodo-logo-256.webp', '/assets/brand/guardiao-komodo-logo-128.webp', '/assets/fonts/poppins-400-latin.woff2', '/assets/fonts/poppins-700-latin.woff2',
   '/src/ui/PwaShell.js', '/src/ui/AuthGate.js', '/src/bundle/agenda.bundle.js', '/src/bundle/residencial.bundle.js', '/assets/icon-192.png', '/assets/icon-512.png', '/assets/favicon-64.png', '/assets/komodo-access-mark.svg'];
 var STATIC_RE = /^\/(src|assets|vendor)\/[^?]*\.(js|css|png|svg|webp|woff2?|ico)$/;

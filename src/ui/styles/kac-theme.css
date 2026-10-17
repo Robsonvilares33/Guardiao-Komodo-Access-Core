@@ -74,3 +74,13 @@ html body #secOnboard fieldset label:has(input:checked){border-color:var(--kac-p
 html body #secOnboard input[type=radio]{width:20px;min-height:20px;height:20px;accent-color:var(--kac-primary);margin:0}
 html body .pwa-offline{background:#3b2a0a;color:var(--kac-text);border:1px solid var(--kac-warning)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* Mostrar/ocultar senha (PasswordToggle.js): olho dentro do campo, alvo 44 px */
+html body .pw-wrap,html body .pw-row{position:relative;display:block}
+html body .pw-wrap input,html body .pw-row input{width:100%;box-sizing:border-box;padding-right:52px}
+html body .pw-eye,html body .auth-card button.pw-eye,html body .pw-row .btn-pw.pw-eye{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:44px;min-width:44px;height:44px;min-height:44px;margin:0;padding:0;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:var(--kac-r-sm);color:var(--kac-muted);cursor:pointer;box-shadow:none}
+html body .pw-eye:hover,html body .pw-eye[aria-pressed=true]{color:var(--kac-primary)}
+html body .pw-eye:focus-visible{outline:3px solid var(--kac-focus);outline-offset:-3px}
+html body .pw-eye .pw-ico{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+html body .pw-eye .pw-ico-hide,html body .pw-eye[aria-pressed=true] .pw-ico-show{display:none}
+html body .pw-eye[aria-pressed=true] .pw-ico-hide{display:block}
+@media (forced-colors:active){html body .pw-eye{border:1px solid ButtonText}}
