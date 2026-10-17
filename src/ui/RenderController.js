@@ -20,14 +20,15 @@ class RenderController {
         const week = KD.weekDates();
         const monthEl = document.querySelector('.month-title');
         const refMonth = KD.getReference() ? Number(KD.getReference().slice(5, 7)) : today.month;
-        if (monthEl) monthEl.innerText = monthNames[refMonth - 1];
+        if (monthEl) monthEl.textContent = monthNames[refMonth - 1];
 
         document.querySelectorAll('.tab').forEach(tab => {
             const diaStr = tab.getAttribute('data-dia');
             const info = week[diaStr];
             if (!info) return;
-            const originalText = tab.innerText.split(' ')[0];
-            tab.innerText = `${originalText} ${String(info.day).padStart(2, '0')}`;
+            // textContent (e não innerText) evita forçar layout da página inteira a cada aba (achado 8, TBT).
+            const originalText = tab.textContent.trim().split(/\s+/)[0];
+            tab.textContent = `${originalText} ${String(info.day).padStart(2, '0')}`;
             const isToday = KD.toISO(info) === KD.todayISO();
             if (!KD.getReference()) tab.classList.toggle('active', isToday);
             tab.classList.toggle('today', isToday);
