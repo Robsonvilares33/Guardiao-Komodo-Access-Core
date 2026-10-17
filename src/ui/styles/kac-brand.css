@@ -2,6 +2,8 @@
    Paleta: ouro #c2a057 / #dfbe76 / #b59461 · preto #0d0d0d · azul-noite #1a1a2e / #141424 / #34364f · fonte Poppins (auto-hospedada).
    Efeitos da marca: emblema 3D (perspectiva + inclinação com o dedo/mouse/giroscópio), brilho dourado pulsando,
    anéis girando, reflexo metálico, partículas douradas (só na entrada) e ícones flutuantes. Tudo desliga com "reduzir movimento". */
+/* Achado 9 (CLS): fallback com métricas da Poppins, para a troca de fonte não mover o layout. */
+@font-face{font-family:'Poppins Fallback';src:local('Arial'),local('Liberation Sans'),local('Helvetica');size-adjust:112.16%;ascent-override:93.62%;descent-override:31.21%;line-gap-override:8.92%}
 @font-face{font-family:'Poppins';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/poppins-400-latin.woff2) format('woff2')}
 @font-face{font-family:'Poppins';font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/poppins-600-latin.woff2) format('woff2')}
 @font-face{font-family:'Poppins';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/poppins-700-latin.woff2) format('woff2')}
@@ -11,7 +13,7 @@
   --kac-text:#ffffff; --kac-muted:#a0a0a0;
   --kac-primary:#c2a057; --kac-primary-hover:#dfbe76; --kac-primary-dark:#b59461; --kac-on-primary:#0d0d0d;
   --kac-gold-grad:linear-gradient(135deg,#c2a057,#b59461); --kac-glass:rgba(194,160,87,.15);
-  --kac-font:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --kac-font:'Poppins','Poppins Fallback',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
   --gold-dark:#b59461; --glass-border:var(--kac-glass);
 }
 html body{background:radial-gradient(ellipse at 30% 0%,rgba(194,160,87,.07),transparent 55%),radial-gradient(ellipse at 80% 100%,rgba(52,54,79,.35),transparent 60%),#0d0d0d fixed;letter-spacing:0}
@@ -53,7 +55,9 @@ html body .gk-emblem img.logo-img,.gk-emblem img{display:block;transform:transla
 /* tamanhos */
 html body .login-card .gk-emblem{margin:18px auto 14px}
 html body .login-card .gk-emblem img{width:150px;height:auto;max-width:none}
-html body .auth-brand{flex-direction:column;text-align:center;gap:10px}
+html body .auth-brand{flex-direction:column;text-align:center;gap:10px;min-height:197px;justify-content:flex-end}
+/* Achado 9 (CLS): logo já ocupa o tamanho final antes do JS embrulhar no emblema; cartão ancorado no topo (não recentraliza quando a seção muda). */
+html body .auth-brand > img{width:120px;height:auto;margin:20px auto 6px}
 html body .auth-brand .gk-emblem{margin:20px auto 6px}
 html body .auth-brand .gk-emblem img{width:120px;height:auto}
 html body header .gk-emblem img.logo-img{width:46px;height:auto;filter:drop-shadow(0 2px 8px rgba(194,160,87,.4))!important}
