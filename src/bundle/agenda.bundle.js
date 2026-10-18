@@ -1,5 +1,1177 @@
-/*! Guardião Komodo — bundle agenda (gerado por scripts/build-bundles.mjs, não editar) src-sha256=c3aa1c64da59bd4c1c6e9749032a50f306b6d399e916c48d8358f8fa90b64c4f */
-const SystemEvents={UI_READY:"UI_READY",UI_TAB_CHANGED:"UI_TAB_CHANGED",UI_SAVE_CLICKED:"UI_SAVE_CLICKED",FORM_DATA_EXTRACTED:"FORM_DATA_EXTRACTED",FORM_VALIDATION_FAILED:"FORM_VALIDATION_FAILED",FORM_VALIDATION_PASSED:"FORM_VALIDATION_PASSED",FORM_CLEARED:"FORM_CLEARED",AI_FORM_FILL_REQUESTED:"AI_FORM_FILL_REQUESTED",AI_CAPTURE_STARTED:"AI_CAPTURE_STARTED",AI_ERROR:"AI_ERROR",DB_SAVE_REQUESTED:"DB_SAVE_REQUESTED",DB_SAVE_SUCCESS:"DB_SAVE_SUCCESS",DB_ERROR:"DB_ERROR"};window.SystemEvents=SystemEvents;class EventBus{constructor(){this.listeners={},this.history=[]}on(e,t){this.listeners[e]||(this.listeners[e]=[]),this.listeners[e].push(t)}off(e,t){this.listeners[e]&&(this.listeners[e]=this.listeners[e].filter(a=>a!==t))}emit(e,t=null){if(this.history.push({event:e,time:new Date().getTime(),payload:t}),console.log(`[EventBus] 🚀 Emitido: ${e}`,t||""),!this.listeners[e]){console.warn(`[EventBus] Nenhum listener para o evento: ${e}`);return}this.listeners[e].forEach(a=>{try{a(t)}catch(r){console.error(`[EventBus] Erro ao processar evento ${e}:`,r)}})}getHistory(){return this.history}}window.eventBus=new EventBus;class AppStore{constructor(){this.state={ui:{activeTab:"visitante",isLoading:!1},auth:{currentUser:null},form:{currentData:{}},visitors:{diaAtivo:window.KomodoDate?window.KomodoDate.todayKey():"seg",dailyData:[]}}}getState(e=null){const t=JSON.parse(JSON.stringify(this.state));return e?t[e]:t}setUiState(e){this.state.ui={...this.state.ui,...e},window.eventBus.emit("STORE_UI_UPDATED",this.state.ui)}setFormState(e){this.state.form={...this.state.form,...e},window.eventBus.emit("STORE_FORM_UPDATED",this.state.form)}setAuthState(e){this.state.auth={...this.state.auth,...e},window.eventBus.emit("STORE_AUTH_UPDATED",this.state.auth)}setVisitorsState(e){this.state.visitors={...this.state.visitors,...e},window.eventBus.emit("STORE_VISITORS_UPDATED",this.state.visitors)}}window.appStore=new AppStore;class ValidationManager{static validateVisitor(e){const t=[];if((!e.nome||e.nome.trim().length<3)&&t.push("Nome do visitante deve conter pelo menos 3 caracteres."),e.modulo==="residencial"&&(!e.unidade||e.unidade.trim().length===0)&&t.push("Unidade de destino é obrigatória."),e.placa&&e.placa!=="Sem veículo"){const a=e.placa.split(" ")[0].trim();this.isValidMercosulOrOld(a)||t.push("Formato de placa inválido. Use ABC-1234 ou ABC1D23.")}return{isValid:t.length===0,errors:t}}static isValidMercosulOrOld(e){const t=e.replace(/[^a-zA-Z0-9]/g,"").toUpperCase();if(t.length!==7)return!1;const a=/^[A-Z]{3}[0-9]{4}$/,r=/^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;return a.test(t)||r.test(t)}}window.ValidationManager=ValidationManager;class GroqAdapter{async analyzeImage(e,t){if(!window.apiService)throw new Error("Serviço de API não carregado.");const a=String(e||"").startsWith("data:image/")?e:"data:image/jpeg;base64,"+String(e||"");return window.apiService.post("/ai/analyze",{base64Image:a,systemPrompt:t})}async chat(e,t){if(!window.apiService)throw new Error("Serviço de API não carregado.");return window.apiService.post("/ai/chat",{systemPrompt:e,userMessage:t})}}class AiProviderFactory{static getProvider(){if(!window.authService?.isRemoteMode())throw new Error("IA indisponível no modo offline. Nenhuma chave deve ser inserida no dispositivo.");return new GroqAdapter}}window.AiProviderFactory=AiProviderFactory;class ApiService{constructor(){this.baseUrl="/api"}_headers(e={}){return{...e}}async _request(e,t,a){const r={method:e,headers:this._headers(),credentials:"same-origin"};a!==void 0&&(r.headers["Content-Type"]="application/json",r.body=JSON.stringify(a));let n;try{const i=typeof AbortController=="function"?new AbortController:null,s=i?setTimeout(()=>i.abort(),12e3):null;i&&(r.signal=i.signal);try{n=await fetch(this.baseUrl+t,r)}finally{s&&clearTimeout(s)}}catch{const i=new Error("Não foi possível conectar ao serviço local. Verifique se ele está iniciado.");throw i.network=!0,i}if(n.status===204)return null;let o;try{o=await n.json()}catch{throw new Error("O serviço retornou uma resposta inválida.")}if(!n.ok||o?.success!==!0){const i=o?.message||(n.status===401?"Sessão expirada. Entre novamente.":"Não foi possível concluir a operação.");if(n.status===401&&!t.startsWith("/auth/login")&&!t.startsWith("/auth/bootstrap"))try{sessionStorage.removeItem("komodo_session")}catch{}const s=new Error(i);throw s.status=n.status,o?.code&&(s.code=o.code),s}return o.data}get(e){return this._request("GET",e)}post(e,t){return this._request("POST",e,t)}put(e,t){return this._request("PUT",e,t)}delete(e){return this._request("DELETE",e)}}window.apiService=new ApiService,(function(){const m="/api/health";function e(a,r){const n=document.getElementById("apiStatus");n&&(n.className=`api-status ${a}`,n.textContent=r,n.setAttribute("aria-label",r))}async function t(){if(!navigator.onLine)return e("offline","Sem conexão"),!1;try{const a=await fetch(m,{cache:"no-store"}),r=await a.json();if(!a.ok||!r.success||r.data.status!=="online")throw new Error("API indisponível");return e("online","Sistema online"),!0}catch{return e("offline","Servidor indisponível"),!1}}window.komodoConnection={check:t},window.addEventListener("online",t),window.addEventListener("offline",t),document.addEventListener("DOMContentLoaded",()=>{t(),window.setInterval(t,3e4)})})(),(function(m){"use strict";var e=864e5,t=["id","hora","nome","unidade","tipo","placa","status","data","dia","modulo"];function a(){var o=null;function i(){return o||(o=new Promise(function(d,l){var c=m.indexedDB.open("kac-offline",1);c.onupgradeneeded=function(){c.result.createObjectStore("kv")},c.onsuccess=function(){d(c.result)},c.onerror=function(){l(c.error)}}),o)}function s(d,l){return i().then(function(c){return new Promise(function(b,S){var g=c.transaction("kv",d),v=g.objectStore("kv"),x=l(v);g.oncomplete=function(){b(x&&x.result)},g.onerror=function(){S(g.error)}})})}return{get:function(d){return s("readonly",function(l){return l.get(d)})},set:function(d,l){return s("readwrite",function(c){c.put(l,d)})},del:function(d){return s("readwrite",function(l){l.delete(d)})},clear:function(){return s("readwrite",function(d){d.clear()})}}}function r(o){o=o||{};var i=o.store||a(),s=(o.crypto||m.crypto).subtle,d=o.now||Date.now,l=function(u){return(o.crypto||m.crypto).getRandomValues(new Uint8Array(u))},c=new TextEncoder,b=new TextDecoder;async function S(){var u=await i.get("key");return u||(u=await s.generateKey({name:"AES-GCM",length:256},!1,["encrypt","decrypt"]),await i.set("key",u)),u}async function g(u){var h=l(12),E=await s.encrypt({name:"AES-GCM",iv:h},await S(),c.encode(JSON.stringify(u)));return{iv:Array.from(h),ct:new Uint8Array(E),exp:d()+e}}async function v(u){if(!u||u.exp<d())return null;try{var h=await s.decrypt({name:"AES-GCM",iv:new Uint8Array(u.iv)},await S(),u.ct);return JSON.parse(b.decode(h))}catch{return null}}function x(u){return(u||[]).map(function(h){var E={};return t.forEach(function(C){h[C]!==void 0&&(E[C]=h[C])}),E})}var y=function(u,h){return"day:"+u+":"+h},f={FIELDS:t,cacheDay:async function(u,h,E){await i.set(y(u,h),await g(x(E)))},readDay:async function(u,h){var E=await i.get(y(u,h)),C=await v(E);return!C&&E&&await i.del(y(u,h)),C},patchDay:async function(u,h,E,C){var T=await f.readDay(u,h);T&&(T.forEach(function(O){String(O.id)===String(E)&&(O.status=C)}),await f.cacheDay(u,h,T))},queue:async function(){return await v(await i.get("queue"))||[]},enqueue:async function(u){var h=await f.queue();return h.push({id:String(u.id),status:Number(u.status),from:u.from===void 0?void 0:Number(u.from),at:d()}),await i.set("queue",await g(h)),h.length},flush:async function(u){for(var h=await f.queue(),E=0,C=0,T=0,O=[],V=0;V<h.length;V++)try{await u(h[V]),E++}catch(B){if(B&&B.status===409)C++;else if(B&&B.status)T++;else{O=h.slice(V);break}}return O.length?await i.set("queue",await g(O)):await i.del("queue"),{sent:E,conflicts:C,failed:T,pending:O.length}},clear:function(){return i.clear()}};return f}if(m.KomodoOffline={create:r,isNetworkError:function(o){return!!(o&&(o.network===!0||!o.status&&/conectar/i.test(String(o.message||""))))}},m.indexedDB&&m.crypto&&m.crypto.subtle)try{m.komodoOffline=r()}catch{}if(m.addEventListener&&m.document){var n=function(o){var i=m.document,s=i.getElementById("kacOfflineNote");s||(s=i.createElement("p"),s.id="kacOfflineNote",s.className="pwa-offline",s.setAttribute("role","status"),s.setAttribute("aria-live","polite"),(i.body||i.documentElement).appendChild(s)),s.textContent=o,s.hidden=!1,clearTimeout(n.t),n.t=setTimeout(function(){s.hidden=!0},6e3)};m.addEventListener("kac:offline-queued",function(){n("Sem internet: registro guardado no aparelho. Será enviado quando a conexão voltar.")}),m.addEventListener("kac:offline-synced",function(o){var i=o.detail||{};n(i.sent+" registro(s) enviado(s)"+(i.conflicts?"; "+i.conflicts+" já tinha(m) sido alterado(s) em outro aparelho":"")+".")})}})(typeof window<"u"?window:globalThis);class VisitorRepository{static _remote(){return!!window.authService?.isRemoteMode()}static async _localQuery(e){return await window.dbService.init(),window.dbService.query("SELECT * FROM komodo_acessos WHERE modulo = ?",[e])}static _dateFor(e){const t=window.KomodoDate;if(!t||!e)return null;const a=t.weekDates()[e];return a?a.year+"-"+String(a.month).padStart(2,"0")+"-"+String(a.day).padStart(2,"0"):null}static async save(e){let t;if(!e.data){const a=this._dateFor(e.dia);a&&(e={...e,data:a})}if(this._remote()){if(!window.apiService)throw new Error("ApiService não carregado.");t=await window.apiService.post("/visitantes",e)}else t=await window.dbService.insert("komodo_acessos",{...e});return window.eventBus&&window.SystemEvents&&window.eventBus.emit(window.SystemEvents.DB_SAVE_SUCCESS,t),t}static async delete(e){return this._remote()?window.apiService.delete("/visitantes/"+encodeURIComponent(e)):(await window.dbService.delete("komodo_acessos",e),{id:e,deleted:!0})}static async reschedule(e,t,a){if(!this._remote())throw new Error("Reagendamento disponível apenas no modo online.");return window.apiService.put("/visitantes/"+encodeURIComponent(e)+"/reagendar",{data:t,hora:a})}static async history(e){return this._remote()?window.apiService.get("/visitantes/"+encodeURIComponent(e)+"/historico"):{data:[]}}static async updateStatus(e,t,a={}){const r={status:t};if(a.from!==void 0&&(r.from=a.from),a.undo===!0&&(r.undo=!0),this._remote())try{return await window.apiService.put("/visitantes/"+encodeURIComponent(e)+"/status",r)}catch(o){const i=window.komodoOffline;if(!i||!window.KomodoOffline.isNetworkError(o)||a.undo===!0)throw o;await i.enqueue({id:e,status:t,from:a.from});const s=this._lastDay;if(s)try{await i.patchDay(s.modulo,s.k,e,Number(t))}catch{}try{window.dispatchEvent(new CustomEvent("kac:offline-queued"))}catch{}return{id:e,status:Number(t),queued:!0}}const n=Number(t);if(!Number.isInteger(n)||n<0||n>2)throw new Error("Status inválido.");if(a.from!==void 0){await window.dbService.init();const o=(await window.dbService.query("SELECT status FROM komodo_acessos WHERE id = ?",[e]))[0];if(o&&Number(o.status||0)!==Number(a.from)){const i=new Error("Status alterado em outro aparelho.");throw i.status=409,i}}return await window.dbService.update("komodo_acessos",{id:e,status:n}),{id:e,status:n}}static async getAllDaily(e,t="residencial"){const a=String(e||"").trim().toLowerCase(),r=this._dateFor(a);if(this._remote()){const o=window.komodoOffline,i=a+":"+(r||"");try{const s=await window.apiService.get("/visitantes/"+encodeURIComponent(t)+"/"+encodeURIComponent(a)+(r?"?data="+r:""));return this._lastDay={modulo:t,k:i},o&&o.cacheDay(t,i,Array.isArray(s)?s:s?.data||[]).catch(()=>{}),s}catch(s){this._lastDay={modulo:t,k:i};const d=o&&window.KomodoOffline.isNetworkError(s)?await o.readDay(t,i):null;if(d)return d.offline=!0,d;throw s}}return(await this._localQuery(t)).filter(o=>o.dia===e&&(!r||!o.data||o.data===r))}static async getAllByModule(e="residencial"){return this._remote()?window.apiService.get("/visitantes/"+encodeURIComponent(e)):this._localQuery(e)}static async getRange(e,t,a){if(this._remote()){const n=[t?"de="+t:"",a?"ate="+a:""].filter(Boolean).join("&");return window.apiService.get("/visitantes/"+encodeURIComponent(e)+(n?"?"+n:""))}return(await this._localQuery(e)).filter(n=>n.data&&(!t||n.data>=t)&&(!a||n.data<=a)).sort((n,o)=>(n.data+(n.hora||"")).localeCompare(o.data+(o.hora||"")))}static async getIncidentReports(e="residencial"){return(await this.getAllByModule(e)).filter(a=>a.alerta===!0||a.alerta===1||a.alerta==="true"||a.alerta==="1")}}if(window.VisitorRepository=VisitorRepository,typeof window<"u"&&window.addEventListener){const m=async()=>{const e=window.komodoOffline;if(!(!e||!VisitorRepository._remote()||navigator.onLine===!1))try{const t=await e.flush(a=>window.apiService.put("/visitantes/"+encodeURIComponent(a.id)+"/status",a.from===void 0?{status:a.status}:{status:a.status,from:a.from}));(t.sent||t.conflicts||t.failed)&&window.dispatchEvent(new CustomEvent("kac:offline-synced",{detail:t}))}catch{}};window.addEventListener("online",m),window.addEventListener("load",()=>setTimeout(m,1500))}class FormManager{constructor(){this._bindEvents()}_bindEvents(){window.eventBus&&window.SystemEvents&&window.eventBus.on(window.SystemEvents.AI_FILL_FORM,e=>{this.fill("form-visitante",e)})}serialize(e){const t=document.getElementById(e);if(!t)return{};const a=t.querySelectorAll("[data-field]"),r={};return a.forEach(n=>{const o=n.getAttribute("data-field");r[o]=n.value?n.value.trim():""}),r}fill(e,t){const a=document.getElementById(e);if(!a||!t)return;a.querySelectorAll("[data-field]").forEach(n=>{const o=n.getAttribute("data-field");t[o]!==void 0&&t[o]!==null&&(n.value=t[o],n.dispatchEvent(new Event("input",{bubbles:!0})))})}clear(e){const t=document.getElementById(e);if(!t)return;t.querySelectorAll("[data-field]").forEach(r=>{r.value=""})}}window.formManager=new FormManager,(function(m){const e="America/Sao_Paulo",t=["dom","seg","ter","qua","qui","sex","sab"],a={seg:0,ter:1,qua:2,qui:3,sex:4,sab:5,dom:6},r={};function n(y){return r[y]||(r[y]=new Intl.DateTimeFormat("en-US",{timeZone:y,year:"numeric",month:"2-digit",day:"2-digit"}))}function o(y=new Date,f=e){const u=n(f).formatToParts(y).reduce((O,V)=>(O[V.type]=V.value,O),{}),h=Number(u.year),E=Number(u.month),C=Number(u.day),T=new Date(Date.UTC(h,E-1,C,12));return{year:h,month:E,day:C,weekday:T.getUTCDay(),dayKey:t[T.getUTCDay()],civil:T}}function i(y,f){return o(y,f).dayKey}let s=null;function d(y){s=y&&/^\d{4}-\d{2}-\d{2}$/.test(y)?y:null}function l(){return s}function c(y){return y.year+"-"+String(y.month).padStart(2,"0")+"-"+String(y.day).padStart(2,"0")}function b(y,f){return c(o(y,f))}function S(y,f){const u=new Date(y+"T12:00:00Z");return u.setUTCDate(u.getUTCDate()+f),u.toISOString().slice(0,10)}function g(y){return t[new Date(y+"T12:00:00Z").getUTCDay()]}function v(y,f){y===void 0&&s&&(y=new Date(s+"T15:00:00Z"));const u=o(y,f),h=(u.weekday+6)%7,E=new Date(u.civil.getTime()-h*864e5),C={};return Object.keys(a).forEach(T=>{const O=new Date(E.getTime()+a[T]*864e5);C[T]={day:O.getUTCDate(),month:O.getUTCMonth()+1,year:O.getUTCFullYear()}}),C}const x={TZ:e,KEYS:t,todayParts:o,todayKey:i,weekDates:v,setReference:d,getReference:l,toISO:c,todayISO:b,addDaysISO:S,weekdayKeyOfISO:g};typeof module<"u"&&module.exports&&(module.exports=x),m&&(m.KomodoDate=x)})(typeof window<"u"?window:null);class RenderController{constructor(){this._bindEvents(),this.updateCalendarUI()}updateCalendarUI(){const e=["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"],t=window.KomodoDate;if(!t)return;const a=t.todayParts(),r=t.weekDates(),n=document.querySelector(".month-title"),o=t.getReference()?Number(t.getReference().slice(5,7)):a.month;n&&(n.textContent=e[o-1]),document.querySelectorAll(".tab").forEach(i=>{const s=i.getAttribute("data-dia"),d=r[s];if(!d)return;const l=i.textContent.trim().split(/\s+/)[0];i.textContent=`${l} ${String(d.day).padStart(2,"0")}`;const c=t.toISO(d)===t.todayISO();t.getReference()||i.classList.toggle("active",c),i.classList.toggle("today",c)})}static currentModule(){return window.location.pathname.includes("residencial")?"residencial":"empresarial"}_bindEvents(){!window.eventBus||!window.SystemEvents||(window.eventBus.on(window.SystemEvents.DB_SAVE_SUCCESS,async()=>{await this.reloadDailyData()}),window.eventBus.on("STORE_VISITORS_UPDATED",e=>{typeof window.renderDaily=="function"&&window.renderDaily(e.dailyData)}))}async reloadDailyData(e=null,t=null){if(!window.appStore||!window.VisitorRepository)return;let a=window.appStore.getState("visitors");e&&(a.diaAtivo=e),t||(t=RenderController.currentModule());try{const r=await window.VisitorRepository.getAllDaily(a.diaAtivo,t);window.appStore.setVisitorsState({diaAtivo:a.diaAtivo,dailyData:r})}catch(r){console.error("Falha ao recarregar dados diários: ",r)}}}window.renderController=new RenderController,(function(){function m(){return window.location.pathname.includes("residencial")?"residencial":"empresarial"}function e(){return window.KomodoDate}function t(){const d=document.querySelector(".tab.active");return d?d.getAttribute("data-dia"):e().todayKey()}function a(d,l,c){const b=document.createElement(d);return Object.assign(b,l||{}),c&&(b.textContent=c),b}function r(d){const l=e();if(!l||!d)return;const c=l.todayISO();l.setReference(d===c?null:d),window.renderController&&window.renderController.updateCalendarUI();const b=l.weekdayKeyOfISO(d);document.querySelectorAll(".tab").forEach(g=>g.classList.toggle("active",g.getAttribute("data-dia")===b));const S=document.getElementById("agendaDate");S&&(S.value=d),o(""),window.renderController&&window.renderController.reloadDailyData(b,m())}function n(d){const l=e(),c=l.getReference()||l.todayISO(),b=l.weekDates(new Date(c+"T15:00:00Z"))[t()],S=b?l.toISO(b):c;r(l.addDaysISO(S,7*d))}function o(d){const l=document.getElementById("agendaViewLabel");l&&(l.textContent=d)}async function i(d){const l=e(),c=l.todayISO();let b=null,S=null,g="";if(d==="hoje")return r(c);d==="futuro"&&(b=l.addDaysISO(c,1),g="Próximos agendamentos (a partir de amanhã)"),d==="historico"&&(S=l.addDaysISO(c,-1),g="Histórico (até ontem)"),document.querySelectorAll(".tab").forEach(v=>v.classList.remove("active")),o(g+"…");try{let v=await window.VisitorRepository.getRange(m(),b,S);d==="historico"&&(v=v.slice().reverse()),o(g+" — "+v.length+" registro(s)"),typeof window.renderDaily=="function"&&window.renderDaily(v,"",!0)}catch(v){o("Falha ao carregar: "+v.message)}}function s(){const d=document.querySelector(".calendar-nav"),l=document.getElementById("tabs");if(!d||!l||!e()||document.getElementById("agendaNav"))return;const c=a("div",{id:"agendaNav",className:"agenda-nav"}),b=(x,y,f,u)=>{const h=a("button",{type:"button",id:x,className:"btn-outline agenda-btn",title:f},y);return h.addEventListener("click",u),h};c.append(b("agendaPrevWeek","◀ Semana","Semana anterior",()=>n(-1)),b("agendaToday","Hoje","Voltar para hoje",()=>i("hoje")),b("agendaNextWeek","Semana ▶","Próxima semana",()=>n(1)));const S=a("input",{type:"date",id:"agendaDate",className:"agenda-date",title:"Ir para a data"});S.value=e().todayISO(),S.addEventListener("change",()=>r(S.value)),c.append(S,b("agendaViewFuture","Próximos","Agendamentos futuros",()=>i("futuro")),b("agendaViewHistory","Histórico","Registros anteriores",()=>i("historico")));const g=a("div",{id:"agendaViewLabel",className:"agenda-view-label"}),v=document.getElementById("agendaNavSlot");v?v.append(c,g):(l.insertAdjacentElement("afterend",c),c.insertAdjacentElement("afterend",g)),l.addEventListener("click",x=>{const y=x.target.closest(".tab");if(!y)return;const f=e().weekDates()[y.getAttribute("data-dia")];f&&(S.value=e().toISO(f)),o("")})}window.AgendaNav={goToDate:r,shiftWeek:n,showView:i,build:s},document.readyState==="loading"?document.addEventListener("DOMContentLoaded",s):s()})(),(function(){"use strict";var m="America/Sao_Paulo",e={created:"Criado",rescheduled:"Reagendado",status_changed:"Status alterado",deleted:"Excluído"},t=["Aguardando","Entrada","Saída"];function a(){return/residencial/.test(location.pathname)?"residencial":"empresarial"}function r(f,u,h){var E=document.createElement(f);return Object.keys(u||{}).forEach(function(C){C==="attrs"?Object.keys(u.attrs).forEach(function(T){E.setAttribute(T,u.attrs[T])}):E[C]=u[C]}),h!=null&&(E.textContent=h),E}function n(f){return f?String(f).slice(0,10).split("-").reverse().join("/"):"—"}function o(f){try{return new Intl.DateTimeFormat("pt-BR",{timeZone:m,dateStyle:"short",timeStyle:"short"}).format(new Date(f))}catch{return String(f||"")}}function i(){return window.KomodoDate&&window.KomodoDate.todayISO?window.KomodoDate.todayISO():new Intl.DateTimeFormat("en-CA",{timeZone:m}).format(new Date)}function s(f){var u=window.appStore&&window.appStore.getState("visitors");return u&&(u.dailyData||[]).find(function(h){return String(h.id)===String(f)})}function d(){var f=window.appStore&&window.appStore.getState("visitors");window.renderController&&window.renderController.reloadDailyData(f&&f.diaAtivo,a())}var l,c;function b(){return l||(l=r("dialog",{id:"visitDialog",className:"visit-dialog",attrs:{"aria-labelledby":"visitDialogTitle"}}),l.addEventListener("close",function(){c&&c.focus&&c.focus()}),document.body.appendChild(l),l)}function S(f,u,h){var E=b();E.textContent="";var C=r("div",{className:"visit-dialog-head"});C.append(r("h2",{id:"visitDialogTitle"},f),r("button",{type:"button",className:"visit-dialog-close",attrs:{"aria-label":"Fechar"}},"✕")),C.lastChild.addEventListener("click",function(){E.close()}),E.append(C,u),c=h||document.activeElement,typeof E.showModal=="function"?E.showModal():E.setAttribute("open","");var T=E.querySelector("input,button:not(.visit-dialog-close)");T&&T.focus()}function g(f,u){var h=s(f);if(h){var E=r("form",{className:"visit-form",noValidate:!0}),C=r("p",{className:"visit-dialog-info"},h.nome+" — atual: "+n(h.data)+" às "+(h.hora||"—")),T=r("label",{htmlFor:"reschedData"},"Nova data"),O=r("input",{type:"date",id:"reschedData",required:!0,value:h.data||i()}),V=r("label",{htmlFor:"reschedHora"},"Novo horário"),B=r("input",{type:"time",id:"reschedHora",required:!0,value:h.hora||""}),K=r("p",{className:"visit-form-msg",attrs:{role:"status","aria-live":"polite"}}),$=r("div",{className:"visit-form-actions"}),w=r("button",{type:"button",className:"btn-outline"},"Cancelar"),p=r("button",{type:"submit",className:"btn-primary",id:"reschedSave"},"Salvar reagendamento");w.addEventListener("click",function(){l.close()}),$.append(w,p),E.append(C,T,O,V,B,K,$),E.addEventListener("submit",async function(A){if(A.preventDefault(),!/^\d{4}-\d{2}-\d{2}$/.test(O.value)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(B.value)){K.textContent="Informe data e horário válidos.";return}if(O.value===h.data&&B.value===h.hora){K.textContent="Nada mudou.";return}p.disabled=!0,K.textContent="Salvando…";try{await window.VisitorRepository.reschedule(h.id,O.value,B.value),K.textContent="Reagendado para "+n(O.value)+" às "+B.value+".",l.close(),c=null,d()}catch(I){K.textContent="Erro: "+(I&&I.message||"falha ao reagendar"),p.disabled=!1}}),S("Reagendar visita",E,u)}}async function v(f,u){var h=s(f),E=r("div",{className:"visit-history"}),C=r("p",{attrs:{role:"status","aria-live":"polite"}},"Carregando histórico…");E.append(C),S("Histórico — "+(h?h.nome:"visita"),E,u);try{var T=await window.VisitorRepository.history(f),O=Array.isArray(T)?T:T&&T.data||[];C.textContent=O.length?O.length+" evento(s)":"Sem histórico registrado.";var V=r("ol",{className:"visit-history-list"});O.forEach(function(B){var K=r("li");K.append(r("strong",{},e[B.action]||B.action),r("time",{dateTime:B.created_at||""}," · "+o(B.created_at)));var $="";B.action==="rescheduled"?$=n(B.old_data)+" "+(B.old_hora||"")+" → "+n(B.new_data)+" "+(B.new_hora||""):B.action==="created"?$="Agendado para "+n(B.new_data)+" "+(B.new_hora||""):B.action==="status_changed"&&($=(t[B.old_status]||B.old_status)+" → "+(t[B.new_status]||B.new_status)),$&&K.append(r("div",{className:"visit-history-detail"},$)),V.append(K)}),E.append(V)}catch(B){C.textContent=B&&/404|não encontrado/i.test(B.message)?"Sem histórico registrado.":"Erro ao carregar histórico."}}function x(f){(f||document).querySelectorAll("#cardsContainer .card[data-id]").forEach(function(u){if(!u.querySelector(".visit-actions")){var h=u.dataset.id,E=s(h),C=E?E.nome:"visita",T=r("div",{className:"visit-actions"});T.append(r("button",{type:"button",className:"btn-outline visit-btn",attrs:{"data-visit-action":"reschedule","data-id":h,"aria-label":"Reagendar "+C}},"📅 Reagendar"),r("button",{type:"button",className:"btn-outline visit-btn",attrs:{"data-visit-action":"history","data-id":h,"aria-label":"Histórico de "+C}},"🕘 Histórico")),u.appendChild(T)}})}document.addEventListener("click",function(f){var u=f.target.closest&&f.target.closest("[data-visit-action]");u&&(f.stopPropagation(),u.dataset.visitAction==="reschedule"?g(u.dataset.id,u):v(u.dataset.id,u))},!0);function y(){var f=document.getElementById("cardsContainer");f&&(x(f),new MutationObserver(function(){x(f)}).observe(f,{childList:!0,subtree:!0}))}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",y):y(),window.VisitActions={decorate:x,openReschedule:g,openHistory:v,_fmt:{br:n,stamp:o}}})(),(function(){"use strict";var m=/^[A-Z]{3}-?\d[A-Z0-9]\d{2}$/;function e(d){var l=window.ValidationManager;return l&&typeof l.isValidMercosulOrOld=="function"?l.isValidMercosulOrOld(d):m.test(String(d).toUpperCase())}function t(d){(d||document).querySelectorAll("button.btn-toggle").forEach(function(l){var c=l.classList.contains("active")?"true":"false";l.getAttribute("aria-pressed")!==c&&l.setAttribute("aria-pressed",c)})}function a(d){(d||document).querySelectorAll(".tab[data-dia]").forEach(function(l){l.classList.contains("active")?l.getAttribute("aria-current")!=="date"&&l.setAttribute("aria-current","date"):l.hasAttribute("aria-current")&&l.removeAttribute("aria-current")})}function r(d){var l=d.getAttribute("data-field"),c=String(d.value||"").trim();return l==="nome"?c&&c.length<3?"Nome deve ter pelo menos 3 caracteres.":"":l==="placa"&&c&&!e(c.split(" ")[0])?"Placa no formato ABC-1234 ou ABC1D23.":""}var n=0;function o(d){var l=r(d),c=d.getAttribute("data-a11y-hint");c||(c="a11yHint"+ ++n,d.setAttribute("data-a11y-hint",c));var b=document.getElementById(c);if(l){b||(b=document.createElement("span"),b.id=c,b.className="a11y-hint",d.insertAdjacentElement("afterend",b)),b.textContent=l,d.setAttribute("aria-invalid","true");var S=(d.getAttribute("aria-describedby")||"").split(" ").filter(Boolean);S.indexOf(c)<0&&(S.push(c),d.setAttribute("aria-describedby",S.join(" ")))}else b&&(b.textContent=""),d.removeAttribute("aria-invalid");return l}function i(d){if(!d)return"";var l=d.querySelector(".empty-records-message");if(l)return l.textContent;var c=d.querySelectorAll(".card[data-id]").length;return c===1?"1 registro na agenda.":c+" registros na agenda."}function s(){t(),a(),new MutationObserver(function(S){var g=!1,v=!1;S.forEach(function(x){var y=x.target;y.classList&&y.classList.contains("btn-toggle")&&(g=!0),y.classList&&y.classList.contains("tab")&&(v=!0),x.type==="childList"&&(g=v=!0)}),g&&t(),v&&a()}).observe(document.body,{subtree:!0,attributes:!0,attributeFilter:["class"],childList:!0}),document.addEventListener("blur",function(S){var g=S.target;g&&g.matches&&g.matches('input[data-field="nome"],input[data-field="placa"]')&&o(g)},!0),document.addEventListener("input",function(S){var g=S.target;g&&g.getAttribute&&g.getAttribute("aria-invalid")==="true"&&o(g)},!0);var d=document.getElementById("cardsContainer");if(d){var l=document.createElement("div");l.id="agendaStatus",l.className="sr-only",l.setAttribute("role","status"),l.setAttribute("aria-live","polite"),d.insertAdjacentElement("beforebegin",l);var c=null,b=function(){clearTimeout(c),c=setTimeout(function(){var S=i(d);l.textContent!==S&&(l.textContent=S)},400)};new MutationObserver(b).observe(d,{childList:!0}),b()}}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",s):s(),window.A11yEnhancer={syncToggles:t,syncTabs:a,check:o,rule:r,describe:i}})();class KomodoModal extends HTMLElement{constructor(){super(),this._rendered=!1}connectedCallback(){this._rendered||(this.render(),this.setupEvents(),this._rendered=!0)}static get observedAttributes(){return["title","open"]}attributeChangedCallback(e,t,a){if(e==="open"){const r=this.querySelector(".modal-overlay");if(!r)return;this.hasAttribute("open")?r.classList.add("aberto"):r.classList.remove("aberto")}}close(){this.removeAttribute("open"),this.dispatchEvent(new CustomEvent("close"))}setupEvents(){const e=this.querySelector(".modal-overlay");if(!e)return;e.addEventListener("click",a=>{a.target===e&&this.close()});const t=this.querySelector(".km-btn-close");t&&t.addEventListener("click",()=>this.close())}render(){const e=this.getAttribute("title")||"Modal",t=document.createDocumentFragment();for(;this.firstChild;)t.appendChild(this.firstChild);const a=document.createElement("div");a.className="modal-overlay";const r=document.createElement("div");r.className="modal-content";const n=document.createElement("div");n.className="modal-header";const o=document.createElement("div");o.className="modal-title-text",o.textContent=e;const i=document.createElement("button");i.className="km-btn-close",i.type="button",i.setAttribute("aria-label","Fechar modal"),i.textContent="×";const s=document.createElement("div");s.className="modal-body",n.append(o,i),s.appendChild(t),r.append(n,s),a.appendChild(r),this.replaceChildren(a)}}customElements.define("komodo-modal",KomodoModal);class DatabaseService{constructor(){this.sqlite=null,this.db=null,this.isReady=!1,this.queryLock=Promise.resolve()}async _enqueue(e){let t;const a=new Promise(n=>{t=n}),r=this.queryLock;this.queryLock=r.then(()=>a).catch(()=>a);try{return await r,await e()}finally{t()}}async init(){return this._enqueue(async()=>{if(!this.isReady)try{if(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.CapacitorSQLite){this.sqlite=window.Capacitor.Plugins.CapacitorSQLite;try{await this.sqlite.createConnection({database:"komododb",version:1,encrypted:!1,mode:"no-encryption"})}catch(e){console.log("Conexão com BD já existia ou houve erro ignorável:",e)}await this.sqlite.open({database:"komododb"}),this.db={execute:async e=>await this.sqlite.execute(Object.assign({database:"komododb"},e)),run:async e=>await this.sqlite.run(Object.assign({database:"komododb"},e)),query:async e=>await this.sqlite.query(Object.assign({database:"komododb"},e))}}else console.warn("SQLite não detectado. Fallback para simulação em memória."),this.db={execute:async()=>{},run:async()=>({changes:{lastId:Date.now()}}),query:async()=>({values:[]})};await this.runMigrations(),this.isReady=!0,console.log("DatabaseService: Inicializado com sucesso.")}catch(e){throw console.error("Erro Crítico no DatabaseService:",e),e}})}async runMigrations(){this.sqlite&&await this.db.execute({statements:`
+/*! Guardião Komodo — bundle agenda (gerado por scripts/build-bundles.mjs, não editar) src-sha256=b6ff09f5c1689fd0dce8bc57848d4737ec777ddd5bbe2cfd83db25888145d46e */
+/* cordova.js */
+/* Stub vazio para a versão web: o app Android (Capacitor/Cordova) substitui este arquivo no build. Evita 404 no navegador. */
+
+;
+/* src/core/Events.js */
+/**
+ * Events.js
+ * 
+ * Dicionário centralizado de Eventos do Sistema Guardião Komodo.
+ * Elimina o uso de "Magic Strings" espalhadas pelo código.
+ */
+
+const SystemEvents = {
+    // Eventos de UI
+    UI_READY: 'UI_READY',
+    UI_TAB_CHANGED: 'UI_TAB_CHANGED',
+    UI_SAVE_CLICKED: 'UI_SAVE_CLICKED',
+    
+    // Eventos de Formulário
+    FORM_DATA_EXTRACTED: 'FORM_DATA_EXTRACTED',
+    FORM_VALIDATION_FAILED: 'FORM_VALIDATION_FAILED',
+    FORM_VALIDATION_PASSED: 'FORM_VALIDATION_PASSED',
+    FORM_CLEARED: 'FORM_CLEARED',
+    
+    // Eventos Cognitivos (IA)
+    AI_FORM_FILL_REQUESTED: 'AI_FORM_FILL_REQUESTED',
+    AI_CAPTURE_STARTED: 'AI_CAPTURE_STARTED',
+    AI_ERROR: 'AI_ERROR',
+    
+    // Eventos de Domínio e Persistência
+    DB_SAVE_REQUESTED: 'DB_SAVE_REQUESTED',
+    DB_SAVE_SUCCESS: 'DB_SAVE_SUCCESS',
+    DB_ERROR: 'DB_ERROR'
+};
+
+window.SystemEvents = SystemEvents;
+
+;
+/* src/core/EventBus.js */
+/**
+ * EventBus.js
+ * 
+ * Barramento central de comunicação da arquitetura desacoplada (Pub/Sub).
+ * Nenhum módulo deve invocar funções de outro módulo diretamente.
+ */
+
+class EventBus {
+    constructor() {
+        this.listeners = {};
+        this.history = []; // Para debug e observabilidade
+    }
+
+    /**
+     * Inscreve um callback para escutar um evento específico.
+     * @param {string} eventName - Nome do evento (usar SystemEvents.*)
+     * @param {Function} callback - Função executada quando o evento ocorre
+     */
+    on(eventName, callback) {
+        if (!this.listeners[eventName]) {
+            this.listeners[eventName] = [];
+        }
+        this.listeners[eventName].push(callback);
+    }
+
+    /**
+     * Remove a inscrição de um callback.
+     */
+    off(eventName, callback) {
+        if (!this.listeners[eventName]) return;
+        this.listeners[eventName] = this.listeners[eventName].filter(cb => cb !== callback);
+    }
+
+    /**
+     * Dispara um evento para todos os ouvintes inscritos.
+     * @param {string} eventName - Nome do evento
+     * @param {any} payload - Dados trafegados
+     */
+    emit(eventName, payload = null) {
+        this.history.push({ event: eventName, time: new Date().getTime(), payload });
+        
+        // Debugging mode (Pode ser desligado em produção)
+        console.log(`[EventBus] 🚀 Emitido: ${eventName}`, payload || '');
+
+        if (!this.listeners[eventName]) {
+            console.warn(`[EventBus] Nenhum listener para o evento: ${eventName}`);
+            return;
+        }
+
+        this.listeners[eventName].forEach(callback => {
+            try {
+                callback(payload);
+            } catch (error) {
+                console.error(`[EventBus] Erro ao processar evento ${eventName}:`, error);
+            }
+        });
+    }
+
+    // Auxiliar para telemetria/debugging
+    getHistory() {
+        return this.history;
+    }
+}
+
+window.eventBus = new EventBus();
+
+;
+/* src/core/AppStore.js */
+/**
+ * AppStore.js
+ * 
+ * Gerenciador Modular de Estado Local.
+ * Atua como a Single Source of Truth do frontend.
+ * Notifica automaticamente as mudanças de estado pelo EventBus.
+ */
+
+class AppStore {
+    constructor() {
+        // Separação por Domínios (Módulos)
+        this.state = {
+            ui: {
+                activeTab: 'visitante',
+                isLoading: false
+            },
+            auth: {
+                currentUser: null
+            },
+            form: {
+                currentData: {}
+            },
+            visitors: {
+                diaAtivo: (window.KomodoDate ? window.KomodoDate.todayKey() : 'seg'),
+                dailyData: []
+            }
+        };
+    }
+
+    /**
+     * Obtém uma cópia readonly do estado global ou de um domínio específico.
+     */
+    getState(domain = null) {
+        const copy = JSON.parse(JSON.stringify(this.state));
+        return domain ? copy[domain] : copy;
+    }
+
+    /**
+     * Mutação segura do estado de UI.
+     */
+    setUiState(partialState) {
+        this.state.ui = { ...this.state.ui, ...partialState };
+        window.eventBus.emit('STORE_UI_UPDATED', this.state.ui);
+    }
+
+    /**
+     * Mutação segura do estado de Formulários.
+     */
+    setFormState(partialState) {
+        this.state.form = { ...this.state.form, ...partialState };
+        window.eventBus.emit('STORE_FORM_UPDATED', this.state.form);
+    }
+
+    /**
+     * Mutação segura do estado de Autenticação.
+     */
+    setAuthState(partialState) {
+        this.state.auth = { ...this.state.auth, ...partialState };
+        window.eventBus.emit('STORE_AUTH_UPDATED', this.state.auth);
+    }
+
+    /**
+     * Mutação segura do estado de Visitantes (Substitui as variáveis globais).
+     */
+    setVisitorsState(partialState) {
+        this.state.visitors = { ...this.state.visitors, ...partialState };
+        window.eventBus.emit('STORE_VISITORS_UPDATED', this.state.visitors);
+    }
+}
+
+window.appStore = new AppStore();
+
+;
+/* src/services/ValidationManager.js */
+/**
+ * ValidationManager.js
+ * 
+ * Camada pura de Regras de Negócio e Validações.
+ * Desacoplada do DOM. Recebe DTOs (Data Transfer Objects) puros
+ * e retorna booleanos com lista de erros.
+ */
+
+class ValidationManager {
+    
+    static validateVisitor(visitorDTO) {
+        const errors = [];
+        
+        if (!visitorDTO.nome || visitorDTO.nome.trim().length < 3) {
+            errors.push("Nome do visitante deve conter pelo menos 3 caracteres.");
+        }
+        
+        if (visitorDTO.modulo === 'residencial' && (!visitorDTO.unidade || visitorDTO.unidade.trim().length === 0)) {
+            errors.push("Unidade de destino é obrigatória.");
+        }
+        
+        if (visitorDTO.placa && visitorDTO.placa !== 'Sem veículo') {
+            // A placa pode vir como "ABC-1234 - Preto (Fiat)" ou "ABC-1234 (Fiat)"
+            // Vamos extrair apenas a primeira palavra
+            const rawPlaca = visitorDTO.placa.split(' ')[0].trim();
+            if (!this.isValidMercosulOrOld(rawPlaca)) {
+                errors.push("Formato de placa inválido. Use ABC-1234 ou ABC1D23.");
+            }
+        }
+        
+        return {
+            isValid: errors.length === 0,
+            errors: errors
+        };
+    }
+    
+    static isValidMercosulOrOld(placa) {
+        const clean = placa.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        if (clean.length !== 7) return false;
+        
+        // Padrão antigo: AAA1234
+        const oldRegex = /^[A-Z]{3}[0-9]{4}$/;
+        // Padrão Mercosul: AAA1A23
+        const newRegex = /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
+        
+        return oldRegex.test(clean) || newRegex.test(clean);
+    }
+}
+
+window.ValidationManager = ValidationManager;
+
+;
+/* src/services/adapters/AiProviderAdapter.js */
+/**
+ * O frontend nunca armazena nem transmite chaves de provedores.
+ * No desktop, a IA é mediada pelo backend e usa GROQ_API_KEY no ambiente do servidor.
+ * No Android/offline, IA permanece indisponível até existir um proxy seguro aprovado.
+ */
+class GroqAdapter {
+  async analyzeImage(base64Image, systemPrompt) {
+    if (!window.apiService) throw new Error('Serviço de API não carregado.');
+    const imageData = String(base64Image || '').startsWith('data:image/')
+      ? base64Image
+      : 'data:image/jpeg;base64,' + String(base64Image || '');
+    return window.apiService.post('/ai/analyze', { base64Image: imageData, systemPrompt });
+  }
+  async chat(systemPrompt, userMessage) {
+    if (!window.apiService) throw new Error('Serviço de API não carregado.');
+    return window.apiService.post('/ai/chat', { systemPrompt, userMessage });
+  }
+}
+class AiProviderFactory {
+  static getProvider() {
+    if (!window.authService?.isRemoteMode()) {
+      throw new Error('IA indisponível no modo offline. Nenhuma chave deve ser inserida no dispositivo.');
+    }
+    return new GroqAdapter();
+  }
+}
+window.AiProviderFactory = AiProviderFactory;
+
+;
+/* src/services/ApiService.js */
+﻿/**
+ * ApiService — API local do backend.
+ * As rotas protegidas recebem o token de sessão emitido pelo servidor.
+ */
+class ApiService {
+  constructor() {
+    this.baseUrl = '/api';
+  }
+
+  _headers(extra = {}) {
+    return { ...extra };
+  }
+
+  async _request(method, endpoint, payload) {
+    const options = { method, headers: this._headers(), credentials: 'same-origin' };
+    if (payload !== undefined) {
+      options.headers['Content-Type'] = 'application/json';
+      options.body = JSON.stringify(payload);
+    }
+    let response;
+    try {
+      // Falha rápida (12 s) em rede ruim em vez de travar a tela.
+      const ctl = typeof AbortController === 'function' ? new AbortController() : null; const tm = ctl ? setTimeout(() => ctl.abort(), 12000) : null; if (ctl) options.signal = ctl.signal;
+      try { response = await fetch(this.baseUrl + endpoint, options); } finally { if (tm) clearTimeout(tm); }
+    } catch {
+      const e = new Error('Não foi possível conectar ao serviço local. Verifique se ele está iniciado.'); e.network = true; throw e;
+    }
+    if (response.status === 204) return null;
+    let data;
+    try { data = await response.json(); }
+    catch { throw new Error('O serviço retornou uma resposta inválida.'); }
+    if (!response.ok || data?.success !== true) {
+      const message = data?.message || (response.status === 401 ? 'Sessão expirada. Entre novamente.' : 'Não foi possível concluir a operação.');
+      if (response.status === 401 && !endpoint.startsWith('/auth/login') && !endpoint.startsWith('/auth/bootstrap')) {
+        try { sessionStorage.removeItem('komodo_session'); } catch {}
+      }
+      const err = new Error(message); err.status = response.status; if (data?.code) err.code = data.code; throw err;
+    }
+    return data.data;
+  }
+
+  get(endpoint) { return this._request('GET', endpoint); }
+  post(endpoint, payload) { return this._request('POST', endpoint, payload); }
+  put(endpoint, payload) { return this._request('PUT', endpoint, payload); }
+  delete(endpoint) { return this._request('DELETE', endpoint); }
+}
+window.apiService = new ApiService();
+
+
+;
+/* src/ui/ConnectionMonitor.js */
+/**
+ * Indicador de disponibilidade da API.
+ * Mantém o operador informado quando a conexão local é interrompida.
+ */
+(function () {
+    const healthUrl = '/api/health';
+
+    function updateStatus(state, message) {
+        const indicator = document.getElementById('apiStatus');
+        if (!indicator) return;
+        indicator.className = `api-status ${state}`;
+        indicator.textContent = message;
+        indicator.setAttribute('aria-label', message);
+    }
+
+    async function checkConnection() {
+        if (!navigator.onLine) {
+            updateStatus('offline', 'Sem conexão');
+            return false;
+        }
+        try {
+            const response = await fetch(healthUrl, { cache: 'no-store' });
+            const payload = await response.json();
+            if (!response.ok || !payload.success || payload.data.status !== 'online') throw new Error('API indisponível');
+            updateStatus('online', 'Sistema online');
+            return true;
+        } catch (error) {
+            updateStatus('offline', 'Servidor indisponível');
+            return false;
+        }
+    }
+
+    window.komodoConnection = { check: checkConnection };
+    window.addEventListener('online', checkConnection);
+    window.addEventListener('offline', checkConnection);
+    document.addEventListener('DOMContentLoaded', () => {
+        checkConnection();
+        window.setInterval(checkConnection, 30000);
+    });
+})();
+
+;
+/* src/services/OfflineGate.js */
+/**
+ * OfflineGate (achado 4) — portaria sem internet.
+ * - Guarda a agenda do DIA (só campos mínimos: id, hora, nome, unidade, tipo, placa, status, data) CIFRADA com AES-GCM 256.
+ * - Fila cifrada de check-in/check-out feitos sem rede; ao voltar a conexão, envia em ordem com "from" (o servidor recusa
+ *   com 409 o que mudou em outro aparelho — nada é sobrescrito às cegas).
+ * - A chave é gerada no aparelho, NÃO exportável (CryptoKey no IndexedDB). Tudo expira em 24 h e é apagado no logout.
+ * - Nunca guarda acompanhantes, histórico, documentos, tokens ou senha.
+ */
+(function (root) {
+  'use strict';
+  var TTL = 24 * 60 * 60 * 1000, FIELDS = ['id', 'hora', 'nome', 'unidade', 'tipo', 'placa', 'status', 'data', 'dia', 'modulo'];
+  function idbStore() {
+    var dbp = null;
+    function open() { if (dbp) return dbp; dbp = new Promise(function (ok, ko) { var r = root.indexedDB.open('kac-offline', 1); r.onupgradeneeded = function () { r.result.createObjectStore('kv'); }; r.onsuccess = function () { ok(r.result); }; r.onerror = function () { ko(r.error); }; }); return dbp; }
+    function tx(mode, fn) { return open().then(function (db) { return new Promise(function (ok, ko) { var t = db.transaction('kv', mode), s = t.objectStore('kv'), out = fn(s); t.oncomplete = function () { ok(out && out.result); }; t.onerror = function () { ko(t.error); }; }); }); }
+    return { get: function (k) { return tx('readonly', function (s) { return s.get(k); }); }, set: function (k, v) { return tx('readwrite', function (s) { s.put(v, k); }); },
+      del: function (k) { return tx('readwrite', function (s) { s.delete(k); }); }, clear: function () { return tx('readwrite', function (s) { s.clear(); }); } };
+  }
+  function create(opts) {
+    opts = opts || {}; var store = opts.store || idbStore(), subtle = (opts.crypto || root.crypto).subtle, now = opts.now || Date.now, getRandom = function (n) { return (opts.crypto || root.crypto).getRandomValues(new Uint8Array(n)); };
+    var enc = new TextEncoder(), dec = new TextDecoder();
+    async function key() { var k = await store.get('key'); if (!k) { k = await subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']); await store.set('key', k); } return k; }
+    async function seal(obj) { var iv = getRandom(12); var ct = await subtle.encrypt({ name: 'AES-GCM', iv: iv }, await key(), enc.encode(JSON.stringify(obj))); return { iv: Array.from(iv), ct: new Uint8Array(ct), exp: now() + TTL }; }
+    async function open(box) { if (!box || box.exp < now()) return null; try { var pt = await subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(box.iv) }, await key(), box.ct); return JSON.parse(dec.decode(pt)); } catch (_) { return null; } }
+    function minimal(rows) { return (rows || []).map(function (r) { var o = {}; FIELDS.forEach(function (f) { if (r[f] !== undefined) o[f] = r[f]; }); return o; }); }
+    var dayKey = function (m, d) { return 'day:' + m + ':' + d; };
+    var api = {
+      FIELDS: FIELDS,
+      cacheDay: async function (modulo, day, rows) { await store.set(dayKey(modulo, day), await seal(minimal(rows))); },
+      readDay: async function (modulo, day) { var b = await store.get(dayKey(modulo, day)); var rows = await open(b); if (!rows && b) await store.del(dayKey(modulo, day)); return rows; },
+      patchDay: async function (modulo, day, id, status) { var rows = await api.readDay(modulo, day); if (!rows) return; rows.forEach(function (r) { if (String(r.id) === String(id)) r.status = status; }); await api.cacheDay(modulo, day, rows); },
+      queue: async function () { return (await open(await store.get('queue'))) || []; },
+      enqueue: async function (op) { var q = await api.queue(); q.push({ id: String(op.id), status: Number(op.status), from: op.from === undefined ? undefined : Number(op.from), at: now() }); await store.set('queue', await seal(q)); return q.length; },
+      // send(op) → resolve ok; rejeita com err.status (409 = conflito; sem status = ainda sem rede → para e mantém o resto)
+      flush: async function (send) { var q = await api.queue(), sent = 0, conflicts = 0, failed = 0, rest = [];
+        for (var i = 0; i < q.length; i++) { try { await send(q[i]); sent++; } catch (e) { if (e && e.status === 409) conflicts++; else if (e && e.status) failed++; else { rest = q.slice(i); break; } } }
+        if (rest.length) await store.set('queue', await seal(rest)); else await store.del('queue');
+        return { sent: sent, conflicts: conflicts, failed: failed, pending: rest.length }; },
+      clear: function () { return store.clear(); }
+    };
+    return api;
+  }
+  root.KomodoOffline = { create: create, isNetworkError: function (e) { return !!(e && (e.network === true || (!e.status && /conectar/i.test(String(e.message || ''))))); } };
+  if (root.indexedDB && root.crypto && root.crypto.subtle) { try { root.komodoOffline = create(); } catch (_) {} }
+  // Aviso discreto (aria-live) quando algo fica na fila ou é sincronizado.
+  if (root.addEventListener && root.document) {
+    var note = function (t) { var d = root.document, n = d.getElementById('kacOfflineNote'); if (!n) { n = d.createElement('p'); n.id = 'kacOfflineNote'; n.className = 'pwa-offline'; n.setAttribute('role', 'status'); n.setAttribute('aria-live', 'polite'); (d.body || d.documentElement).appendChild(n); } n.textContent = t; n.hidden = false; clearTimeout(note.t); note.t = setTimeout(function () { n.hidden = true; }, 6000); };
+    root.addEventListener('kac:offline-queued', function () { note('Sem internet: registro guardado no aparelho. Será enviado quando a conexão voltar.'); });
+    root.addEventListener('kac:offline-synced', function (e) { var r = e.detail || {}; note(r.sent + ' registro(s) enviado(s)' + (r.conflicts ? '; ' + r.conflicts + ' já tinha(m) sido alterado(s) em outro aparelho' : '') + '.'); });
+  }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+;
+/* src/db/dao/VisitorRepository.js */
+/**
+ * Repository de acessos: API autenticada no desktop; SQLite local no Capacitor.
+ * Não há fallback silencioso do desktop para localStorage se a API falhar.
+ */
+class VisitorRepository {
+  static _remote() { return Boolean(window.authService?.isRemoteMode()); }
+  static async _localQuery(modulo) {
+    await window.dbService.init();
+    return window.dbService.query('SELECT * FROM komodo_acessos WHERE modulo = ?', [modulo]);
+  }
+
+  static _dateFor(dia) {
+    const KD = window.KomodoDate; if (!KD || !dia) return null;
+    const w = KD.weekDates()[dia]; if (!w) return null;
+    return w.year + '-' + String(w.month).padStart(2, '0') + '-' + String(w.day).padStart(2, '0');
+  }
+
+  static async save(visitorDTO) {
+    let result;
+    if (!visitorDTO.data) { const d = this._dateFor(visitorDTO.dia); if (d) visitorDTO = { ...visitorDTO, data: d }; }
+    if (this._remote()) {
+      if (!window.apiService) throw new Error('ApiService não carregado.');
+      result = await window.apiService.post('/visitantes', visitorDTO);
+    } else {
+      result = await window.dbService.insert('komodo_acessos', { ...visitorDTO });
+    }
+    if (window.eventBus && window.SystemEvents) window.eventBus.emit(window.SystemEvents.DB_SAVE_SUCCESS, result);
+    return result;
+  }
+
+  static async delete(id) {
+    if (this._remote()) return window.apiService.delete('/visitantes/' + encodeURIComponent(id));
+    await window.dbService.delete('komodo_acessos', id);
+    return { id, deleted: true };
+  }
+
+  static async reschedule(id, data, hora) {
+    if (!this._remote()) throw new Error('Reagendamento disponível apenas no modo online.');
+    return window.apiService.put('/visitantes/' + encodeURIComponent(id) + '/reagendar', { data, hora });
+  }
+
+  static async history(id) {
+    if (!this._remote()) return { data: [] };
+    return window.apiService.get('/visitantes/' + encodeURIComponent(id) + '/historico');
+  }
+
+  static async updateStatus(id, newStatus, opts = {}) {
+    const body = { status: newStatus };
+    if (opts.from !== undefined) body.from = opts.from;
+    if (opts.undo === true) body.undo = true;
+    if (this._remote()) {
+      try { return await window.apiService.put('/visitantes/' + encodeURIComponent(id) + '/status', body); }
+      catch (e) {
+        // Achado 4: sem rede → fila cifrada no aparelho; envia sozinho quando a conexão voltar.
+        const off = window.komodoOffline; if (!off || !window.KomodoOffline.isNetworkError(e) || opts.undo === true) throw e;
+        await off.enqueue({ id, status: newStatus, from: opts.from });
+        const ld = this._lastDay; if (ld) { try { await off.patchDay(ld.modulo, ld.k, id, Number(newStatus)); } catch (_) {} }
+        try { window.dispatchEvent(new CustomEvent('kac:offline-queued')); } catch (_) {}
+        return { id, status: Number(newStatus), queued: true };
+      }
+    }
+    const status = Number(newStatus);
+    if (!Number.isInteger(status) || status < 0 || status > 2) throw new Error('Status inválido.');
+    if (opts.from !== undefined) { await window.dbService.init(); const cur = (await window.dbService.query('SELECT status FROM komodo_acessos WHERE id = ?', [id]))[0]; if (cur && Number(cur.status || 0) !== Number(opts.from)) { const e = new Error('Status alterado em outro aparelho.'); e.status = 409; throw e; } }
+    await window.dbService.update('komodo_acessos', { id, status });
+    return { id, status };
+  }
+
+  static async getAllDaily(dateString, modulo = 'residencial') {
+    // API web filtra por dia da semana (seg..dom), não por data ISO completa.
+    const day = String(dateString || '').trim().toLowerCase();
+    const date = this._dateFor(day);
+    if (this._remote()) {
+      const off = window.komodoOffline, k = day + ':' + (date || '');
+      try { const rows = await window.apiService.get('/visitantes/' + encodeURIComponent(modulo) + '/' + encodeURIComponent(day) + (date ? '?data=' + date : ''));
+        this._lastDay = { modulo, k };
+        if (off) off.cacheDay(modulo, k, Array.isArray(rows) ? rows : (rows?.data || [])).catch(() => {});
+        return rows; }
+      catch (e) { this._lastDay = { modulo, k }; const cached = off && window.KomodoOffline.isNetworkError(e) ? await off.readDay(modulo, k) : null; if (cached) { cached.offline = true; return cached; } throw e; }
+    }
+    const rows = await this._localQuery(modulo);
+    return rows.filter(row => row.dia === dateString && (!date || !row.data || row.data === date));
+  }
+
+  static async getAllByModule(modulo = 'residencial') {
+    if (this._remote()) return window.apiService.get('/visitantes/' + encodeURIComponent(modulo));
+    return this._localQuery(modulo);
+  }
+
+  /** Registros do módulo num intervalo de datas (inclusive). de/ate: 'YYYY-MM-DD' ou null. */
+  static async getRange(modulo, de, ate) {
+    if (this._remote()) {
+      const qs = [de ? 'de=' + de : '', ate ? 'ate=' + ate : ''].filter(Boolean).join('&');
+      return window.apiService.get('/visitantes/' + encodeURIComponent(modulo) + (qs ? '?' + qs : ''));
+    }
+    const rows = await this._localQuery(modulo);
+    return rows.filter(r => r.data && (!de || r.data >= de) && (!ate || r.data <= ate))
+      .sort((a, b) => (a.data + (a.hora || '')).localeCompare(b.data + (b.hora || '')));
+  }
+
+  static async getIncidentReports(modulo = 'residencial') {
+    const allData = await this.getAllByModule(modulo);
+    return allData.filter(item => item.alerta === true || item.alerta === 1 || item.alerta === 'true' || item.alerta === '1');
+  }
+}
+window.VisitorRepository = VisitorRepository;
+
+// Achado 4: ao voltar a conexão (e ao abrir o app), envia a fila offline em ordem; conflitos (409) viram aviso, nada é sobrescrito.
+if (typeof window !== 'undefined' && window.addEventListener) {
+  const kacFlush = async () => { const off = window.komodoOffline; if (!off || !VisitorRepository._remote() || navigator.onLine === false) return;
+    try { const r = await off.flush(op => window.apiService.put('/visitantes/' + encodeURIComponent(op.id) + '/status', op.from === undefined ? { status: op.status } : { status: op.status, from: op.from }));
+      if (r.sent || r.conflicts || r.failed) window.dispatchEvent(new CustomEvent('kac:offline-synced', { detail: r })); } catch (_) {} };
+  window.addEventListener('online', kacFlush); window.addEventListener('load', () => setTimeout(kacFlush, 1500));
+}
+
+;
+/* src/ui/FormManager.js */
+/**
+ * FormManager.js
+ * 
+ * Camada responsável por abstrair manipulação de formulários da interface HTML.
+ * O FormManager usa atributos "data-field" para serializar e preencher formulários.
+ * Assina e despacha eventos no EventBus, desacoplando completamente da I.A e Regras de Negócio.
+ */
+
+class FormManager {
+    constructor() {
+        this._bindEvents();
+    }
+
+    /**
+     * Assina os eventos globais
+     */
+    _bindEvents() {
+        if (window.eventBus && window.SystemEvents) {
+            window.eventBus.on(window.SystemEvents.AI_FILL_FORM, (data) => {
+                // Preenchemos o formulário genérico de visitante
+                // Futuramente pode haver um payload.formId, por hora fixamos 'form-visitante'
+                this.fill('form-visitante', data);
+            });
+        }
+    }
+
+    /**
+     * Serializa um form html para um DTO baseado nos atributos data-field
+     * @param {string} formId 
+     * @returns {Object} DTO com chave=valor
+     */
+    serialize(formId) {
+        const form = document.getElementById(formId);
+        if (!form) return {};
+
+        const fields = form.querySelectorAll('[data-field]');
+        const dto = {};
+
+        fields.forEach(field => {
+            const fieldName = field.getAttribute('data-field');
+            dto[fieldName] = field.value ? field.value.trim() : '';
+        });
+
+        return dto;
+    }
+
+    /**
+     * Preenche um formulário html a partir de um DTO
+     * @param {string} formId 
+     * @param {Object} dto Chave=valor
+     */
+    fill(formId, dto) {
+        const form = document.getElementById(formId);
+        if (!form || !dto) return;
+
+        const fields = form.querySelectorAll('[data-field]');
+        fields.forEach(field => {
+            const fieldName = field.getAttribute('data-field');
+            if (dto[fieldName] !== undefined && dto[fieldName] !== null) {
+                field.value = dto[fieldName];
+                
+                // Dispara o evento de input para triggers visuais (Mascara, Validação em Tempo Real)
+                field.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        });
+    }
+
+    /**
+     * Limpa os campos de um formulário
+     * @param {string} formId 
+     */
+    clear(formId) {
+        const form = document.getElementById(formId);
+        if (!form) return;
+
+        const fields = form.querySelectorAll('[data-field]');
+        fields.forEach(field => {
+            field.value = '';
+        });
+    }
+}
+
+// Inicializa a instância Global do FormManager
+window.formManager = new FormManager();
+
+;
+/* src/core/KomodoDate.js */
+/**
+ * KomodoDate — data "de hoje" sempre no fuso America/Sao_Paulo,
+ * independente do fuso do aparelho/navegador.
+ */
+(function (root) {
+  const TZ = 'America/Sao_Paulo';
+  const KEYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
+  const WEEK_ORDER = { seg: 0, ter: 1, qua: 2, qui: 3, sex: 4, sab: 5, dom: 6 };
+
+  // Criar Intl.DateTimeFormat é caro; um por fuso basta.
+  const FMT = {};
+  function fmt(timeZone) { return FMT[timeZone] || (FMT[timeZone] = new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })); }
+  function todayParts(now = new Date(), timeZone = TZ) {
+    const parts = fmt(timeZone).formatToParts(now).reduce((acc, p) => { acc[p.type] = p.value; return acc; }, {});
+    const year = Number(parts.year), month = Number(parts.month), day = Number(parts.day);
+    // Data civil pura (UTC ao meio-dia) para fazer aritmética de dias sem efeito de fuso.
+    const civil = new Date(Date.UTC(year, month - 1, day, 12));
+    return { year, month, day, weekday: civil.getUTCDay(), dayKey: KEYS[civil.getUTCDay()], civil };
+  }
+
+  function todayKey(now, timeZone) { return todayParts(now, timeZone).dayKey; }
+
+  /** Datas (dia do mês) da semana corrente, de segunda a domingo. */
+  let reference = null; // ISO 'YYYY-MM-DD' da semana em exibição (null = semana atual)
+  function setReference(iso) { reference = iso && /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : null; }
+  function getReference() { return reference; }
+  function toISO(p) { return p.year + '-' + String(p.month).padStart(2, '0') + '-' + String(p.day).padStart(2, '0'); }
+  function todayISO(now, timeZone) { return toISO(todayParts(now, timeZone)); }
+  function addDaysISO(iso, n) { const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+  function weekdayKeyOfISO(iso) { return KEYS[new Date(iso + 'T12:00:00Z').getUTCDay()]; }
+
+  function weekDates(now, timeZone) {
+    if (now === undefined && reference) now = new Date(reference + 'T15:00:00Z');
+    const t = todayParts(now, timeZone);
+    const offsetToMonday = (t.weekday + 6) % 7;
+    const monday = new Date(t.civil.getTime() - offsetToMonday * 86400000);
+    const out = {};
+    Object.keys(WEEK_ORDER).forEach(k => {
+      const d = new Date(monday.getTime() + WEEK_ORDER[k] * 86400000);
+      out[k] = { day: d.getUTCDate(), month: d.getUTCMonth() + 1, year: d.getUTCFullYear() };
+    });
+    return out;
+  }
+
+  const api = { TZ, KEYS, todayParts, todayKey, weekDates, setReference, getReference, toISO, todayISO, addDaysISO, weekdayKeyOfISO };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  if (root) root.KomodoDate = api;
+})(typeof window !== 'undefined' ? window : null);
+
+;
+/* src/ui/RenderController.js */
+/**
+ * RenderController.js
+ * 
+ * Camada de visualização reativa (Fase 4).
+ * Escuta os eventos do AppStore e desenha a UI automaticamente,
+ * eliminando a necessidade de chamadas diretas como renderDaily().
+ */
+
+class RenderController {
+    constructor() {
+        this._bindEvents();
+        this.updateCalendarUI();
+    }
+
+    updateCalendarUI() {
+        const monthNames = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"];
+        const KD = window.KomodoDate;
+        if (!KD) return;
+        const today = KD.todayParts();
+        const week = KD.weekDates();
+        const monthEl = document.querySelector('.month-title');
+        const refMonth = KD.getReference() ? Number(KD.getReference().slice(5, 7)) : today.month;
+        if (monthEl) monthEl.textContent = monthNames[refMonth - 1];
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            const diaStr = tab.getAttribute('data-dia');
+            const info = week[diaStr];
+            if (!info) return;
+            // textContent (e não innerText) evita forçar layout da página inteira a cada aba (achado 8, TBT).
+            const originalText = tab.textContent.trim().split(/\s+/)[0];
+            tab.textContent = `${originalText} ${String(info.day).padStart(2, '0')}`;
+            const isToday = KD.toISO(info) === KD.todayISO();
+            if (!KD.getReference()) tab.classList.toggle('active', isToday);
+            tab.classList.toggle('today', isToday);
+        });
+    }
+
+    static currentModule() {
+        return window.location.pathname.includes('residencial') ? 'residencial' : 'empresarial';
+    }
+
+    _bindEvents() {
+        if (!window.eventBus || !window.SystemEvents) return;
+
+        // Quando o repositório salva com sucesso, mandamos a Store recarregar
+        window.eventBus.on(window.SystemEvents.DB_SAVE_SUCCESS, async () => {
+            await this.reloadDailyData();
+        });
+
+        // Quando a Store notifica mudança de visitantes, renderizamos a tela
+        window.eventBus.on('STORE_VISITORS_UPDATED', (state) => {
+            if (typeof window.renderDaily === 'function') {
+                // A função legado renderDaily será chamada passando os dados do Store
+                window.renderDaily(state.dailyData);
+            }
+        });
+    }
+
+    /**
+     * Recarrega os dados do dia ativo e atualiza a Store.
+     * Pode ser chamado ao inicializar a página ou ao trocar a aba do dia.
+     */
+    async reloadDailyData(diaStr = null, modulo = null) {
+        if (!window.appStore || !window.VisitorRepository) return;
+        
+        let visitorsState = window.appStore.getState('visitors');
+        
+        if (diaStr) {
+            visitorsState.diaAtivo = diaStr;
+        }
+
+        // Tenta inferir o módulo caso não passado (fallback para a fase 5)
+        if (!modulo) {
+            modulo = RenderController.currentModule();
+        }
+
+        try {
+            // Em vez de banco direto, usa o Repositorio criado na Fase 2
+            const rows = await window.VisitorRepository.getAllDaily(visitorsState.diaAtivo, modulo);
+            
+            // Atualiza a store, que por sua vez disparará o evento de renderização
+            window.appStore.setVisitorsState({
+                diaAtivo: visitorsState.diaAtivo,
+                dailyData: rows
+            });
+        } catch(e) {
+            console.error("Falha ao recarregar dados diários: ", e);
+        }
+    }
+}
+
+// Inicializa o Controller global
+window.renderController = new RenderController();
+
+;
+/* src/ui/AgendaNav.js */
+/**
+ * AgendaNav — navegação da agenda (semana anterior/próxima, seletor de data, "Hoje")
+ * e visões Hoje / Próximos / Histórico, sem exigir mudança de esquema.
+ * Datas sempre no fuso America/Sao_Paulo (KomodoDate).
+ */
+(function () {
+  function modulo() { return window.location.pathname.includes('residencial') ? 'residencial' : 'empresarial'; }
+  function KD() { return window.KomodoDate; }
+  function activeDay() { const t = document.querySelector('.tab.active'); return t ? t.getAttribute('data-dia') : KD().todayKey(); }
+  function el(tag, attrs, text) { const e = document.createElement(tag); Object.assign(e, attrs || {}); if (text) e.textContent = text; return e; }
+
+  function goToDate(iso) {
+    const kd = KD(); if (!kd || !iso) return;
+    const today = kd.todayISO();
+    kd.setReference(iso === today ? null : iso);
+    if (window.renderController) window.renderController.updateCalendarUI();
+    const day = kd.weekdayKeyOfISO(iso);
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-dia') === day));
+    const picker = document.getElementById('agendaDate'); if (picker) picker.value = iso;
+    setViewLabel('');
+    if (window.renderController) window.renderController.reloadDailyData(day, modulo());
+  }
+
+  function shiftWeek(n) {
+    const kd = KD(); const ref = kd.getReference() || kd.todayISO();
+    const base = kd.weekDates(new Date(ref + 'T15:00:00Z'))[activeDay()];
+    const cur = base ? kd.toISO(base) : ref;
+    goToDate(kd.addDaysISO(cur, 7 * n));
+  }
+
+  function setViewLabel(text) { const l = document.getElementById('agendaViewLabel'); if (l) l.textContent = text; }
+
+  async function showView(kind) {
+    const kd = KD(); const today = kd.todayISO();
+    let de = null, ate = null, label = '';
+    if (kind === 'hoje') return goToDate(today);
+    if (kind === 'futuro') { de = kd.addDaysISO(today, 1); label = 'Próximos agendamentos (a partir de amanhã)'; }
+    if (kind === 'historico') { ate = kd.addDaysISO(today, -1); label = 'Histórico (até ontem)'; }
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    setViewLabel(label + '…');
+    try {
+      let rows = await window.VisitorRepository.getRange(modulo(), de, ate);
+      if (kind === 'historico') rows = rows.slice().reverse();
+      setViewLabel(label + ' — ' + rows.length + ' registro(s)');
+      if (typeof window.renderDaily === 'function') window.renderDaily(rows, '', true);
+    } catch (e) { setViewLabel('Falha ao carregar: ' + e.message); }
+  }
+
+  function build() {
+    const nav = document.querySelector('.calendar-nav'); const tabs = document.getElementById('tabs');
+    if (!nav || !tabs || !KD() || document.getElementById('agendaNav')) return;
+    const bar = el('div', { id: 'agendaNav', className: 'agenda-nav' });
+    const mk = (id, text, title, fn) => { const b = el('button', { type: 'button', id, className: 'btn-outline agenda-btn', title }, text); b.addEventListener('click', fn); return b; };
+    bar.append(
+      mk('agendaPrevWeek', '◀ Semana', 'Semana anterior', () => shiftWeek(-1)),
+      mk('agendaToday', 'Hoje', 'Voltar para hoje', () => showView('hoje')),
+      mk('agendaNextWeek', 'Semana ▶', 'Próxima semana', () => shiftWeek(1))
+    );
+    const picker = el('input', { type: 'date', id: 'agendaDate', className: 'agenda-date', title: 'Ir para a data' });
+    picker.value = KD().todayISO();
+    picker.addEventListener('change', () => goToDate(picker.value));
+    bar.append(picker,
+      mk('agendaViewFuture', 'Próximos', 'Agendamentos futuros', () => showView('futuro')),
+      mk('agendaViewHistory', 'Histórico', 'Registros anteriores', () => showView('historico')));
+    const label = el('div', { id: 'agendaViewLabel', className: 'agenda-view-label' });
+    // Achado 8 (CLS): o espaço já vem reservado no HTML (#agendaNavSlot); sem ele, insere após as abas como antes.
+    const slot = document.getElementById('agendaNavSlot');
+    if (slot) slot.append(bar, label);
+    else { tabs.insertAdjacentElement('afterend', bar); bar.insertAdjacentElement('afterend', label); }
+    // Ao clicar numa aba, sincroniza o seletor de data com a semana em exibição.
+    tabs.addEventListener('click', e => {
+      const t = e.target.closest('.tab'); if (!t) return;
+      const w = KD().weekDates()[t.getAttribute('data-dia')]; if (w) picker.value = KD().toISO(w);
+      setViewLabel('');
+    });
+  }
+
+  window.AgendaNav = { goToDate, shiftWeek, showView, build };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build); else build();
+})();
+
+;
+/* src/ui/VisitActions.js */
+/* Reagendar + Histórico da visita (rotas /reagendar e /historico). Datas em America/Sao_Paulo. Sem innerHTML com dados. */
+(function () {
+  'use strict';
+  var TZ = 'America/Sao_Paulo';
+  var ACTIONS = { created: 'Criado', rescheduled: 'Reagendado', status_changed: 'Status alterado', deleted: 'Excluído' };
+  var STATUS = ['Aguardando', 'Entrada', 'Saída'];
+  function modulo() { return /residencial/.test(location.pathname) ? 'residencial' : 'empresarial'; }
+  function el(tag, props, text) { var e = document.createElement(tag); Object.keys(props || {}).forEach(function (k) { if (k === 'attrs') Object.keys(props.attrs).forEach(function (a) { e.setAttribute(a, props.attrs[a]); }); else e[k] = props[k]; }); if (text != null) e.textContent = text; return e; }
+  function br(iso) { return iso ? String(iso).slice(0, 10).split('-').reverse().join('/') : '—'; }
+  function stamp(ts) { try { return new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, dateStyle: 'short', timeStyle: 'short' }).format(new Date(ts)); } catch (_) { return String(ts || ''); } }
+  function todayISO() { return window.KomodoDate && window.KomodoDate.todayISO ? window.KomodoDate.todayISO() : new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date()); }
+  function findVisit(id) { var st = window.appStore && window.appStore.getState('visitors'); return st && (st.dailyData || []).find(function (r) { return String(r.id) === String(id); }); }
+  function reload() { var st = window.appStore && window.appStore.getState('visitors'); if (window.renderController) window.renderController.reloadDailyData(st && st.diaAtivo, modulo()); }
+
+  var dlg, lastFocus;
+  function dialog() {
+    if (dlg) return dlg;
+    dlg = el('dialog', { id: 'visitDialog', className: 'visit-dialog', attrs: { 'aria-labelledby': 'visitDialogTitle' } });
+    dlg.addEventListener('close', function () { if (lastFocus && lastFocus.focus) lastFocus.focus(); });
+    document.body.appendChild(dlg);
+    return dlg;
+  }
+  function open(title, body, trigger) {
+    var d = dialog(); d.textContent = '';
+    var head = el('div', { className: 'visit-dialog-head' });
+    head.append(el('h2', { id: 'visitDialogTitle' }, title), el('button', { type: 'button', className: 'visit-dialog-close', attrs: { 'aria-label': 'Fechar' } }, '✕'));
+    head.lastChild.addEventListener('click', function () { d.close(); });
+    d.append(head, body);
+    lastFocus = trigger || document.activeElement;
+    if (typeof d.showModal === 'function') d.showModal(); else d.setAttribute('open', '');
+    var first = d.querySelector('input,button:not(.visit-dialog-close)'); if (first) first.focus();
+  }
+
+  function openReschedule(id, trigger) {
+    var v = findVisit(id); if (!v) return;
+    var form = el('form', { className: 'visit-form', noValidate: true });
+    var info = el('p', { className: 'visit-dialog-info' }, v.nome + ' — atual: ' + br(v.data) + ' às ' + (v.hora || '—'));
+    var lData = el('label', { htmlFor: 'reschedData' }, 'Nova data');
+    var iData = el('input', { type: 'date', id: 'reschedData', required: true, value: v.data || todayISO() });
+    var lHora = el('label', { htmlFor: 'reschedHora' }, 'Novo horário');
+    var iHora = el('input', { type: 'time', id: 'reschedHora', required: true, value: v.hora || '' });
+    var msg = el('p', { className: 'visit-form-msg', attrs: { role: 'status', 'aria-live': 'polite' } });
+    var actions = el('div', { className: 'visit-form-actions' });
+    var cancel = el('button', { type: 'button', className: 'btn-outline' }, 'Cancelar');
+    var save = el('button', { type: 'submit', className: 'btn-primary', id: 'reschedSave' }, 'Salvar reagendamento');
+    cancel.addEventListener('click', function () { dlg.close(); });
+    actions.append(cancel, save);
+    form.append(info, lData, iData, lHora, iHora, msg, actions);
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(iData.value) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(iHora.value)) { msg.textContent = 'Informe data e horário válidos.'; return; }
+      if (iData.value === v.data && iHora.value === v.hora) { msg.textContent = 'Nada mudou.'; return; }
+      save.disabled = true; msg.textContent = 'Salvando…';
+      try {
+        await window.VisitorRepository.reschedule(v.id, iData.value, iHora.value);
+        msg.textContent = 'Reagendado para ' + br(iData.value) + ' às ' + iHora.value + '.';
+        dlg.close(); lastFocus = null; reload();
+      } catch (ex) { msg.textContent = 'Erro: ' + (ex && ex.message || 'falha ao reagendar'); save.disabled = false; }
+    });
+    open('Reagendar visita', form, trigger);
+  }
+
+  async function openHistory(id, trigger) {
+    var v = findVisit(id);
+    var box = el('div', { className: 'visit-history' });
+    var status = el('p', { attrs: { role: 'status', 'aria-live': 'polite' } }, 'Carregando histórico…');
+    box.append(status);
+    open('Histórico — ' + (v ? v.nome : 'visita'), box, trigger);
+    try {
+      var r = await window.VisitorRepository.history(id);
+      var rows = Array.isArray(r) ? r : ((r && r.data) || []); // ApiService devolve o array já desembrulhado
+      status.textContent = rows.length ? rows.length + ' evento(s)' : 'Sem histórico registrado.';
+      var ol = el('ol', { className: 'visit-history-list' });
+      rows.forEach(function (h) {
+        var li = el('li');
+        li.append(el('strong', {}, ACTIONS[h.action] || h.action), el('time', { dateTime: h.created_at || '' }, ' · ' + stamp(h.created_at)));
+        var d = '';
+        if (h.action === 'rescheduled') d = br(h.old_data) + ' ' + (h.old_hora || '') + ' → ' + br(h.new_data) + ' ' + (h.new_hora || '');
+        else if (h.action === 'created') d = 'Agendado para ' + br(h.new_data) + ' ' + (h.new_hora || '');
+        else if (h.action === 'status_changed') d = (STATUS[h.old_status] || h.old_status) + ' → ' + (STATUS[h.new_status] || h.new_status);
+        if (d) li.append(el('div', { className: 'visit-history-detail' }, d));
+        ol.append(li);
+      });
+      box.append(ol);
+    } catch (ex) { status.textContent = (ex && /404|não encontrado/i.test(ex.message)) ? 'Sem histórico registrado.' : 'Erro ao carregar histórico.'; }
+  }
+
+  function decorate(root) {
+    (root || document).querySelectorAll('#cardsContainer .card[data-id]').forEach(function (card) {
+      if (card.querySelector('.visit-actions')) return;
+      var id = card.dataset.id; var v = findVisit(id); var nome = v ? v.nome : 'visita';
+      var bar = el('div', { className: 'visit-actions' });
+      bar.append(
+        el('button', { type: 'button', className: 'btn-outline visit-btn', attrs: { 'data-visit-action': 'reschedule', 'data-id': id, 'aria-label': 'Reagendar ' + nome } }, '📅 Reagendar'),
+        el('button', { type: 'button', className: 'btn-outline visit-btn', attrs: { 'data-visit-action': 'history', 'data-id': id, 'aria-label': 'Histórico de ' + nome } }, '🕘 Histórico'));
+      card.appendChild(bar);
+    });
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-visit-action]'); if (!b) return;
+    e.stopPropagation();
+    if (b.dataset.visitAction === 'reschedule') openReschedule(b.dataset.id, b); else openHistory(b.dataset.id, b);
+  }, true);
+  function start() { var c = document.getElementById('cardsContainer'); if (!c) return; decorate(c); new MutationObserver(function () { decorate(c); }).observe(c, { childList: true, subtree: true }); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+  window.VisitActions = { decorate: decorate, openReschedule: openReschedule, openHistory: openHistory, _fmt: { br: br, stamp: stamp } };
+})();
+
+;
+/* src/ui/A11yEnhancer.js */
+/* Fase D (D4–D6): melhorias de acessibilidade por observação do DOM — não altera handlers, dados nem fluxo.
+   D4 aria-pressed nos botões de alternância; aria-current nas abas de dia.
+   D5 aria-invalid + dica ligada ao campo (nome ≥3, placa ABC-1234/ABC1D23 via ValidationManager) — só informa; validação real continua no salvar.
+   D6 região role=status anuncia "N registros" ou o estado vazio da agenda. */
+(function () {
+  'use strict';
+  var PLATE = /^[A-Z]{3}-?\d[A-Z0-9]\d{2}$/;
+  // Mesma regra do ValidationManager (fonte da verdade) quando disponível.
+  function validPlate(p) { var VM = window.ValidationManager; return VM && typeof VM.isValidMercosulOrOld === 'function' ? VM.isValidMercosulOrOld(p) : PLATE.test(String(p).toUpperCase()); }
+  function syncToggles(root) { (root || document).querySelectorAll('button.btn-toggle').forEach(function (b) { var v = b.classList.contains('active') ? 'true' : 'false'; if (b.getAttribute('aria-pressed') !== v) b.setAttribute('aria-pressed', v); }); }
+  function syncTabs(root) { (root || document).querySelectorAll('.tab[data-dia]').forEach(function (t) { if (t.classList.contains('active')) { if (t.getAttribute('aria-current') !== 'date') t.setAttribute('aria-current', 'date'); } else if (t.hasAttribute('aria-current')) t.removeAttribute('aria-current'); }); }
+  function rule(input) { var f = input.getAttribute('data-field'); var v = String(input.value || '').trim(); if (f === 'nome') return v && v.length < 3 ? 'Nome deve ter pelo menos 3 caracteres.' : ''; if (f === 'placa') return v && !validPlate(v.split(' ')[0]) ? 'Placa no formato ABC-1234 ou ABC1D23.' : ''; return ''; }
+  var seq = 0;
+  function check(input) {
+    var msg = rule(input); var id = input.getAttribute('data-a11y-hint');
+    if (!id) { id = 'a11yHint' + (++seq); input.setAttribute('data-a11y-hint', id); }
+    var hint = document.getElementById(id);
+    if (msg) {
+      if (!hint) { hint = document.createElement('span'); hint.id = id; hint.className = 'a11y-hint'; input.insertAdjacentElement('afterend', hint); }
+      hint.textContent = msg; input.setAttribute('aria-invalid', 'true');
+      var d = (input.getAttribute('aria-describedby') || '').split(' ').filter(Boolean); if (d.indexOf(id) < 0) { d.push(id); input.setAttribute('aria-describedby', d.join(' ')); }
+    } else {
+      if (hint) hint.textContent = ''; input.removeAttribute('aria-invalid');
+    }
+    return msg;
+  }
+  function describe(container) {
+    if (!container) return '';
+    var empty = container.querySelector('.empty-records-message'); if (empty) return empty.textContent;
+    var n = container.querySelectorAll('.card[data-id]').length; return n === 1 ? '1 registro na agenda.' : n + ' registros na agenda.';
+  }
+  function start() {
+    syncToggles(); syncTabs();
+    new MutationObserver(function (ms) { var t = false, d = false; ms.forEach(function (m) { var el = m.target; if (el.classList && el.classList.contains('btn-toggle')) t = true; if (el.classList && el.classList.contains('tab')) d = true; if (m.type === 'childList') { t = d = true; } }); if (t) syncToggles(); if (d) syncTabs(); })
+      .observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'], childList: true });
+    document.addEventListener('blur', function (e) { var el = e.target; if (el && el.matches && el.matches('input[data-field="nome"],input[data-field="placa"]')) check(el); }, true);
+    document.addEventListener('input', function (e) { var el = e.target; if (el && el.getAttribute && el.getAttribute('aria-invalid') === 'true') check(el); }, true);
+    var c = document.getElementById('cardsContainer'); if (!c) return;
+    var live = document.createElement('div'); live.id = 'agendaStatus'; live.className = 'sr-only'; live.setAttribute('role', 'status'); live.setAttribute('aria-live', 'polite'); c.insertAdjacentElement('beforebegin', live);
+    var timer = null; var announce = function () { clearTimeout(timer); timer = setTimeout(function () { var s = describe(c); if (live.textContent !== s) live.textContent = s; }, 400); };
+    new MutationObserver(announce).observe(c, { childList: true }); announce();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+  window.A11yEnhancer = { syncToggles: syncToggles, syncTabs: syncTabs, check: check, rule: rule, describe: describe };
+})();
+
+;
+/* src/ui/components/core/KomodoModal.js */
+/**
+ * KomodoModal.js
+ *
+ * Web Component leve para modais do Guardião Komodo.
+ * Usa Light DOM (sem Shadow DOM) para que document.getElementById()
+ * funcione normalmente em todos os scripts do app.
+ */
+class KomodoModal extends HTMLElement {
+    constructor() {
+        super();
+        this._rendered = false;
+    }
+
+    connectedCallback() {
+        if (!this._rendered) {
+            this.render();
+            this.setupEvents();
+            this._rendered = true;
+        }
+    }
+
+    static get observedAttributes() {
+        return ['title', 'open'];
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (name === 'open') {
+            const overlay = this.querySelector('.modal-overlay');
+            if (!overlay) return;
+            if (this.hasAttribute('open')) {
+                overlay.classList.add('aberto');
+            } else {
+                overlay.classList.remove('aberto');
+            }
+        }
+    }
+
+    close() {
+        this.removeAttribute('open');
+        this.dispatchEvent(new CustomEvent('close'));
+    }
+
+    setupEvents() {
+        const overlay = this.querySelector('.modal-overlay');
+        if (!overlay) return;
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                this.close();
+            }
+        });
+        
+        const closeBtn = this.querySelector('.km-btn-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.close());
+        }
+    }
+
+    render() {
+        const title = this.getAttribute('title') || 'Modal';
+        const fragment = document.createDocumentFragment();
+        while (this.firstChild) {
+            fragment.appendChild(this.firstChild);
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        const content = document.createElement('div');
+        content.className = 'modal-content';
+        const header = document.createElement('div');
+        header.className = 'modal-header';
+        const titleNode = document.createElement('div');
+        titleNode.className = 'modal-title-text';
+        titleNode.textContent = title;
+        const closeButton = document.createElement('button');
+        closeButton.className = 'km-btn-close';
+        closeButton.type = 'button';
+        closeButton.setAttribute('aria-label', 'Fechar modal');
+        closeButton.textContent = '×';
+        const body = document.createElement('div');
+        body.className = 'modal-body';
+
+        header.append(titleNode, closeButton);
+        body.appendChild(fragment);
+        content.append(header, body);
+        overlay.appendChild(content);
+        this.replaceChildren(overlay);
+    }
+}
+customElements.define('komodo-modal', KomodoModal);
+
+;
+/* src/db/DatabaseService.js */
+/**
+ * DatabaseService.js
+ *
+ * Camada abstrata de persistência Offline-First (SQLite).
+ * Implementa o padrão Singleton.
+ *
+ * CHANGELOG desta revisão:
+ *  - Adicionada tabela `komodo_tbl_usuarios` para autenticação real (ver AuthService.js).
+ *  - Renomeada `komodo_tbl_pacientes` -> `komodo_tbl_registros` com migração automática
+ *    e sem perda de dados (era resíduo de um template de agenda de clínica; os campos
+ *    `clinica/medico/especialidade/sala` não fazem sentido pra um app de acesso/portaria).
+ *  - Mantido 100% do comportamento anterior de insert/query/init (nada foi removido).
+ */
+class DatabaseService {
+  constructor() {
+    this.sqlite = null;
+    this.db = null;
+    this.isReady = false;
+    this.queryLock = Promise.resolve(); // Mutex Queue para evitar DB Locked
+  }
+
+  async _enqueue(operation) {
+    let release;
+    const nextLock = new Promise(resolve => { release = resolve; });
+    const currentLock = this.queryLock;
+    this.queryLock = currentLock.then(() => nextLock).catch(() => nextLock);
+
+    try {
+      await currentLock;
+      return await operation();
+    } finally {
+      release();
+    }
+  }
+
+  async init() {
+    return this._enqueue(async () => {
+      if (this.isReady) return;
+      try {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorSQLite) {
+          this.sqlite = window.Capacitor.Plugins.CapacitorSQLite;
+          
+          try {
+            await this.sqlite.createConnection({
+              database: "komododb",
+              version: 1,
+              encrypted: false,
+              mode: "no-encryption"
+            });
+          } catch(e) {
+            console.log("Conexão com BD já existia ou houve erro ignorável:", e);
+          }
+          
+          await this.sqlite.open({ database: "komododb" });
+
+          this.db = {
+            execute: async (opts) => await this.sqlite.execute(Object.assign({ database: "komododb" }, opts)),
+            run: async (opts) => await this.sqlite.run(Object.assign({ database: "komododb" }, opts)),
+            query: async (opts) => await this.sqlite.query(Object.assign({ database: "komododb" }, opts))
+          };
+        } else {
+          console.warn("SQLite não detectado. Fallback para simulação em memória.");
+          this.db = { execute: async () => {}, run: async () => ({changes: {lastId: Date.now()}}), query: async () => ({values: []}) };
+        }
+
+        await this.runMigrations();
+        this.isReady = true;
+        console.log("DatabaseService: Inicializado com sucesso.");
+      } catch (e) {
+        console.error("Erro Crítico no DatabaseService:", e);
+        throw e;
+      }
+    });
+  }
+
+  async runMigrations() {
+    const v1 = `
       CREATE TABLE IF NOT EXISTS komodo_acessos (
         id TEXT PRIMARY KEY,
         modulo TEXT NOT NULL,
@@ -29,7 +1201,2479 @@ const SystemEvents={UI_READY:"UI_READY",UI_TAB_CHANGED:"UI_TAB_CHANGED",UI_SAVE_
         message TEXT,
         timestamp TEXT
       );
-    `})}async insert(e,t){return this.isReady||await this.init(),this._enqueue(async()=>{const a=Object.keys(t).join(", "),r=Object.keys(t).map(()=>"?").join(", "),n=Object.values(t),o=`INSERT INTO ${e} (${a}) VALUES (${r})`;if(this.sqlite){const i=await this.db.run({statement:o,values:n});return t.id=t.id||i.changes.lastId,t}else{t.id=t.id||Date.now().toString();let i=JSON.parse(localStorage.getItem(e)||"[]");const s=i.findIndex(d=>d.id===t.id);return s>=0?i[s]=t:i.push(t),localStorage.setItem(e,JSON.stringify(i)),t}})}async update(e,t){return this.isReady||await this.init(),this._enqueue(async()=>{if(!t.id)return null;if(this.sqlite){const a=Object.keys(t).filter(i=>i!=="id"),r=a.map(i=>`${i} = ?`).join(", "),n=a.map(i=>t[i]);n.push(t.id);const o=`UPDATE ${e} SET ${r} WHERE id = ?`;return await this.db.run({statement:o,values:n}),t}else{let a=JSON.parse(localStorage.getItem(e)||"[]");const r=a.findIndex(n=>String(n.id)===String(t.id));return r>=0&&(a[r]=t),localStorage.setItem(e,JSON.stringify(a)),t}})}async delete(e,t){return this.isReady||await this.init(),this._enqueue(async()=>{if(this.sqlite){const a=`DELETE FROM ${e} WHERE id = ?`;await this.db.run({statement:a,values:[t]})}else{let a=JSON.parse(localStorage.getItem(e)||"[]");a=a.filter(r=>String(r.id)!==String(t)),localStorage.setItem(e,JSON.stringify(a))}return!0})}async query(e,t=[]){return this.isReady||await this.init(),this._enqueue(async()=>{if(this.sqlite)return(await this.db.query({statement:e,values:t})).values||[];{let a=e.match(/FROM\s+(\w+)/i);if(!a)return[];let r=a[1],n=JSON.parse(localStorage.getItem(r)||"[]");return e.includes("modulo = ?")&&(n=n.filter(o=>o.modulo===t[0])),n}})}}window.dbService=new DatabaseService;class AuthService{constructor(){if(this.SESSION_KEY="komodo_session",this.SESSION_TTL_MS=720*60*1e3,this.isRemoteMode())try{localStorage.removeItem(this.SESSION_KEY)}catch{}}isRemoteMode(){const e=window.location,t=e.protocol==="https:"&&e.hostname!=="localhost"&&e.hostname!=="127.0.0.1",a=e.protocol==="http:"&&(e.hostname==="127.0.0.1"||e.hostname==="localhost")&&e.port==="32198";return t||a}_bufToHex(e){return Array.from(new Uint8Array(e)).map(t=>t.toString(16).padStart(2,"0")).join("")}_hexToBuf(e){const t=new Uint8Array(e.length/2);for(let a=0;a<e.length;a+=2)t[a/2]=parseInt(e.substr(a,2),16);return t.buffer}_randomSaltHex(e=16){const t=new Uint8Array(e);return crypto.getRandomValues(t),this._bufToHex(t.buffer)}async _deriveHash(e,t,a=15e4){const r=new TextEncoder,n=await crypto.subtle.importKey("raw",r.encode(e),{name:"PBKDF2"},!1,["deriveBits"]),o=await crypto.subtle.deriveBits({name:"PBKDF2",salt:this._hexToBuf(t),iterations:a,hash:"SHA-256"},n,256);return this._bufToHex(o)}async hasAnyUser(){if(this.isRemoteMode())return!!(await window.apiService.get("/auth/status"))?.hasAdmin;const e=await window.dbService.query("SELECT COUNT(*) as total FROM komodo_tbl_usuarios");return!!(e&&e[0]&&Number(e[0].total)>0)}async createFirstAdmin(e,t,a=""){const r=String(e||"").trim().toLowerCase(),n=String(t||"");if(this.isRemoteMode()){if(!r||n.length<12)throw new Error("Defina um e-mail e uma senha com no mínimo 12 caracteres.");const s=String(a||"");if(s.length<32)throw new Error("Informe a chave de configuração válida fornecida pelo administrador do ambiente.");return await window.apiService.post("/auth/bootstrap",{email:r,password:n,bootstrapSecret:s}),!0}if(!r||n.length<8)throw new Error("Defina um e-mail e uma senha com no mínimo 8 caracteres.");if(await this.hasAnyUser())throw new Error("Já existe um administrador cadastrado.");const o=this._randomSaltHex(),i=await this._deriveHash(n,o);return await window.dbService.insert("komodo_tbl_usuarios",{id:"user_"+Date.now(),email:r,salt:o,hash:i,papel:"admin",criado_em:new Date().toISOString()}),!0}async login(e,t){const a=String(e||"").trim().toLowerCase(),r=String(t||"");if(this.isRemoteMode()){const d=await window.apiService.post("/auth/login",{email:a,password:r}),l={userId:d.user.id,email:d.user.email,role:d.user.role,expiresAt:d.expiresAt};return sessionStorage.setItem(this.SESSION_KEY,JSON.stringify(l)),l}const n=await window.dbService.query("SELECT * FROM komodo_tbl_usuarios WHERE email = ?",[a]);if(!n||n.length===0)throw new Error("Credenciais inválidas.");const o=n[0];if(await this._deriveHash(r,o.salt)!==o.hash)throw new Error("Credenciais inválidas.");const s={token:this._randomSaltHex(24),userId:o.id,email:o.email,expiresAt:Date.now()+this.SESSION_TTL_MS};return localStorage.setItem(this.SESSION_KEY,JSON.stringify(s)),s}getSession(){try{const e=this.isRemoteMode()?sessionStorage:localStorage,t=e.getItem(this.SESSION_KEY);if(!t)return null;const a=JSON.parse(t);return!a.expiresAt||Date.now()>a.expiresAt?(e.removeItem(this.SESSION_KEY),null):a}catch{return null}}isAuthenticated(){return!!this.getSession()}logout(){try{window.komodoOffline&&window.komodoOffline.clear().catch(()=>{})}catch{}const e=this.getSession();if(this.isRemoteMode()&&e&&window.apiService){const t=window.apiService.post("/auth/logout",{}).catch(()=>null);return sessionStorage.removeItem(this.SESSION_KEY),t}return localStorage.removeItem(this.SESSION_KEY),Promise.resolve()}requireAuth(e="login.html"){if(this.isAuthenticated())return;let t=!1;try{t=sessionStorage.getItem("kac_newlogin")==="1"}catch{}window.location.href=t?"auth.html":e}}window.authService=new AuthService,window.KomodoParticles=(function(){function m(e,t){t=t||{};const a=t.count||45,r=t.linkDistance||150,n=t.colors||["rgba(194,160,87,"],o=document.getElementById(e);if(!o)return;const i=o.getContext("2d"),s=[],d={x:-9999,y:-9999};function l(){o.width=window.innerWidth,o.height=window.innerHeight}l(),window.addEventListener("resize",l),document.addEventListener("mousemove",g=>{d.x=g.clientX,d.y=g.clientY});function c(){this.x=Math.random()*o.width,this.y=Math.random()*o.height,this.vx=(Math.random()-.5)*.35,this.vy=(Math.random()-.5)*.35,this.radius=Math.random()*2+.5,this.color=n[Math.floor(Math.random()*n.length)]}c.prototype.update=function(){this.x+=this.vx,this.y+=this.vy,(this.x<0||this.x>o.width)&&(this.vx*=-1),(this.y<0||this.y>o.height)&&(this.vy*=-1);const g=this.x-d.x,v=this.y-d.y;Math.sqrt(g*g+v*v)<180&&(this.x+=g*.02,this.y+=v*.02)},c.prototype.draw=function(){i.beginPath(),i.arc(this.x,this.y,this.radius,0,Math.PI*2),i.fillStyle=this.color+"0.6)",i.fill()};for(let g=0;g<a;g++)s.push(new c);let b;function S(){i.clearRect(0,0,o.width,o.height);for(let g=0;g<s.length;g++){s[g].update(),s[g].draw();for(let v=g+1;v<s.length;v++){const x=s[g].x-s[v].x,y=s[g].y-s[v].y,f=Math.sqrt(x*x+y*y);if(f<r){const u=(1-f/r)*.18;i.beginPath(),i.moveTo(s[g].x,s[g].y),i.lineTo(s[v].x,s[v].y),i.strokeStyle="rgba(194,160,87,"+u+")",i.lineWidth=.8,i.stroke()}}}b=requestAnimationFrame(S)}return S(),{stop:()=>cancelAnimationFrame(b)}}return{init:m}})(),(function(m){"use strict";var e="kac_fx";function t(){return!!(m.matchMedia&&m.matchMedia("(prefers-reduced-motion: reduce)").matches)}function a(){try{return m.localStorage.getItem(e)==="1"}catch{return!1}}var r=!1;function n(o,i){var s=a()&&!t();return document.body.classList.toggle("kac-fx",s),s&&!r&&m.KomodoParticles&&(r=!0,m.KomodoParticles.init(o||"particles-canvas",i||{count:50})),s}document.addEventListener("visibilitychange",function(){document.body.classList.toggle("kac-fx-paused",document.hidden)}),m.KomodoFx={init:function(o,i){var s=n(o,i),d=document.getElementById("fxToggle");return d&&(d.checked=s,d.disabled=t(),d.addEventListener("change",function(){try{d.checked?m.localStorage.setItem(e,"1"):m.localStorage.removeItem(e)}catch{}d.checked?n(o,i):m.location.reload()})),s},enabled:function(){return a()&&!t()}}})(window),(function(m){"use strict";var e={};function t(n){return e[n]||(e[n]=new Promise(function(o,i){var s=document.createElement("script");s.src=n,s.async=!1,s.onload=function(){o()},s.onerror=function(){delete e[n],i(new Error("Falha ao carregar "+n))},document.head.appendChild(s)})),e[n]}var a=["vendor/jspdf-4.2.1/jspdf.umd.min.js","vendor/jspdf-autotable-5.0.8/jspdf.plugin.autotable.min.js"],r="vendor/chart.js-4.5.1/chart.umd.js";m.KacVendor={pdf:function(){return m.jspdf&&m.jspdf.jsPDF&&m.jspdf.jsPDF.API&&m.jspdf.jsPDF.API.autoTable?Promise.resolve():t(a[0]).then(function(){return t(a[1])})},chart:function(){return m.Chart?Promise.resolve():t(r)},_load:t}})(window),(function(){"use strict";function m(a){return Array.prototype.slice.call(a.querySelectorAll(".tab[data-dia]"))}function e(a){var r=m(a),n=r.some(function(o){return o.classList.contains("active")});r.forEach(function(o,i){var s=o.classList.contains("active")||!n&&i===0;o.setAttribute("role","tab"),o.setAttribute("aria-selected",o.classList.contains("active")?"true":"false"),o.tabIndex=s?0:-1,o.id||(o.id="tab-"+o.getAttribute("data-dia")),o.setAttribute("aria-controls","cardsContainer")})}function t(){var a=document.getElementById("tabs");a&&(a.setAttribute("role","tablist"),a.getAttribute("aria-label")||a.setAttribute("aria-label","Dias da semana"),e(a),new MutationObserver(function(){e(a)}).observe(a,{subtree:!0,attributes:!0,attributeFilter:["class"]}),a.addEventListener("keydown",function(r){var n=m(a),o=n.indexOf(r.target);if(!(o<0)){var i=null;if(r.key==="ArrowRight")i=(o+1)%n.length;else if(r.key==="ArrowLeft")i=(o-1+n.length)%n.length;else if(r.key==="Home")i=0;else if(r.key==="End")i=n.length-1;else if(r.key==="Enter"||r.key===" "){r.preventDefault(),r.target.click();return}i!==null&&(r.preventDefault(),n[i].click(),n[i].focus())}}))}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",t):t(),typeof module<"u"&&(module.exports={sync:e})})(),(function(m){"use strict";var e=["Agendado","Na portaria","Saiu"],t=["Chegou","Saiu",null],a=1e4;function r(v){return v=Number(v)||0,v<2?v+1:null}function n(v){var x=document.createElement("span");return v=Number(v)||0,x.className="status-badge status-"+v,x.textContent=e[v],x}function o(v){var x=Number(v.status)||0;if(r(x)===null)return null;var y=document.createElement("button");return y.type="button",y.className="btn-status-toggle btn-status-next status-next-"+x,y.dataset.id=String(v.id==null?"":v.id),y.textContent=t[x],y.setAttribute("aria-label",t[x]+": "+String(v.nome||"visita")),y}var i=null,s=0,d=0;function l(v,x,y){var f=document.getElementById("kacToast");if(!f){f=document.createElement("div"),f.id="kacToast",f.className="kac-toast",f.setAttribute("role","status"),f.setAttribute("aria-live","polite"),document.body.appendChild(f);var u=function(){i&&(clearTimeout(i),i=null,s=Math.max(1e3,s-(Date.now()-d)))},h=function(){!f.hidden&&!i&&s>0&&C(s)};f.addEventListener&&(f.addEventListener("mouseenter",u),f.addEventListener("focusin",u),f.addEventListener("mouseleave",h),f.addEventListener("focusout",h))}function E(){f.hidden=!0,f.textContent="",s=0,i&&(clearTimeout(i),i=null)}function C(V){s=V,d=Date.now(),i=setTimeout(E,V)}f.textContent="";var T=document.createElement("span");if(T.textContent=v,f.appendChild(T),x){var O=document.createElement("button");O.type="button",O.className="kac-toast-undo",O.textContent="Desfazer",O.addEventListener("click",function(){return E(),x()}),f.appendChild(O)}return f.hidden=!1,i&&clearTimeout(i),i=null,C(y||a),{hide:E,el:f}}function c(v,x,y){if(!(!v||!v.querySelector)){var f=v.querySelector(".status-box");if(f){f.textContent="",f.appendChild(n(x.status));var u=o(x);u&&(y&&(u.disabled=!0,u.setAttribute("aria-busy","true")),f.appendChild(u))}}}var b={};async function S(v,x,y,f){var u=String(v.id);if(b[u])return null;var h=Number(v.status)||0,E=r(h);if(E===null)return null;var C=f&&f.closest?f.closest(".card"):null;b[u]=!0,v.status=E,c(C,v,!0),l(String(v.nome||"Visita")+": "+e[E]+".",function(){return g(v,x,y,C,h,E)});try{await x.updateStatus(v.id,E,{from:h})}catch(T){v.status=h,c(C,v,!1),delete b[u],l(T&&T.status===409?"Status já alterado em outro aparelho. Agenda atualizada.":'Não foi possível salvar "'+e[E]+'": '+(T&&T.message||"erro")+". Tente de novo.");try{await y()}catch{}return null}return delete b[u],c(C,v,!1),Promise.resolve().then(y).catch(function(){}),E}async function g(v,x,y,f,u,h){for(var E=String(v.id),C=0;C<50&&b[E];C++)await new Promise(function(T){setTimeout(T,100)});if(Number(v.status)===h){b[E]=!0,v.status=u,c(f,v,!0);try{await x.updateStatus(v.id,u,{from:h,undo:!0}),l("Desfeito: "+e[u]+".",null,4e3)}catch(T){v.status=h,l("Não foi possível desfazer: "+(T&&T.message||"erro"))}delete b[E],c(f,v,!1);try{await y()}catch{}}}m.VisitStatus={LABEL:e,ACTION:t,UNDO_MS:a,next:r,badge:n,actionButton:o,advance:S,toast:l,paint:c,_pending:b},typeof module<"u"&&(module.exports=m.VisitStatus)})(typeof window<"u"?window:globalThis),(function(m){"use strict";var e=function(s){return document.getElementById(s)},t={new:"btnOpenModal",dashboard:"btnOpenDashboard",pdf:"btnExportPDF",config:"btnOpenConfig",logout:"btnLogout"};function a(s){if(s==="agenda"){m.scrollTo({top:0,behavior:"smooth"});var d=e("cardsContainer");d&&d.focus();return}if(s==="search"){var l=e("globalSearch");l&&(l.scrollIntoView({block:"center"}),l.focus());return}var c=e(t[s]);c&&c.click();var b=document.querySelector(".bn-more");b&&(b.open=!1)}function r(s){(s||document).querySelectorAll("details.opt-section").forEach(function(d){var l=Array.prototype.some.call(d.querySelectorAll("input:not([type=hidden]):not([type=file]), textarea, select"),function(c){return c.tagName==="SELECT"?c.selectedIndex>0:String(c.value||"").trim()!==""});l&&(d.open=!0)})}function n(){var s=e("mainModalOverlay");s&&new MutationObserver(function(){(s.hasAttribute("open")||s.classList.contains("aberto"))&&setTimeout(function(){r(s);var d=s.querySelector('[data-field="nome"]');d&&!d.closest("[hidden]")&&d.offsetParent!==null&&d.focus()},50)}).observe(s,{attributes:!0,attributeFilter:["open","class","style"]})}async function o(){var s=e("orgName");if(!(!s||!m.authService||!m.apiService))try{if(!m.authService.isRemoteMode()||!m.authService.isAuthenticated())return;var d=await m.apiService.get("/organizacao"),l=d&&typeof d.name=="string"?d.name.trim():"";if(!l)return;s.textContent=l,s.title=l,s.hidden=!1}catch{}}function i(){var s=document.querySelector(".bottom-nav");s&&s.addEventListener("click",function(d){var l=d.target.closest("[data-nav]");l&&(d.preventDefault(),a(l.getAttribute("data-nav")))}),n(),o()}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",i):i(),m.KacMobileShell={nav:a,syncSections:r,orgName:o},typeof module<"u"&&(module.exports=m.KacMobileShell)})(typeof window<"u"?window:globalThis),(function(e){"use strict";function t(n){var o={"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"};return String(n??"").replace(/[&<>"']/g,function(i){return o[i]})}function a(n,o){var i=String(n??""),s=String(o??"");if(!s)return t(i);for(var d=i.toLowerCase(),l=s.toLowerCase(),c=[],b=0,S;(S=d.indexOf(l,b))!==-1;)c.push(t(i.slice(b,S))),c.push('<span class="highlight">'+t(i.slice(S,S+s.length))+"</span>"),b=S+s.length;return c.push(t(i.slice(b))),c.join("")}var r=Object.freeze({escapeHtml:t,highlightHtml:a});typeof module=="object"&&module.exports&&(module.exports=r),e&&(e.KomodoHtmlSafety=r)})(typeof window<"u"?window:globalThis),document.addEventListener("DOMContentLoaded",async function(){window.authService&&window.authService.requireAuth("login.html"),window.KomodoParticles&&window.KomodoFx&&window.KomodoFx.init("particles-canvas",{count:50});var m=[{cat:"Carros Populares",nome:"Fiat",tipo:"Carro"},{cat:"Carros Populares",nome:"Volkswagen",tipo:"Carro"},{cat:"Carros Populares",nome:"Chevrolet",tipo:"Carro"},{cat:"Carros Populares",nome:"Ford",tipo:"Carro"},{cat:"Carros Populares",nome:"Toyota",tipo:"Carro"},{cat:"Carros Populares",nome:"Honda",tipo:"Carro"},{cat:"Carros Populares",nome:"Hyundai",tipo:"Carro"},{cat:"Carros Populares",nome:"Renault",tipo:"Carro"},{cat:"Carros Populares",nome:"Nissan",tipo:"Carro"},{cat:"Carros Populares",nome:"Jeep",tipo:"Carro"},{cat:"Carros Populares",nome:"Peugeot",tipo:"Carro"},{cat:"Carros Populares",nome:"Citroën",tipo:"Carro"},{cat:"Carros Populares",nome:"Caoa Chery",tipo:"Carro"},{cat:"Carros Populares",nome:"BYD",tipo:"Carro"},{cat:"Carros Populares",nome:"GWM",tipo:"Carro"},{cat:"Carros Premium",nome:"Audi",tipo:"Carro"},{cat:"Carros Premium",nome:"BMW",tipo:"Carro"},{cat:"Carros Premium",nome:"Mercedes-Benz",tipo:"Carro"},{cat:"Carros Premium",nome:"Volvo",tipo:"Carro"},{cat:"Carros Premium",nome:"Land Rover",tipo:"Carro"},{cat:"Carros Premium",nome:"Porsche",tipo:"Carro"},{cat:"Carros Premium",nome:"Mitsubishi",tipo:"Carro"},{cat:"Carros Premium",nome:"Lexus",tipo:"Carro"},{cat:"Carros Premium",nome:"Jaguar",tipo:"Carro"},{cat:"Carros Premium",nome:"Mini",tipo:"Carro"},{cat:"Carros Premium",nome:"Subaru",tipo:"Carro"},{cat:"Motos",nome:"Honda (Moto)",tipo:"Moto"},{cat:"Motos",nome:"Yamaha",tipo:"Moto"},{cat:"Motos",nome:"Suzuki",tipo:"Moto"},{cat:"Motos",nome:"Kawasaki",tipo:"Moto"},{cat:"Motos",nome:"BMW (Moto)",tipo:"Moto"},{cat:"Motos",nome:"Triumph",tipo:"Moto"},{cat:"Motos",nome:"Royal Enfield",tipo:"Moto"},{cat:"Motos",nome:"Dafra",tipo:"Moto"},{cat:"Motos",nome:"Haojue",tipo:"Moto"},{cat:"Motos",nome:"Shineray",tipo:"Moto"},{cat:"Motos",nome:"Ducati",tipo:"Moto"},{cat:"Motos",nome:"Harley-Davidson",tipo:"Moto"},{cat:"Caminhões / Outros",nome:"Scania",tipo:"Carro"},{cat:"Caminhões / Outros",nome:"Volvo (Caminhão)",tipo:"Carro"},{cat:"Caminhões / Outros",nome:"Iveco",tipo:"Carro"},{cat:"Caminhões / Outros",nome:"Mercedes-Benz (Caminhão)",tipo:"Carro"},{cat:"Caminhões / Outros",nome:"VW Caminhões",tipo:"Carro"},{cat:"Caminhões / Outros",nome:"Agrale",tipo:"Carro"}],e="Carro",t="Carro";function a(w,p){var A=document.getElementById(w);if(A){p=p||"",A.replaceChildren();var I=typeof vehicleSelectors<"u"?vehicleSelectors[w]:null,D=w==="listWrapper1",R=I?I.type:D?e:t,_=I?I.labelId:D?"labelDropdown1":"labelDropdown2",N=I?I.panelId:D?"dropdownPanel1":"dropdownPanel2";if(!(!R||!_||!N)){for(var P="",H=0,L=0;L<m.length;L++){var F=m[L];if(F.tipo===R&&!(p&&F.nome.toLowerCase().indexOf(p.toLowerCase())===-1)){if(F.cat!==P){var M=document.createElement("div");M.className="brand-list-group",M.textContent=F.cat,A.appendChild(M),P=F.cat}var k=document.createElement("div");k.className="brand-item",k.dataset.brand=F.nome,k.dataset.label=_,k.dataset.panel=N,k.textContent=F.nome,A.appendChild(k),H++}}if(!H){var q=document.createElement("div");q.className="brand-item",q.style.color="var(--text-muted)",q.textContent="Nenhuma marca encontrada.",A.appendChild(q)}}}}document.getElementById("modalContent").addEventListener("click",async function(w){var p=w.target;if(p.classList.contains("btn-toggle")&&p.tagName==="BUTTON"){var A=p.closest(".btn-toggle-group");if(A){for(var I=A.querySelectorAll(".btn-toggle"),D=0;D<I.length;D++)I[D].classList.remove("active");p.classList.add("active");var R=p.getAttribute("data-target");R==="1"?(e=p.getAttribute("data-val"),document.getElementById("labelDropdown1").textContent="🔍 Buscar veículo",a("listWrapper1")):R==="2"&&(t=p.getAttribute("data-val"),document.getElementById("labelDropdown2").textContent="🔍 Buscar veículo",a("listWrapper2"))}w.stopPropagation();return}if(p.closest(".search-dropdown-btn")){var _=p.closest(".search-dropdown-btn"),N=_.getAttribute("data-panel"),P=document.getElementById(N);if(P){var H=P.classList.contains("open");if(document.getElementById("dropdownPanel1").classList.remove("open"),document.getElementById("dropdownPanel2").classList.remove("open"),!H){P.classList.add("open");var L=N==="dropdownPanel1"?"listWrapper1":"listWrapper2";a(L);var F=P.querySelector(".search-input-box");F&&(F.value="",F.focus())}}w.stopPropagation();return}if(p.classList.contains("brand-item")&&p.getAttribute("data-brand")){var M=p.getAttribute("data-brand"),k=p.getAttribute("data-label"),N=p.getAttribute("data-panel");document.getElementById(k).textContent="✔️ "+M,document.getElementById(N).classList.remove("open"),w.stopPropagation();return}if(p.id==="photoBox"||p.closest("#photoBox")){o();return}if(p.id==="btnCapture"){s();return}if(p.id==="btnFilePhysical"){document.getElementById("fileUploader").click();return}if(p.id==="btnCloseWebcam"){i();return}if(p.id==="btnRemovePhoto"){d();return}if(p.id==="btnRetakePhoto"){o();return}if(p.id==="btnCancelar"){r();return}if(p.id==="btnSalvar"||p.closest("#btnSalvar")){try{var q=document.getElementById("modalContent"),U=window.formManager?window.formManager.serialize("form-acesso"):{},j=U.nome||"",W=U.placa||"",G=U.cor||"",Q=U.acompanhantes||"0",te=U.placaAcomp||"",ae=U.corAcomp||"",ne=q.querySelector('.btn-toggle-group[data-group="tipo"] .active'),J=ne?ne.getAttribute("data-val"):"Visita";if(!j||j.trim().length<3){alert("Nome deve conter pelo menos 3 caracteres.");return}var Y=window.appStore?window.appStore.getState("visitors"):null,X=Y?Y.diaAtivo:"seg",z=document.getElementById("labelDropdown1"),Z=z?z.innerText.replace("✔️ ","").replace("🔍 Buscar veículo","Sem Veículo"):"Sem veículo",ie=W?W+(G?" - "+G:"")+" ("+Z+")":"Sem veículo",re=document.getElementById("labelDropdown2"),se=re?re.innerText.replace("✔️ ","").replace("🔍 Buscar veículo","Sem Veículo"):"Sem veículo",de=te?te+(ae?" - "+ae:"")+" ("+se+")":"",ce=U.historico||"Registro adicionado em "+new Date().toLocaleDateString("pt-BR"),le={id:Date.now().toString(),modulo:"empresarial",dia:X,hora:new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),nome:j,tipo:J,unidade:"",placa:ie,acompanhantes:Q,placaAcompanhante:de,historico:ce,alerta:0,status:0},ee=document.getElementById("btnSalvar");ee.disabled=!0,ee.textContent="Salvando...",await window.VisitorRepository.save(le),r(),window.formManager.clear("form-acesso"),document.getElementById("labelDropdown1").textContent="🔍 Buscar veículo",document.getElementById("labelDropdown2").textContent="🔍 Buscar veículo",window.renderController&&await window.renderController.reloadDailyData(X,"empresarial"),alert("Cadastro salvo com sucesso."),ee.disabled=!1,ee.textContent="Salvar Registro"}catch(ue){alert("Erro inesperado no salvamento: "+ue.message);var oe=document.getElementById("btnSalvar");oe&&(oe.disabled=!1,oe.textContent="Salvar Registro")}return}}),document.querySelectorAll(".search-input-box").forEach(function(w){w.addEventListener("input",function(){var p=this.getAttribute("data-list");a(p,this.value)})}),document.addEventListener("click",function(w){w.target.closest(".search-dropdown-wrapper")||(document.getElementById("dropdownPanel1").classList.remove("open"),document.getElementById("dropdownPanel2").classList.remove("open"))}),document.getElementById("btnOpenModal").addEventListener("click",function(){document.getElementById("mainModalOverlay").setAttribute("open","")});function r(){document.getElementById("mainModalOverlay").removeAttribute("open"),i()}document.getElementById("mainModalOverlay").addEventListener("close",r);var n=null;function o(){document.getElementById("snapshotContainer").style.display="none",navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(function(w){n=w,document.getElementById("webcamVideo").srcObject=w,document.getElementById("photoBox").style.display="none",document.getElementById("webcamContainer").style.display="block"}).catch(function(){document.getElementById("fileUploader").click()})}function i(){n&&(n.getTracks().forEach(function(w){w.stop()}),n=null),document.getElementById("webcamContainer").style.display="none",window.getComputedStyle(document.getElementById("snapshotContainer")).display==="none"&&(document.getElementById("photoBox").style.display="block")}function s(){var w=document.getElementById("webcamVideo"),p=document.createElement("canvas");p.width=w.videoWidth||640,p.height=w.videoHeight||480,p.getContext("2d").drawImage(w,0,0,p.width,p.height),document.getElementById("snapshotImage").src=p.toDataURL("image/jpeg"),i(),document.getElementById("snapshotContainer").style.display="block",document.getElementById("photoBox").style.display="none"}document.getElementById("fileUploader").addEventListener("change",function(w){var p=w.target.files[0];if(p){var A=new FileReader;A.onload=function(I){document.getElementById("snapshotImage").src=I.target.result,document.getElementById("photoBox").style.display="none",document.getElementById("webcamContainer").style.display="none",document.getElementById("snapshotContainer").style.display="block"},A.readAsDataURL(p)}});function d(){document.getElementById("snapshotImage").src="",document.getElementById("snapshotContainer").style.display="none",document.getElementById("photoBox").style.display="block",document.getElementById("fileUploader").value=""}async function l(w){var p="";if(w){var A=document.getElementById("webcamVideo");if(!A)return;var I=document.createElement("canvas");I.width=A.videoWidth||640,I.height=A.videoHeight||480,I.getContext("2d").drawImage(A,0,0,I.width,I.height),p=I.toDataURL("image/jpeg").split(",")[1]}else{var D=document.getElementById("snapshotImage");if(!D||!D.src)return;p=D.src.split(",")[1]}var R=w?document.getElementById("btnOcrPlaca"):document.getElementById("btnOcrPlacaFile");if(R){var _=R.innerText;R.innerText="⏳ Analisando IA...",R.disabled=!0;try{window.ocrService?(await window.ocrService.processImage(p),w&&typeof s=="function"&&s()):alert("OcrService indisponível.")}finally{R.innerText=_,R.disabled=!1}}}var c=document.getElementById("btnOcrPlaca");c&&c.addEventListener("click",function(){l(!0)});var b=document.getElementById("btnOcrPlacaFile");b&&b.addEventListener("click",function(){l(!1)});var S=["dom","seg","ter","qua","qui","sex","sab"],g=window.KomodoDate?window.KomodoDate.todayKey():S[new Date().getDay()],v=document.querySelectorAll(".tab"),x=document.querySelector('.tab[data-dia="'+g+'"]');if(x){for(var y=0;y<v.length;y++)v[y].classList.remove("active");x.classList.add("active")}window.renderController&&window.renderController.reloadDailyData(g,"empresarial"),document.getElementById("tabs").addEventListener("click",function(w){var p=w.target.closest(".tab");if(p){for(var A=p.getAttribute("data-dia"),I=this.querySelectorAll(".tab"),D=0;D<I.length;D++)I[D].classList.remove("active");p.classList.add("active"),window.renderController&&window.renderController.reloadDailyData(A,"empresarial"),document.getElementById("globalSearch").value=""}}),window.renderDaily=function(w,p,A){var I=document.getElementById("cardsContainer");if(!I)return;I.replaceChildren(),p=String(p||"");var D=window.appStore?window.appStore.getState("visitors"):null,R=D?D.diaAtivo:g,_=p||A?w.slice():w.filter(function(L){return L.dia===R});if(!_.length){var N=document.createElement("h3");N.className="empty-records-message",N.textContent="Nenhum registro para este período.",I.appendChild(N);return}_.sort(function(L,F){return String(L.hora||"").localeCompare(String(F.hora||""))});function P(L,F){var M=String(F??""),k=p.toLocaleLowerCase();if(!k){L.appendChild(document.createTextNode(M));return}for(var q=M.toLocaleLowerCase(),U=0,j;(j=q.indexOf(k,U))!==-1;){j>U&&L.appendChild(document.createTextNode(M.slice(U,j)));var W=document.createElement("span");W.className="highlight",W.textContent=M.slice(j,j+k.length),L.appendChild(W),U=j+k.length}U<M.length&&L.appendChild(document.createTextNode(M.slice(U)))}function H(L,F,M,k){var q=document.createElement("div");return q.className=k||"info-row",q.appendChild(document.createTextNode(F)),P(q,M),L.appendChild(q),q}_.forEach(function(L){var F=!!(L.tipo&&String(L.tipo).toLowerCase().indexOf("morador")!==-1),M=document.createElement("div");M.className=L.alerta?"card alerta":"card",M.dataset.id=String(L.id==null?"":L.id);var k=document.createElement("button");k.type="button",k.className="btn-delete-card",k.dataset.delid=String(L.id==null?"":L.id),k.title="Excluir registro",k.textContent="🗑️",M.appendChild(k);var q=document.createElement("div");q.className="status-box",q.appendChild(window.VisitStatus.badge(L.status));var U=window.VisitStatus.actionButton(L);U&&q.appendChild(U),M.appendChild(q);var j=document.createElement("div");j.className="card-header-inline";var W=document.createElement("span");W.className="time",W.appendChild(document.createTextNode("⏰ ")),P(W,L.hora),j.appendChild(W);var G=document.createElement("span");if(G.className="name",P(G,L.nome),p||A){var Q=document.createElement("span");Q.className="record-day-extra",Q.textContent=" ("+("Agendado p/ "+String(L.dia||"").toUpperCase()+(L.data?" "+String(L.data).split("-").reverse().join("/"):""))+")",G.appendChild(Q)}if(j.appendChild(G),0)var te;if(M.appendChild(j),0)var ae,ne;else H(M,"🚗 Veículo Titular: ",L.placa);if(L.acompanhantes&&L.acompanhantes!=="0"&&L.acompanhantes!=="-"){var J=document.createElement("div");J.className="info-row",J.style.marginTop="5px",J.appendChild(document.createTextNode("👤 Acompanhantes: "));var Y=document.createElement("span");Y.className="companion-count",Y.textContent=String(L.acompanhantes),J.appendChild(Y),M.appendChild(J)}if(L.placaAcompanhante){var X=document.createElement("div");X.className="info-row companion-vehicle",X.appendChild(document.createTextNode("🚗 Veículo Acompanhante: ")),P(X,L.placaAcompanhante),M.appendChild(X)}var z=document.createElement("div");z.className=L.alerta?"history-box bad":"history-box";var Z=document.createElement("strong");Z.textContent="Histórico:",z.appendChild(Z),z.appendChild(document.createTextNode(" ")),P(z,L.historico),M.appendChild(z),I.appendChild(M)})},document.getElementById("cardsContainer").addEventListener("click",async function(w){var p=window.appStore?window.appStore.getState("visitors"):null;if(p){var A=w.target.closest(".btn-delete-card");if(A){var I=A.getAttribute("data-delid"),D=p.dailyData.find(N=>N.id===I);if(!D||!confirm('Tem certeza que deseja excluir "'+D.nome+'"?'))return;var R=A.closest(".card");R.classList.add("removing");try{await window.VisitorRepository.delete(D.id),window.renderController&&window.renderController.reloadDailyData(p.diaAtivo,"empresarial")}catch(N){alert("Erro ao deletar: "+N.message),R.classList.remove("removing")}return}var _=w.target.closest(".btn-status-toggle");if(_){var I=_.getAttribute("data-id"),D=p.dailyData.find(H=>String(H.id)===I);D&&!_.disabled&&await window.VisitStatus.advance(D,window.VisitorRepository,async function(){window.renderController&&await window.renderController.reloadDailyData(p.diaAtivo,"empresarial")},_)}}});function f(w,p){let A;return function(...I){clearTimeout(A),A=setTimeout(()=>w.apply(this,I),p)}}document.getElementById("globalSearch").addEventListener("input",f(async function(){var w=window.appStore?window.appStore.getState("visitors"):null;if(w){var p=this.value.toLowerCase().trim();if(p){for(var A=document.querySelectorAll(".tab"),I=0;I<A.length;I++)A[I].classList.remove("active");var D=w.dailyData;try{D=await window.VisitorRepository.getAllByModule("empresarial")}catch{D=w.dailyData}var R=(D||[]).filter(function(N){return Object.values(N).some(function(P){return String(P).toLowerCase().indexOf(p)!==-1})});window.renderDaily(R,p)}else{for(var _=document.querySelectorAll(".tab"),I=0;I<_.length;I++)_[I].getAttribute("data-dia")===w.diaAtivo&&_[I].classList.add("active");window.renderDaily(w.dailyData)}}},300));var u=document.getElementById("quickInput"),h=document.getElementById("quickAddModule"),E=document.getElementById("quickDropdown"),C=null;async function T(){if(C)return C;try{C=await window.VisitorRepository.getAllByModule("empresarial")}catch{var w=window.appStore?window.appStore.getState("visitors"):null;return w?w.dailyData:[]}return C}window.eventBus&&window.SystemEvents&&window.eventBus.on(window.SystemEvents.DB_SAVE_SUCCESS,function(){C=null}),u.addEventListener("input",async function(){var w=this.value.toLowerCase().trim();if(w.length>1){var p=await T(),A={};p.forEach(function(R){R.nome.toLowerCase().indexOf(w)!==-1&&(A[R.nome.toLowerCase()]=R)});var I=Object.values(A);if(h.classList.add("active"),E.replaceChildren(),I.length)I.forEach(function(R){var _=document.createElement("div");_.className="auto-item",_.dataset.nome=String(R.nome==null?"":R.nome);var N=document.createElement("span");N.className="auto-name",N.textContent=String(R.nome==null?"":R.nome);var P=document.createElement("span");P.className="auto-doc",P.textContent=String(R.tipo||"Visitante")+" | Placa: "+String(R.placa||"");var H=document.createElement("span");H.style.cssText="font-size:12px;font-weight:600;margin-top:2px;",H.style.color=R.alerta?"var(--danger)":"var(--success)",H.textContent=(R.alerta?"⚠️":"✅")+" "+String(R.historico||""),_.append(N,P,H),E.appendChild(_)});else{var D=document.createElement("div");D.className="auto-item",D.style.color="var(--gold)",D.style.textAlign="center",D.textContent="Não encontrado no histórico. Clique em CLIENTE E VISITA para cadastrar novo.",E.appendChild(D)}}else h.classList.remove("active")}),E.addEventListener("click",function(w){var p=w.target.closest(".auto-item");p&&p.getAttribute("data-nome")&&(u.value=p.getAttribute("data-nome"),h.classList.remove("active"))}),document.addEventListener("click",function(w){h.contains(w.target)||h.classList.remove("active")}),document.getElementById("btnQuickAdd").addEventListener("click",async function(){var w=window.appStore?window.appStore.getState("visitors"):null,p=await T(),A=u.value.trim(),I=document.getElementById("quickTime").value||"00:00";if(!A){alert("Digite um nome ou selecione da lista.");return}for(var D=null,R=p.length-1;R>=0;R--)if(p[R].nome.toLowerCase()===A.toLowerCase()){D=p[R];break}var _={id:Date.now().toString(),modulo:"empresarial",dia:w.diaAtivo,hora:I,nome:A,unidade:"",tipo:D?D.tipo:"Visitante",placa:D?D.placa:"Sem Veículo",acompanhantes:D?D.acompanhantes:"0",placaAcompanhante:D?D.placaAcompanhante:"",historico:D?D.historico:"Adicionado via Agendamento Rápido",alerta:D?D.alerta:0,status:0};try{await window.VisitorRepository.save(_),window.renderController&&window.renderController.reloadDailyData(w.diaAtivo,"empresarial"),u.value="",h.classList.remove("active"),alert("Registro Adicionado com Sucesso!")}catch(N){alert("Erro ao salvar: "+N.message)}}),window.fillFormWithAI=function(w){if(w){var p=document.getElementById("modalContent");if(p){document.getElementById("mainModalOverlay").setAttribute("open","");var A=p.querySelectorAll(".form-control");w.nome&&A[0]&&(A[0].value=w.nome),w.placa&&A[1]&&(A[1].value=w.placa),w.cor&&A[2]&&(A[2].value=w.cor)}}},document.getElementById("btnExportPDF").addEventListener("click",async function(){try{window.KacVendor&&await window.KacVendor.pdf()}catch{alert("Não foi possível carregar o módulo de PDF. Verifique a conexão.");return}if(typeof window.PdfExportService<"u"){const w=window.appStore?window.appStore.getState("visitors"):null,p=w?w.dailyData:[],A=w?w.diaAtivo:g;window.PdfExportService.exportTurnReport(p,A,"EMPRESARIAL")}else alert("Módulo de PDF não carregado.")}),document.getElementById("btnOpenDashboard").addEventListener("click",function(){window.dashboardManager&&window.dashboardManager.openDashboard()}),document.getElementById("btnOpenConfig").addEventListener("click",function(){document.getElementById("configAiProvider").value=localStorage.getItem("komodo_ai_provider")||"groq",document.getElementById("configApiKey").value="",document.getElementById("configModalOverlay").setAttribute("open","")}),document.getElementById("btnSaveConfig").addEventListener("click",function(){localStorage.setItem("komodo_ai_provider",document.getElementById("configAiProvider").value),document.getElementById("configModalOverlay").removeAttribute("open"),alert("Preferências salvas neste aparelho. A IA ainda não está habilitada no servidor.")});var O=document.getElementById("aiPanel"),V=document.getElementById("aiBody"),B=document.getElementById("aiInput"),K=document.getElementById("aiTypingIndicator");document.getElementById("btnToggleAi").addEventListener("click",function(){O.classList.toggle("open"),setTimeout(function(){B.focus()},100)}),document.getElementById("btnCloseAi").addEventListener("click",function(){O.classList.remove("open")});var $=document.getElementById("btnLogout");$&&$.addEventListener("click",async function(){if(window.authService){try{await window.authService.logout()}catch{}window.location.href="login.html"}}),document.getElementById("btnSendAi").addEventListener("click",function(){window.komodoCopilot&&window.komodoCopilot.sendChatMessage()}),B.addEventListener("keypress",function(w){w.key==="Enter"&&document.getElementById("btnSendAi").click()}),document.getElementById("aiInput").id="chat-input",document.getElementById("aiBody").id="chat-messages",a("listWrapper1"),a("listWrapper2")});class PacienteDAO{constructor(e){this.db=e}_sanitize(e){const t={};for(let a in e)typeof e[a]=="string"?t[a]=e[a].replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"):t[a]=e[a];return t}async insert(e){try{const t=this._sanitize(e);return t.id=t.id||Date.now().toString(),await this.db.insert("komodo_tbl_registros",t)}catch(t){throw console.error("PacienteDAO.insert erro:",t),t}}async findAll(){try{return await this.db.query("SELECT * FROM komodo_tbl_registros ORDER BY timestamp DESC")}catch(e){return console.error("PacienteDAO.findAll erro:",e),[]}}async findById(e){try{const t=await this.db.query("SELECT * FROM komodo_tbl_registros WHERE id = ?",[e]);return t.length>0?t[0]:null}catch(t){return console.error("PacienteDAO.findById erro:",t),null}}}window.pacienteDAO=new PacienteDAO(window.dbService);class TelemetryService{constructor(e){this.db=e,this.initGlobalListeners()}initGlobalListeners(){window.addEventListener("error",e=>{this.logError(e.message,e.filename,e.lineno,e.error?e.error.stack:null)}),window.addEventListener("unhandledrejection",e=>{this.logError(e.reason,"Promise Rejection",0,e.reason?e.reason.stack:null)})}async logError(e,t,a,r){console.error(`[TELEMETRY] Captured: ${e}`);const n={level:"ERROR",message:`[${t}:${a}] ${e}`,timestamp:new Date().toISOString()};try{this.db&&await this.db.insert("sys_logs",n)}catch(o){console.error("Telemetry failed to write log:",o)}}async getRecentLogs(e=50){return this.db?await this.db.query("SELECT * FROM sys_logs ORDER BY id DESC LIMIT ?",[e]):[]}}window.telemetryService=new TelemetryService(window.dbService);class OcrService{constructor(){this.videoElement=null,this.stream=null,this.targetId=null}start(e){if(this.targetId=e,!window.authService||!window.authService.isRemoteMode()){alert("OCR com IA indisponível no modo offline. A configuração segura do servidor é necessária.");return}const t=document.getElementById("modal-ocr"),a=document.getElementById("ocr-video");this.videoElement=a,t&&t.classList.add("active"),navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(r=>{this.stream=r,a&&(a.srcObject=r)}).catch(r=>{alert("Erro ao acessar câmera: "+r.message),this.close()})}async capture(){if(!this.videoElement)return;const e=document.createElement("canvas");e.width=this.videoElement.videoWidth,e.height=this.videoElement.videoHeight,e.getContext("2d").drawImage(this.videoElement,0,0);const t=e.toDataURL("image/jpeg",.8).split(",")[1];this.close();const a=document.getElementById(this.targetId);a&&this.targetId!=="autofill"&&(a.value="Processando...");let r="";this.targetId==="autofill"?(r='Analise esta imagem. Extraia os dados estruturados e retorne APENAS no formato JSON válido: {"nome": "...", "doc": "...", "placa": "...", "cor": "..."}. NENHUM texto extra.',typeof window.showGlobalLoader=="function"&&window.showGlobalLoader("Analisando imagem via Factory...")):r=(this.targetId.includes("placa")?"placa":"doc")==="placa"?"Extraia APENAS a placa do veículo desta imagem. Formato AAA-1234 ou Mercosul.":"Extraia o CPF ou RG deste documento. Retorne APENAS os números formatados.",await this.processImage(t,r,a)}async processImage(e,t=null,a=null){let r=t||'Analise esta imagem. Extraia os dados estruturados e retorne APENAS no formato JSON válido: {"nome": "...", "doc": "...", "placa": "...", "cor": "..."}. Se não houver, deixe vazio.';try{const o=await window.AiProviderFactory.getProvider().analyzeImage(e,r);if(this.targetId==="autofill"||!this.targetId){typeof window.hideGlobalLoader=="function"&&window.hideGlobalLoader();let i=o.replace(/```json/gi,"").replace(/```/g,"").trim();const s=JSON.parse(i);if(typeof window.formManager<"u"&&typeof window.formManager.fill=="function"){const d=document.getElementById("sectionMorador").classList.contains("active")?"form-morador":"form-visitante";window.formManager.fill(d,s),alert(`✨ Dados extraídos pela IA!
+    `;
+    if (this.sqlite) {
+      await this.db.execute({ statements: v1 });
+    }
+  }
 
-`+JSON.stringify(s,null,2))}else typeof window.fillFormWithAI=="function"&&window.fillFormWithAI(s)}else a&&(a.value=o)}catch(n){this.targetId==="autofill"||!this.targetId?typeof window.hideGlobalLoader=="function"&&window.hideGlobalLoader():a&&(a.value="Erro OCR"),alert("Falha OCR (Adapter): "+n.message)}}close(){this.stream&&this.stream.getTracks().forEach(t=>t.stop());const e=document.getElementById("modal-ocr");e&&e.classList.remove("active")}}window.ocrService=new OcrService,window.triggerOCR=m=>window.ocrService.start(m),window.closeOCR=()=>window.ocrService.close(),window.captureOCR=()=>window.ocrService.capture();class PdfExportService{static exportTurnReport(e,t,a="RESIDENCIAL"){if(typeof window.jspdf>"u"){alert("A biblioteca jsPDF não foi carregada no sistema offline.");return}const{jsPDF:r}=window.jspdf,n=new r;n.setFontSize(18),n.text(`GUARDIÃO KOMODO - RELATÓRIO ${a}`,14,22),n.setFontSize(12),n.text(`Data: ${new Date().toLocaleDateString("pt-BR")} | Dia: ${t.toUpperCase()}`,14,32);const o=[["Hora","Nome","Unidade","Tipo/Parentesco","Placa","Alerta"]],i=[];[...e].sort((d,l)=>d.hora.localeCompare(l.hora)).forEach(d=>{const l=d.parentesco&&d.parentesco!=="-"?` (${d.parentesco})`:"",c=d.alerta?"SIM (RISCO)":"NORMAL";i.push([d.hora,d.nome,d.unidade,d.tipo+l,d.placa,c])}),typeof n.autoTable=="function"&&n.autoTable({startY:40,head:o,body:i,theme:"grid",headStyles:{fillColor:[194,160,87]}}),n.save(`komodo_${a.toLowerCase()}_turno.pdf`)}static exportAdvancedReport(e,t="Relatório Geral Analítico",a="GERAL"){if(typeof window.jspdf>"u"){alert("A biblioteca jsPDF não foi carregada.");return}const{jsPDF:r}=window.jspdf,n=new r("landscape");n.setFontSize(22),n.setTextColor(194,160,87),n.text("GUARDIÃO KOMODO ENTERPRISE",14,20),n.setFontSize(14),n.setTextColor(50,50,50),n.text(t.toUpperCase(),14,30),n.setFontSize(10),n.setTextColor(100,100,100),n.text(`Data de Emissão: ${new Date().toLocaleString("pt-BR")} | Módulo: ${a.toUpperCase()}`,14,38);const o=e.length,i=e.filter(c=>c.alerta===!0||c.alerta===1||c.alerta==="true"||c.alerta==="1").length;n.setFontSize(12),n.setTextColor(0,0,0),n.text(`Resumo: ${o} Acessos Registrados | Incidentes / Alertas: ${i}`,14,48);const s=[["Data","Hora","Nome","Unidade","Tipo/Parentesco","Placa","Alerta","Hitórico/Obs"]],d=[];e.forEach(c=>{const b=c.parentesco&&c.parentesco!=="-"?` (${c.parentesco})`:"",S=c.alerta===!0||c.alerta===1||c.alerta==="true"||c.alerta==="1"?"SIM (RISCO)":"NORMAL",g=c.historico?c.historico.substring(0,50)+(c.historico.length>50?"...":""):"-";d.push([c.dia?c.dia.toUpperCase():"N/A",c.hora||"00:00",c.nome||"-",c.unidade||"-",(c.tipo||"-")+b,c.placa||"-",S,g])}),typeof n.autoTable=="function"&&n.autoTable({startY:55,head:s,body:d,theme:"grid",headStyles:{fillColor:[194,160,87]},alternateRowStyles:{fillColor:[245,245,245]},styles:{fontSize:9}});const l=n.internal.getNumberOfPages();for(let c=1;c<=l;c++)n.setPage(c),n.setFontSize(8),n.setTextColor(150,150,150),n.text(`Gerado por Guardião Komodo - Core Security Engine | Página ${c} de ${l}`,14,n.internal.pageSize.height-10);n.save(`komodo_${a.toLowerCase()}_relatorio_avancado.pdf`)}}window.PdfExportService=PdfExportService;class KomodoCopilot{constructor(){this.contextFiles=[],this.recognition=null}startVoice(e,t){if(!("webkitSpeechRecognition"in window)&&!("SpeechRecognition"in window)){alert("Seu navegador não suporta reconhecimento de voz.");return}const a=window.SpeechRecognition||window.webkitSpeechRecognition;this.recognition=new a,this.recognition.lang="pt-BR",this.recognition.interimResults=!1,this.recognition.maxAlternatives=1;const r=event?event.currentTarget:null;if(r&&r.classList.add("recording"),t){const n=document.getElementById(t);n&&(n.textContent="Ouvindo...")}this.recognition.onresult=n=>{const o=n.results[0][0].transcript,i=document.getElementById(e);e==="chat-input"?(i&&(i.value=o),this.sendChatMessage(o)):i&&(i.value=o,i.dispatchEvent(new Event("input",{bubbles:!0})))},this.recognition.onend=()=>{if(r&&r.classList.remove("recording"),t){const n=document.getElementById(t);n&&(n.textContent="")}},this.recognition.start()}async sendChatMessage(e=null){const t=document.getElementById("chat-input"),a=e||(t?t.value.trim():"");if(!a)return;t&&!e&&(t.value=""),this._appendMsg(a,"user");const r="loader_"+Date.now();this._appendMsg('<div class="chat-loader"><span></span><span></span><span></span></div>',"bot",r);try{const n='Você é o Guardião Komodo, IA de segurança e gestão de acesso. Responda de forma concisa e direta. SE o usuário pedir para CADASTRAR, REGISTRAR ou INSERIR, responda APENAS com um JSON neste formato exato (sem formatação markdown): {"action": "CADASTRO", "data": {"nome": "...", "doc": "...", "placa": "...", "cor": "..."}}. Caso contrário, responda normalmente em texto livre.',o=window.AiProviderFactory.getProvider();let i="";if(this.contextFiles.length>0){const c=this.contextFiles[0].data;this.contextFiles=[],i=await o.analyzeImage(c,n+" IMAGEM EM ANEXO. APLIQUE OCR E CHAT.")}else i=await o.chat(n,a);const s=document.getElementById(r);let d=i.replace(/```json/gi,"").replace(/```/g,"").trim(),l=null;try{d.startsWith("{")&&d.includes('"action"')&&(l=JSON.parse(d))}catch{}l&&l.action==="CADASTRO"?(s&&this._renderMd(s,"Entendido! Abrindo formulário de cadastro com os dados pré-preenchidos."),typeof window.fillFormWithAI=="function"?window.fillFormWithAI(l.data):alert("Função de auto-preenchimento não encontrada na tela atual.")):s&&this._renderMd(s,i)}catch(n){const o=document.getElementById(r);o&&(o.textContent="Erro da IA (Adapter): "+String(n.message||"erro inesperado"))}}_appendMsg(e,t,a=null){const r=document.getElementById("chat-messages");if(!r)return;const n=document.createElement("div");if(n.className="chat-msg "+t,a&&(n.id=a),e==='<div class="chat-loader"><span></span><span></span><span></span></div>'){const o=document.createElement("div");o.className="chat-loader";for(let i=0;i<3;i++)o.appendChild(document.createElement("span"));n.appendChild(o)}else n.textContent=String(e??"");r.appendChild(n),r.scrollTop=r.scrollHeight}_renderMd(e,t){if(!e)return;const a=String(t??""),r=/\*\*(.+?)\*\*|\*(.+?)\*|\n/g;let n=0,o;for(e.replaceChildren();(o=r.exec(a))!==null;){if(o.index>n&&e.appendChild(document.createTextNode(a.slice(n,o.index))),o[0]===`
-`)e.appendChild(document.createElement("br"));else{const i=document.createElement(o[1]!==void 0?"strong":"em");i.textContent=o[1]!==void 0?o[1]:o[2],e.appendChild(i)}n=r.lastIndex}n<a.length&&e.appendChild(document.createTextNode(a.slice(n)))}_formatMd(e){const t={"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"};let a=String(e??"").replace(/[&<>"']/g,r=>t[r]);return a=a.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>"),a=a.replace(/\*(.*?)\*/g,"<em>$1</em>"),a=a.replace(/\n/g,"<br>"),a}}window.komodoCopilot=new KomodoCopilot,window.startVoice=(m,e)=>window.komodoCopilot.startVoice(m,e),window.sendChatMessage=()=>window.komodoCopilot.sendChatMessage();class DashboardManager{constructor(){this.chartTiposInstance=null,this.chartHorariosInstance=null,this._bindEvents()}_bindEvents(){!window.eventBus||!window.SystemEvents||window.eventBus.on("STORE_VISITORS_UPDATED",e=>{const t=document.getElementById("dashModalOverlay");t&&(t.tagName.toLowerCase()==="komodo-modal"?t.hasAttribute("open"):typeof window.getComputedStyle=="function"?window.getComputedStyle(t).display!=="none":t.classList.contains("aberto"))&&this.renderDashboard(e.dailyData)})}renderDashboard(e){if(!e)return;const t={Morador:0,Visitante:0,Prestador:0,Delivery:0,Outros:0},a={"Manhã (06-12)":0,"Tarde (12-18)":0,"Noite (18-24)":0},r={Normal:0,"Alerta de Risco":0},n={};if(e.forEach(o=>{const i=(o.tipo||"").toLowerCase();i.includes("morador")?t.Morador++:i.includes("visitante")?t.Visitante++:i.includes("prestador")||i.includes("manutenção")?t.Prestador++:i.includes("delivery")?t.Delivery++:t.Outros++;const s=o.hora||"00:00",d=parseInt(s.split(":")[0])||0;d>=6&&d<12?a["Manhã (06-12)"]++:d>=12&&d<18?a["Tarde (12-18)"]++:a["Noite (18-24)"]++,o.alerta===!0||o.alerta===1||o.alerta==="true"||o.alerta==="1"?r["Alerta de Risco"]++:r.Normal++;const c=(o.dia||"N/A").toUpperCase();n[c]||(n[c]=0),n[c]++}),this.chartTiposInstance&&this.chartTiposInstance.destroy(),this.chartHorariosInstance&&this.chartHorariosInstance.destroy(),this.chartAlertasInstance&&this.chartAlertasInstance.destroy(),this.chartFluxoInstance&&this.chartFluxoInstance.destroy(),typeof window.Chart<"u"){const o=window.Chart;o.defaults.color="#a0a0a0",o.defaults.font.family="Poppins";const i=document.getElementById("chartTipos");i&&(this.chartTiposInstance=new o(i.getContext("2d"),{type:"doughnut",data:{labels:Object.keys(t),datasets:[{data:Object.values(t),backgroundColor:["#22c55e","#3b82f6","#c2a057","#eab308","#a0a0a0"],borderWidth:0}]},options:{plugins:{legend:{position:"bottom"},title:{display:!0,text:"Distribuição por Tipo",color:"#c2a057"}}}}));const s=document.getElementById("chartHorarios");s&&(this.chartHorariosInstance=new o(s.getContext("2d"),{type:"bar",data:{labels:Object.keys(a),datasets:[{label:"Acessos",data:Object.values(a),backgroundColor:"#c2a057",borderRadius:4}]},options:{scales:{y:{beginAtZero:!0,grid:{color:"rgba(194,160,87,0.1)"}},x:{grid:{display:!1}}},plugins:{legend:{display:!1},title:{display:!0,text:"Picos de Horários",color:"#c2a057"}}}}));const d=document.getElementById("chartAlertas");d&&(this.chartAlertasInstance=new o(d.getContext("2d"),{type:"pie",data:{labels:Object.keys(r),datasets:[{data:Object.values(r),backgroundColor:["#22c55e","#ef4444"],borderWidth:0}]},options:{plugins:{legend:{position:"bottom"},title:{display:!0,text:"Nível de Risco (Incidentes)",color:"#ef4444"}}}}));const l=document.getElementById("chartFluxo");l&&(this.chartFluxoInstance=new o(l.getContext("2d"),{type:"line",data:{labels:Object.keys(n),datasets:[{label:"Volume de Tráfego",data:Object.values(n),borderColor:"#3b82f6",backgroundColor:"rgba(59,130,246,0.1)",fill:!0,tension:.4}]},options:{scales:{y:{beginAtZero:!0,grid:{color:"rgba(59,130,246,0.1)"}},x:{grid:{display:!1}}},plugins:{legend:{display:!1},title:{display:!0,text:"Fluxo por Dia (Tráfego)",color:"#3b82f6"}}}}))}else console.warn("Chart.js não carregado. Módulo Dashboard ignorado.")}async openDashboard(){if(window.KacVendor)try{await window.KacVendor.chart()}catch(t){console.warn("Chart.js indisponível:",t.message)}const e=document.getElementById("dashModalOverlay")||document.querySelector("#dashModalOverlay");if(e&&(e.tagName.toLowerCase()==="komodo-modal"?e.setAttribute("open",""):(e.classList.add("aberto"),e.style.display="flex")),window.VisitorRepository)try{const t=window.location.pathname.includes("index")?"empresarial":"residencial";this.currentGlobalData=await window.VisitorRepository.getAllByModule(t),this.currentModulo=t,this.renderDashboard(this.currentGlobalData)}catch(t){console.error("Erro ao carregar métricas analíticas:",t)}}async exportCurrentData(){if(!(!this.currentGlobalData||!window.PdfExportService)){if(window.KacVendor)try{await window.KacVendor.pdf()}catch{alert("Não foi possível carregar o módulo de PDF. Verifique a conexão.");return}window.PdfExportService.exportAdvancedReport(this.currentGlobalData,"Relatório Analítico Completo",this.currentModulo.toUpperCase())}}}window.dashboardManager=new DashboardManager,window.exportAdvancedDashboardReport=()=>{window.dashboardManager&&window.dashboardManager.exportCurrentData()};class PacienteForm{constructor(e){this.db=e}gv(e){const t=document.getElementById(e);return t?t.value.trim():""}async save(){try{const e=this.gv("paciente-nome");if(!e){alert("Nome do paciente é obrigatório.");return}const t=new Date,a={nome:e,cpf:this.gv("paciente-cpf"),rg:this.gv("paciente-rg"),doc:this.gv("paciente-doc"),tel:this.gv("paciente-tel"),sexo:this.gv("paciente-sexo"),nasc:this.gv("paciente-nasc"),hora_prevista:this.gv("paciente-hora"),local:this.gv("paciente-clinica"),responsavel:this.gv("paciente-medico"),tipo_acesso:this.gv("paciente-espec")||"Paciente",portaria:this.gv("paciente-sala"),obs:this.gv("paciente-obs"),horario:t.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),timestamp:t.toISOString()},o={id:(await this.db.insert("komodo_tbl_registros",a)).id,nome:e,tipo:"Paciente",doc:a.doc||a.cpf||a.rg,destino:a.local+(a.portaria?" / Sala "+a.portaria:""),placa:this.gv("paciente-v-placa"),marca:this.gv("paciente-v-marca"),obs:a.obs,horario:a.horario,alerta:!1,foto:window.state&&window.state.capturedPhoto?window.state.capturedPhoto:null,veiculo:this.gv("paciente-v-marca")||"A pé",medico:a.responsavel,acompanhante:this.gv("paciente-a-nome")};typeof window.addToResDB=="function"&&(window.addToResDB(o),typeof window.renderResCards=="function"&&window.renderResCards()),typeof window.closeModal=="function"&&window.closeModal("modal-form-paciente"),typeof window.tryVibrate=="function"&&window.tryVibrate([50,30,50]),alert(`✅ Paciente ${e} registrado com sucesso!`),this.clearForm()}catch(e){console.error("Erro ao salvar paciente:",e),alert("Erro ao salvar paciente. Verifique o log.")}}clearForm(){["paciente-nome","paciente-cpf","paciente-rg","paciente-doc","paciente-tel","paciente-sexo","paciente-nasc","paciente-hora","paciente-clinica","paciente-medico","paciente-espec","paciente-sala","paciente-obs","paciente-v-tipo","paciente-v-marca","paciente-v-modelo","paciente-v-versao","paciente-v-ano","paciente-v-cor","paciente-v-placa","paciente-v-vaga","paciente-a-nome","paciente-a-parentesco","paciente-a-doc","paciente-a-tel","paciente-a-v-tipo","paciente-a-v-marca","paciente-a-v-modelo","paciente-a-v-cor","paciente-a-v-placa","paciente-a-v-vaga"].forEach(t=>{const a=document.getElementById(t);a&&(a.tagName==="SELECT"?a.selectedIndex=0:a.value="")})}}window.pacienteForm=new PacienteForm(window.dbService),window.saveRelationalPaciente=()=>window.pacienteForm.save();class FormulariosBase{constructor(e){this.db=e}gv(e){const t=document.getElementById(e);return t?t.value.trim():""}async _saveBase(e,t,a){const r=this.gv(`${t}-nome`);if(!r){alert(`Nome do ${e.toLowerCase()} é obrigatório.`);return}const n=new Date,o={nome:r,tipo_acesso:e,horario:n.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),timestamp:n.toISOString()},i=a(this),s={...o,...i};try{const d=await this.db.insert("komodo_tbl_registros",s);s.id=d.id,s.tipo=e,s.alerta=!1,s.foto=window.state&&window.state.capturedPhoto?window.state.capturedPhoto:null,typeof window.addToResDB=="function"&&(window.addToResDB(s),typeof window.renderResCards=="function"&&window.renderResCards()),typeof window.closeModal=="function"&&window.closeModal(`modal-form-${t}`),typeof window.tryVibrate=="function"&&window.tryVibrate([50,30,50]),alert(`✅ ${e} ${r} registrado(a)!`),this._clearForm(t)}catch(d){console.error(`Erro ao salvar ${e}:`,d),alert(`Erro ao salvar ${e}. Verifique o log.`)}}_clearForm(e){document.querySelectorAll(`[id^="${e}-"]`).forEach(a=>{a.tagName==="SELECT"?a.selectedIndex=0:a.value=""})}async saveVisitante(){await this._saveBase("Visitante","visitante",e=>({doc:e.gv("visitante-doc"),local:e.gv("visitante-destino"),obs:e.gv("visitante-obs")}))}async saveMorador(){await this._saveBase("Morador","morador",e=>({local:e.gv("morador-unidade")}))}async savePrestador(){await this._saveBase("Prestador","prestador",e=>({local:e.gv("prestador-destino"),responsavel:e.gv("prestador-empresa"),obs:e.gv("prestador-obs")}))}async saveEntregador(){await this._saveBase("Entregador","entregador",e=>({local:e.gv("entregador-destino"),responsavel:e.gv("entregador-app")}))}async saveRepresentante(){await this._saveBase("Representante","representante",e=>({local:e.gv("representante-contato"),responsavel:e.gv("representante-marca")}))}}window.formulariosBase=new FormulariosBase(window.dbService),window.saveVisitante=()=>window.formulariosBase.saveVisitante(),window.saveMorador=()=>window.formulariosBase.saveMorador(),window.savePrestador=()=>window.formulariosBase.savePrestador(),window.saveEntregador=()=>window.formulariosBase.saveEntregador(),window.saveRepresentante=()=>window.formulariosBase.saveRepresentante(),(function(){"use strict";function m(e){if(e){var t=document.getElementById(e);t&&(t.tagName&&t.tagName.toLowerCase()==="komodo-modal"?t.removeAttribute("open"):t.style.display="none")}}document.addEventListener("submit",function(e){e.target&&e.target.matches("form[data-prevent-submit]")&&e.preventDefault()}),document.addEventListener("input",function(e){var t=e.target;if(t&&t.matches("input[data-uppercase]")){var a=t.selectionStart,r=t.selectionEnd,n=t.value.toUpperCase();if(t.value!==n&&(t.value=n,typeof a=="number"&&typeof r=="number"))try{t.setSelectionRange(a,r)}catch{}}}),document.addEventListener("click",function(e){var t=e.target&&e.target.closest?e.target.closest("[data-action]"):null;if(t){var a=t.dataset.action;if(a==="close-config"||a==="close-dashboard"){m(t.dataset.target);return}if(a==="export-advanced-dashboard"){typeof window.exportAdvancedDashboardReport=="function"?window.exportAdvancedDashboardReport():console.warn("Exportação avançada indisponível: função não carregada.");return}if(a==="set-access-type"){var r=document.getElementById(t.dataset.target||"");if(!r)return;r.value=t.dataset.value||"";var n=t.closest('[data-group="tipoAcesso"]');n&&n.querySelectorAll('[data-action="set-access-type"]').forEach(function(o){o.classList.toggle("active",o===t),o.setAttribute("aria-pressed",o===t?"true":"false")})}}})})();
+  async insert(table, data) {
+    if (!this.isReady) await this.init();
+
+    return this._enqueue(async () => {
+      const keys = Object.keys(data).join(', ');
+      const placeholders = Object.keys(data).map(() => '?').join(', ');
+      const values = Object.values(data);
+
+      const statement = `INSERT INTO ${table} (${keys}) VALUES (${placeholders})`;
+
+      if (this.sqlite) {
+        const res = await this.db.run({ statement, values });
+        data.id = data.id || res.changes.lastId;
+        return data;
+      } else {
+        data.id = data.id || Date.now().toString();
+        let arr = JSON.parse(localStorage.getItem(table) || '[]');
+        // Se já existe com este ID, atualiza. Senão insere.
+        const idx = arr.findIndex(item => item.id === data.id);
+        if(idx >= 0) arr[idx] = data;
+        else arr.push(data);
+        localStorage.setItem(table, JSON.stringify(arr));
+        return data;
+      }
+    });
+  }
+
+  async update(table, data) {
+      if (!this.isReady) await this.init();
+      return this._enqueue(async () => {
+          if(!data.id) return null;
+          
+          if(this.sqlite) {
+              const keys = Object.keys(data).filter(k => k !== 'id');
+              const setClause = keys.map(k => `${k} = ?`).join(', ');
+              const values = keys.map(k => data[k]);
+              values.push(data.id);
+              
+              const statement = `UPDATE ${table} SET ${setClause} WHERE id = ?`;
+              await this.db.run({ statement, values });
+              return data;
+          } else {
+              let arr = JSON.parse(localStorage.getItem(table) || '[]');
+              const idx = arr.findIndex(item => String(item.id) === String(data.id));
+              if(idx >= 0) arr[idx] = data;
+              localStorage.setItem(table, JSON.stringify(arr));
+              return data;
+          }
+      });
+  }
+
+  async delete(table, id) {
+      if (!this.isReady) await this.init();
+      return this._enqueue(async () => {
+          if(this.sqlite) {
+              const statement = `DELETE FROM ${table} WHERE id = ?`;
+              await this.db.run({ statement, values: [id] });
+          } else {
+              let arr = JSON.parse(localStorage.getItem(table) || '[]');
+              arr = arr.filter(item => String(item.id) !== String(id));
+              localStorage.setItem(table, JSON.stringify(arr));
+          }
+          return true;
+      });
+  }
+
+  async query(sql, params = []) {
+    if (!this.isReady) await this.init();
+    return this._enqueue(async () => {
+      if (this.sqlite) {
+        const res = await this.db.query({ statement: sql, values: params });
+        return res.values || [];
+      } else {
+          // Fake query para o localStorage (apenas SELECT * FROM tabela WHERE modulo = ?)
+          let tableMatch = sql.match(/FROM\s+(\w+)/i);
+          if(!tableMatch) return [];
+          let table = tableMatch[1];
+          let arr = JSON.parse(localStorage.getItem(table) || '[]');
+          
+          if (sql.includes('modulo = ?')) {
+              arr = arr.filter(item => item.modulo === params[0]);
+          }
+          return arr;
+      }
+    });
+  }
+}
+
+window.dbService = new DatabaseService();
+
+
+;
+/* src/services/AuthService.js */
+﻿/**
+ * AuthService — backend no desktop local; autenticação local no Capacitor.
+ * O servidor é a autoridade para as sessões do desktop. O modo local permanece
+ * para o Android/offline e não é usado para autorizar chamadas ao backend.
+ */
+class AuthService {
+  constructor() {
+    this.SESSION_KEY = 'komodo_session';
+    this.SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+    // Old desktop bearer tokens are no longer accepted; purge only the obsolete desktop key.
+    if (this.isRemoteMode()) {
+      try { localStorage.removeItem(this.SESSION_KEY); } catch {}
+    }
+  }
+
+  isRemoteMode() {
+    const loc = window.location;
+    const hostedHttps = loc.protocol === 'https:' &&
+      loc.hostname !== 'localhost' && loc.hostname !== '127.0.0.1';
+    const localDesktopBackend = loc.protocol === 'http:' &&
+      (loc.hostname === '127.0.0.1' || loc.hostname === 'localhost') &&
+      loc.port === '32198';
+    return hostedHttps || localDesktopBackend;
+  }
+
+  _bufToHex(buf) {
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  _hexToBuf(hex) {
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < hex.length; i += 2) bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+    return bytes.buffer;
+  }
+  _randomSaltHex(bytes = 16) {
+    const arr = new Uint8Array(bytes);
+    crypto.getRandomValues(arr);
+    return this._bufToHex(arr.buffer);
+  }
+  async _deriveHash(password, saltHex, iterations = 150000) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveBits']);
+    const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: this._hexToBuf(saltHex), iterations, hash: 'SHA-256' }, keyMaterial, 256);
+    return this._bufToHex(bits);
+  }
+
+  async hasAnyUser() {
+    if (this.isRemoteMode()) {
+      const status = await window.apiService.get('/auth/status');
+      return Boolean(status?.hasAdmin);
+    }
+    const rows = await window.dbService.query('SELECT COUNT(*) as total FROM komodo_tbl_usuarios');
+    return Boolean(rows && rows[0] && Number(rows[0].total) > 0);
+  }
+
+  async createFirstAdmin(email, password, bootstrapSecret = '') {
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    const cleanPassword = String(password || '');
+    if (this.isRemoteMode()) {
+      if (!cleanEmail || cleanPassword.length < 12) throw new Error('Defina um e-mail e uma senha com no mínimo 12 caracteres.');
+      const secret = String(bootstrapSecret || '');
+      if (secret.length < 32) throw new Error('Informe a chave de configuração válida fornecida pelo administrador do ambiente.');
+      await window.apiService.post('/auth/bootstrap', { email: cleanEmail, password: cleanPassword, bootstrapSecret: secret });
+      return true;
+    }
+    if (!cleanEmail || cleanPassword.length < 8) throw new Error('Defina um e-mail e uma senha com no mínimo 8 caracteres.');
+    if (await this.hasAnyUser()) throw new Error('Já existe um administrador cadastrado.');
+    const salt = this._randomSaltHex();
+    const hash = await this._deriveHash(cleanPassword, salt);
+    await window.dbService.insert('komodo_tbl_usuarios', {
+      id: 'user_' + Date.now(), email: cleanEmail, salt, hash, papel: 'admin', criado_em: new Date().toISOString()
+    });
+    return true;
+  }
+
+  async login(email, password) {
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    const cleanPassword = String(password || '');
+    if (this.isRemoteMode()) {
+      const data = await window.apiService.post('/auth/login', { email: cleanEmail, password: cleanPassword });
+      const session = {
+        userId: data.user.id,
+        email: data.user.email,
+        role: data.user.role,
+        expiresAt: data.expiresAt
+      };
+      sessionStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
+      return session;
+    }
+
+    const rows = await window.dbService.query('SELECT * FROM komodo_tbl_usuarios WHERE email = ?', [cleanEmail]);
+    if (!rows || rows.length === 0) throw new Error('Credenciais inválidas.');
+    const user = rows[0];
+    const computed = await this._deriveHash(cleanPassword, user.salt);
+    if (computed !== user.hash) throw new Error('Credenciais inválidas.');
+    const session = { token: this._randomSaltHex(24), userId: user.id, email: user.email, expiresAt: Date.now() + this.SESSION_TTL_MS };
+    localStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
+    return session;
+  }
+
+  getSession() {
+    try {
+      const storage = this.isRemoteMode() ? sessionStorage : localStorage;
+      const raw = storage.getItem(this.SESSION_KEY);
+      if (!raw) return null;
+      const session = JSON.parse(raw);
+      if (!session.expiresAt || Date.now() > session.expiresAt) {
+        storage.removeItem(this.SESSION_KEY);
+        return null;
+      }
+      return session;
+    } catch { return null; }
+  }
+  isAuthenticated() { return Boolean(this.getSession()); }
+
+  logout() {
+    try { if (window.komodoOffline) window.komodoOffline.clear().catch(() => {}); } catch (_) {} // achado 4: nada fica no aparelho após sair
+    const session = this.getSession();
+    if (this.isRemoteMode() && session && window.apiService) {
+      // Inicia a revogação antes de apagar o token local.
+      const pending = window.apiService.post('/auth/logout', {}).catch(() => null);
+      sessionStorage.removeItem(this.SESSION_KEY);
+      return pending;
+    }
+    localStorage.removeItem(this.SESSION_KEY);
+    return Promise.resolve();
+  }
+
+  requireAuth(redirectTo = 'login.html') {
+    if (this.isAuthenticated()) return;
+    // Novo login (Fase C): a dica só existe se o flag estava ligado e houve login Supabase nesta aba (tokens ficam só em memória).
+    let hint = false; try { hint = sessionStorage.getItem('kac_newlogin') === '1'; } catch (_) {}
+    window.location.href = hint ? 'auth.html' : redirectTo;
+  }
+}
+window.authService = new AuthService();
+
+
+;
+/* src/ui/components/ParticlesEngine.js */
+/**
+ * ParticlesEngine.js
+ *
+ * Motor único de partículas/radar de fundo, usado em login.html e index.html.
+ * Antes esse código estava duplicado em dois arquivos — agora é uma fonte só.
+ *
+ * Uso:
+ *   <canvas id="particles-canvas"></canvas>
+ *   <script src="src/ui/components/ParticlesEngine.js"></script>
+ *   <script> window.KomodoParticles.init('particles-canvas'); </script>
+ */
+window.KomodoParticles = (function () {
+  function init(canvasId, options) {
+    options = options || {};
+    const count = options.count || 45;
+    const linkDistance = options.linkDistance || 150;
+    const colors = options.colors || ['rgba(194,160,87,'];
+
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const particles = [];
+    const mouse = { x: -9999, y: -9999 };
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    document.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    function Particle() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.vx = (Math.random() - 0.5) * 0.35;
+      this.vy = (Math.random() - 0.5) * 0.35;
+      this.radius = Math.random() * 2 + 0.5;
+      this.color = colors[Math.floor(Math.random() * colors.length)];
+    }
+    Particle.prototype.update = function () {
+      this.x += this.vx;
+      this.y += this.vy;
+      if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+      if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+      const dx = this.x - mouse.x, dy = this.y - mouse.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 180) {
+        this.x += dx * 0.02;
+        this.y += dy * 0.02;
+      }
+    };
+    Particle.prototype.draw = function () {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = this.color + '0.6)';
+      ctx.fill();
+    };
+
+    for (let i = 0; i < count; i++) particles.push(new Particle());
+
+    let rafId;
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < linkDistance) {
+            const opacity = (1 - dist / linkDistance) * 0.18;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = 'rgba(194,160,87,' + opacity + ')';
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+          }
+        }
+      }
+      rafId = requestAnimationFrame(animate);
+    }
+    animate();
+
+    return {
+      stop: () => cancelAnimationFrame(rafId)
+    };
+  }
+
+  return { init };
+})();
+
+;
+/* src/ui/KomodoFx.js */
+/* UX fase 1 (item 2): fundo animado (radar + partículas) DESLIGADO por padrão.
+   Liga só se o usuário ativar (preferência local 'kac_fx'='1', não sensível) e o sistema não pedir menos movimento.
+   Com aba oculta, a animação CSS pausa (classe kac-fx-paused). */
+(function (root) {
+  'use strict';
+  var KEY = 'kac_fx';
+  function reduced() { return !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches); }
+  function wanted() { try { return root.localStorage.getItem(KEY) === '1'; } catch (_) { return false; } }
+  var started = false;
+  function apply(canvasId, opts) {
+    var on = wanted() && !reduced();
+    document.body.classList.toggle('kac-fx', on);
+    if (on && !started && root.KomodoParticles) { started = true; root.KomodoParticles.init(canvasId || 'particles-canvas', opts || { count: 50 }); }
+    return on;
+  }
+  document.addEventListener('visibilitychange', function () { document.body.classList.toggle('kac-fx-paused', document.hidden); });
+  root.KomodoFx = {
+    init: function (canvasId, opts) {
+      var on = apply(canvasId, opts);
+      var box = document.getElementById('fxToggle');
+      if (box) {
+        box.checked = on; box.disabled = reduced();
+        box.addEventListener('change', function () { try { if (box.checked) root.localStorage.setItem(KEY, '1'); else root.localStorage.removeItem(KEY); } catch (_) {} if (box.checked) apply(canvasId, opts); else root.location.reload(); });
+      }
+      return on;
+    },
+    enabled: function () { return wanted() && !reduced(); }
+  };
+})(window);
+
+;
+/* src/ui/LazyVendor.js */
+/* UX fase 1 (item 1): bibliotecas pesadas (jsPDF ~420 KB, Chart.js ~208 KB) só são baixadas quando usadas.
+   Mesmos arquivos locais de vendor/ (mesma origem, CSP inalterada). Promessa cacheada: cada script carrega no máximo 1 vez. */
+(function (root) {
+  'use strict';
+  var cache = {};
+  function load(src) {
+    if (cache[src]) return cache[src];
+    cache[src] = new Promise(function (resolve, reject) {
+      var s = document.createElement('script'); s.src = src; s.async = false;
+      s.onload = function () { resolve(); }; s.onerror = function () { delete cache[src]; reject(new Error('Falha ao carregar ' + src)); };
+      document.head.appendChild(s);
+    });
+    return cache[src];
+  }
+  var PDF = ['vendor/jspdf-4.2.1/jspdf.umd.min.js', 'vendor/jspdf-autotable-5.0.8/jspdf.plugin.autotable.min.js'];
+  var CHART = 'vendor/chart.js-4.5.1/chart.umd.js';
+  root.KacVendor = {
+    pdf: function () { if (root.jspdf && root.jspdf.jsPDF && root.jspdf.jsPDF.API && root.jspdf.jsPDF.API.autoTable) return Promise.resolve(); return load(PDF[0]).then(function () { return load(PDF[1]); }); },
+    chart: function () { return root.Chart ? Promise.resolve() : load(CHART); },
+    _load: load
+  };
+})(window);
+
+;
+/* src/ui/DayTabs.js */
+/* UX fase 1 (item 4): abas de dias acessíveis. Mantém os handlers de clique existentes (init.js/AgendaNav):
+   role=tab + aria-selected sincronizado com a classe .active; só a aba ativa entra no Tab (roving tabindex);
+   ←/→ trocam de dia, Home/End vão ao primeiro/último, Enter/Espaço ativam. */
+(function () {
+  'use strict';
+  function tabs(list) { return Array.prototype.slice.call(list.querySelectorAll('.tab[data-dia]')); }
+  function sync(list) {
+    var all = tabs(list); var any = all.some(function (t) { return t.classList.contains('active'); });
+    all.forEach(function (t, i) { var on = t.classList.contains('active') || (!any && i === 0); t.setAttribute('role', 'tab'); t.setAttribute('aria-selected', t.classList.contains('active') ? 'true' : 'false'); t.tabIndex = on ? 0 : -1; if (!t.id) t.id = 'tab-' + t.getAttribute('data-dia'); t.setAttribute('aria-controls', 'cardsContainer'); });
+  }
+  function init() {
+    var list = document.getElementById('tabs'); if (!list) return;
+    list.setAttribute('role', 'tablist'); if (!list.getAttribute('aria-label')) list.setAttribute('aria-label', 'Dias da semana');
+    sync(list);
+    new MutationObserver(function () { sync(list); }).observe(list, { subtree: true, attributes: true, attributeFilter: ['class'] });
+    list.addEventListener('keydown', function (e) {
+      var all = tabs(list); var i = all.indexOf(e.target); if (i < 0) return; var n = null;
+      if (e.key === 'ArrowRight') n = (i + 1) % all.length; else if (e.key === 'ArrowLeft') n = (i - 1 + all.length) % all.length;
+      else if (e.key === 'Home') n = 0; else if (e.key === 'End') n = all.length - 1;
+      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.click(); return; }
+      if (n === null) return; e.preventDefault(); all[n].click(); all[n].focus();
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  if (typeof module !== 'undefined') module.exports = { sync: sync };
+})();
+
+;
+/* src/ui/VisitStatus.js */
+/* UX fase 2 (item 5): "Chegou / Saiu" em 1 toque, com estado claro e desfazer por 10 s (pausa com mouse/foco).
+   Estados (mesma coluna status 0/1/2 de sempre — sem mudança de banco): 0 Agendado → 1 Na portaria → 2 Saiu.
+   Cada mudança vai à API com o status anterior ("from"): se outro aparelho mudou antes, a API responde 409 e nada é sobrescrito.
+   Toda mudança (inclusive o desfazer) é auditada no servidor. DOM só via textContent. */
+(function (root) {
+  'use strict';
+  var LABEL = ['Agendado', 'Na portaria', 'Saiu'];
+  var ACTION = ['Chegou', 'Saiu', null];
+  var UNDO_MS = 10000;
+  function next(s) { s = Number(s) || 0; return s < 2 ? s + 1 : null; }
+  function badge(s) { var b = document.createElement('span'); s = Number(s) || 0; b.className = 'status-badge status-' + s; b.textContent = LABEL[s]; return b; }
+  function actionButton(item) {
+    var s = Number(item.status) || 0; if (next(s) === null) return null;
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'btn-status-toggle btn-status-next status-next-' + s;
+    b.dataset.id = String(item.id == null ? '' : item.id); b.textContent = ACTION[s];
+    b.setAttribute('aria-label', ACTION[s] + ': ' + String(item.nome || 'visita'));
+    return b;
+  }
+  // Aviso com "Desfazer": 10 s, pausa enquanto o mouse está em cima ou o foco está dentro (WCAG 2.2.1).
+  var toastTimer = null, remaining = 0, startedAt = 0;
+  function toast(text, onUndo, ms) {
+    var t = document.getElementById('kacToast');
+    if (!t) {
+      t = document.createElement('div'); t.id = 'kacToast'; t.className = 'kac-toast'; t.setAttribute('role', 'status'); t.setAttribute('aria-live', 'polite'); document.body.appendChild(t);
+      var pause = function () { if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; remaining = Math.max(1000, remaining - (Date.now() - startedAt)); } };
+      var resume = function () { if (!t.hidden && !toastTimer && remaining > 0) arm(remaining); };
+      if (t.addEventListener) { t.addEventListener('mouseenter', pause); t.addEventListener('focusin', pause); t.addEventListener('mouseleave', resume); t.addEventListener('focusout', resume); }
+    }
+    function hide() { t.hidden = true; t.textContent = ''; remaining = 0; if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; } }
+    function arm(d) { remaining = d; startedAt = Date.now(); toastTimer = setTimeout(hide, d); }
+    t.textContent = ''; var msg = document.createElement('span'); msg.textContent = text; t.appendChild(msg);
+    if (onUndo) { var u = document.createElement('button'); u.type = 'button'; u.className = 'kac-toast-undo'; u.textContent = 'Desfazer'; u.addEventListener('click', function () { hide(); return onUndo(); }); t.appendChild(u); }
+    t.hidden = false; if (toastTimer) clearTimeout(toastTimer); toastTimer = null; arm(ms || UNDO_MS);
+    return { hide: hide, el: t };
+  }
+  // Atualiza só o cartão na tela (sem esperar a API nem recarregar a agenda).
+  function paint(card, reg, pending) {
+    if (!card || !card.querySelector) return;
+    var box = card.querySelector('.status-box'); if (!box) return;
+    box.textContent = ''; box.appendChild(badge(reg.status));
+    var b = actionButton(reg); if (b) { if (pending) { b.disabled = true; b.setAttribute('aria-busy', 'true'); } box.appendChild(b); }
+  }
+  var pendingIds = {};
+  // Avança 1 estado de forma OTIMISTA: tela e aviso na hora; API em seguida; erro/409 → volta o estado e avisa.
+  async function advance(reg, repo, reload, btn) {
+    var key = String(reg.id); if (pendingIds[key]) return null;
+    var from = Number(reg.status) || 0, to = next(from); if (to === null) return null;
+    var card = btn && btn.closest ? btn.closest('.card') : null;
+    pendingIds[key] = true; reg.status = to; paint(card, reg, true);
+    toast(String(reg.nome || 'Visita') + ': ' + LABEL[to] + '.', function () { return undo(reg, repo, reload, card, from, to); });
+    try { await repo.updateStatus(reg.id, to, { from: from }); }
+    catch (e) {
+      reg.status = from; paint(card, reg, false); delete pendingIds[key];
+      toast(e && e.status === 409 ? 'Status já alterado em outro aparelho. Agenda atualizada.' : 'Não foi possível salvar "' + LABEL[to] + '": ' + (e && e.message || 'erro') + '. Tente de novo.');
+      try { await reload(); } catch (_) {} return null;
+    }
+    delete pendingIds[key]; paint(card, reg, false);
+    Promise.resolve().then(reload).catch(function () {}); // sincroniza em segundo plano
+    return to;
+  }
+  async function undo(reg, repo, reload, card, from, to) {
+    var key = String(reg.id);
+    // se a gravação original ainda está em andamento, espera ela terminar
+    for (var i = 0; i < 50 && pendingIds[key]; i++) await new Promise(function (r) { setTimeout(r, 100); });
+    if (Number(reg.status) !== to) return;
+    pendingIds[key] = true; reg.status = from; paint(card, reg, true);
+    try { await repo.updateStatus(reg.id, from, { from: to, undo: true }); toast('Desfeito: ' + LABEL[from] + '.', null, 4000); }
+    catch (e) { reg.status = to; toast('Não foi possível desfazer: ' + (e && e.message || 'erro')); }
+    delete pendingIds[key]; paint(card, reg, false);
+    try { await reload(); } catch (_) {}
+  }
+  root.VisitStatus = { LABEL: LABEL, ACTION: ACTION, UNDO_MS: UNDO_MS, next: next, badge: badge, actionButton: actionButton, advance: advance, toast: toast, paint: paint, _pending: pendingIds };
+  if (typeof module !== 'undefined') module.exports = root.VisitStatus;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+;
+/* src/ui/MobileShell.js */
+/* UX fase 2: (7) barra de navegação inferior no celular, (6) seções opcionais do cadastro, (backlog) nome da empresa no cabeçalho.
+   Só delega para botões que já existem (mesmos handlers, mesmas permissões). DOM só via textContent. */
+(function (root) {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var MAP = { 'new': 'btnOpenModal', dashboard: 'btnOpenDashboard', pdf: 'btnExportPDF', config: 'btnOpenConfig', logout: 'btnLogout' };
+  function nav(action) {
+    if (action === 'agenda') { root.scrollTo({ top: 0, behavior: 'smooth' }); var c = $('cardsContainer'); if (c) c.focus(); return; }
+    if (action === 'search') { var s = $('globalSearch'); if (s) { s.scrollIntoView({ block: 'center' }); s.focus(); } return; }
+    var b = $(MAP[action]); if (b) b.click();
+    var more = document.querySelector('.bn-more'); if (more) more.open = false;
+  }
+  // (6) abre automaticamente as seções opcionais que já têm dados (ex.: editar um registro)
+  function syncSections(root2) {
+    (root2 || document).querySelectorAll('details.opt-section').forEach(function (d) {
+      var filled = Array.prototype.some.call(d.querySelectorAll('input:not([type=hidden]):not([type=file]), textarea, select'), function (el) { return el.tagName === 'SELECT' ? el.selectedIndex > 0 : String(el.value || '').trim() !== ''; });
+      if (filled) d.open = true;
+    });
+  }
+  function watchModal() {
+    var m = $('mainModalOverlay'); if (!m) return;
+    new MutationObserver(function () {
+      if (m.hasAttribute('open') || m.classList.contains('aberto')) { setTimeout(function () { syncSections(m); var n = m.querySelector('[data-field="nome"]'); if (n && !n.closest('[hidden]') && n.offsetParent !== null) n.focus(); }, 50); }
+    }).observe(m, { attributes: true, attributeFilter: ['open', 'class', 'style'] });
+  }
+  // (backlog) nome da empresa da sessão, vindo do servidor (/api/organizacao: só o nome da PRÓPRIA org)
+  async function orgName() {
+    var el = $('orgName'); if (!el || !root.authService || !root.apiService) return;
+    try { if (!root.authService.isRemoteMode() || !root.authService.isAuthenticated()) return; var d = await root.apiService.get('/organizacao'); var n = d && typeof d.name === 'string' ? d.name.trim() : ''; if (!n) return; el.textContent = n; el.title = n; el.hidden = false; } catch (_) { /* silencioso: cabeçalho continua sem nome */ }
+  }
+  function init() {
+    var bar = document.querySelector('.bottom-nav');
+    if (bar) bar.addEventListener('click', function (e) { var b = e.target.closest('[data-nav]'); if (b) { e.preventDefault(); nav(b.getAttribute('data-nav')); } });
+    watchModal(); orgName();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  root.KacMobileShell = { nav: nav, syncSections: syncSections, orgName: orgName };
+  if (typeof module !== 'undefined') module.exports = root.KacMobileShell;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+;
+/* src/ui/HtmlSafety.js */
+(function attachHtmlSafety(root) {
+    'use strict';
+
+    function escapeHtml(value) {
+        var entities = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        };
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
+            return entities[character];
+        });
+    }
+
+    function highlightHtml(value, searchTerm) {
+        var text = String(value == null ? '' : value);
+        var query = String(searchTerm == null ? '' : searchTerm);
+        if (!query) return escapeHtml(text);
+
+        var lowerText = text.toLowerCase();
+        var lowerQuery = query.toLowerCase();
+        var chunks = [];
+        var cursor = 0;
+        var matchIndex;
+
+        while ((matchIndex = lowerText.indexOf(lowerQuery, cursor)) !== -1) {
+            chunks.push(escapeHtml(text.slice(cursor, matchIndex)));
+            chunks.push('<span class="highlight">' + escapeHtml(text.slice(matchIndex, matchIndex + query.length)) + '</span>');
+            cursor = matchIndex + query.length;
+        }
+        chunks.push(escapeHtml(text.slice(cursor)));
+        return chunks.join('');
+    }
+
+    var api = Object.freeze({ escapeHtml: escapeHtml, highlightHtml: highlightHtml });
+    if (typeof module === 'object' && module.exports) module.exports = api;
+    if (root) root.KomodoHtmlSafety = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+;
+/* src/ui/init.js */
+/**
+ * init.js
+ * Lógica de inicialização de UI e eventos visuais.
+ * Tudo encapsulado em DOMContentLoaded para garantir que o DOM esteja pronto.
+ */
+document.addEventListener('DOMContentLoaded', async function() {
+    // Bloqueia acesso à tela se não houver sessão válida (ver AuthService.js).
+    if (window.authService) {
+        window.authService.requireAuth('login.html');
+    }
+
+    // ==================================================
+    // ENGINE DE PARTÍCULAS
+    // ==================================================
+    if (window.KomodoParticles) {
+        if (window.KomodoFx) window.KomodoFx.init('particles-canvas', { count: 50 });
+    }
+
+    // ==================================================
+    // BANCO DE DADOS DE MARCAS
+    // ==================================================
+    var marcasBrasil = [
+        { cat: "Carros Populares", nome: "Fiat", tipo: "Carro" }, { cat: "Carros Populares", nome: "Volkswagen", tipo: "Carro" }, { cat: "Carros Populares", nome: "Chevrolet", tipo: "Carro" }, { cat: "Carros Populares", nome: "Ford", tipo: "Carro" }, { cat: "Carros Populares", nome: "Toyota", tipo: "Carro" }, { cat: "Carros Populares", nome: "Honda", tipo: "Carro" }, { cat: "Carros Populares", nome: "Hyundai", tipo: "Carro" }, { cat: "Carros Populares", nome: "Renault", tipo: "Carro" }, { cat: "Carros Populares", nome: "Nissan", tipo: "Carro" }, { cat: "Carros Populares", nome: "Jeep", tipo: "Carro" }, { cat: "Carros Populares", nome: "Peugeot", tipo: "Carro" }, { cat: "Carros Populares", nome: "Citroën", tipo: "Carro" }, { cat: "Carros Populares", nome: "Caoa Chery", tipo: "Carro" }, { cat: "Carros Populares", nome: "BYD", tipo: "Carro" }, { cat: "Carros Populares", nome: "GWM", tipo: "Carro" },
+        { cat: "Carros Premium", nome: "Audi", tipo: "Carro" }, { cat: "Carros Premium", nome: "BMW", tipo: "Carro" }, { cat: "Carros Premium", nome: "Mercedes-Benz", tipo: "Carro" }, { cat: "Carros Premium", nome: "Volvo", tipo: "Carro" }, { cat: "Carros Premium", nome: "Land Rover", tipo: "Carro" }, { cat: "Carros Premium", nome: "Porsche", tipo: "Carro" }, { cat: "Carros Premium", nome: "Mitsubishi", tipo: "Carro" }, { cat: "Carros Premium", nome: "Lexus", tipo: "Carro" }, { cat: "Carros Premium", nome: "Jaguar", tipo: "Carro" }, { cat: "Carros Premium", nome: "Mini", tipo: "Carro" }, { cat: "Carros Premium", nome: "Subaru", tipo: "Carro" },
+        { cat: "Motos", nome: "Honda (Moto)", tipo: "Moto" }, { cat: "Motos", nome: "Yamaha", tipo: "Moto" }, { cat: "Motos", nome: "Suzuki", tipo: "Moto" }, { cat: "Motos", nome: "Kawasaki", tipo: "Moto" }, { cat: "Motos", nome: "BMW (Moto)", tipo: "Moto" }, { cat: "Motos", nome: "Triumph", tipo: "Moto" }, { cat: "Motos", nome: "Royal Enfield", tipo: "Moto" }, { cat: "Motos", nome: "Dafra", tipo: "Moto" }, { cat: "Motos", nome: "Haojue", tipo: "Moto" }, { cat: "Motos", nome: "Shineray", tipo: "Moto" }, { cat: "Motos", nome: "Ducati", tipo: "Moto" }, { cat: "Motos", nome: "Harley-Davidson", tipo: "Moto" },
+        { cat: "Caminhões / Outros", nome: "Scania", tipo: "Carro" }, { cat: "Caminhões / Outros", nome: "Volvo (Caminhão)", tipo: "Carro" }, { cat: "Caminhões / Outros", nome: "Iveco", tipo: "Carro" }, { cat: "Caminhões / Outros", nome: "Mercedes-Benz (Caminhão)", tipo: "Carro" }, { cat: "Caminhões / Outros", nome: "VW Caminhões", tipo: "Carro" }, { cat: "Caminhões / Outros", nome: "Agrale", tipo: "Carro" }
+    ];
+
+    var activeType1 = 'Carro';
+    var activeType2 = 'Carro';
+
+    function renderBrandList(wrapperId, filterText) {
+        var wrapper = document.getElementById(wrapperId);
+        if (!wrapper) return;
+        filterText = filterText || '';
+        wrapper.replaceChildren();
+
+        var selector = (typeof vehicleSelectors !== 'undefined') ? vehicleSelectors[wrapperId] : null;
+        var isFirst = wrapperId === 'listWrapper1';
+        var activeType = selector ? selector.type : (isFirst ? activeType1 : activeType2);
+        var labelId = selector ? selector.labelId : (isFirst ? 'labelDropdown1' : 'labelDropdown2');
+        var panelId = selector ? selector.panelId : (isFirst ? 'dropdownPanel1' : 'dropdownPanel2');
+        if (!activeType || !labelId || !panelId) return;
+
+        var currentCat = '';
+        var matchCount = 0;
+        for (var i = 0; i < marcasBrasil.length; i++) {
+            var m = marcasBrasil[i];
+            if (m.tipo !== activeType) continue;
+            if (filterText && m.nome.toLowerCase().indexOf(filterText.toLowerCase()) === -1) continue;
+
+            if (m.cat !== currentCat) {
+                var group = document.createElement('div');
+                group.className = 'brand-list-group';
+                group.textContent = m.cat;
+                wrapper.appendChild(group);
+                currentCat = m.cat;
+            }
+
+            var item = document.createElement('div');
+            item.className = 'brand-item';
+            item.dataset.brand = m.nome;
+            item.dataset.label = labelId;
+            item.dataset.panel = panelId;
+            item.textContent = m.nome;
+            wrapper.appendChild(item);
+            matchCount++;
+        }
+
+        if (!matchCount) {
+            var empty = document.createElement('div');
+            empty.className = 'brand-item';
+            empty.style.color = 'var(--text-muted)';
+            empty.textContent = 'Nenhuma marca encontrada.';
+            wrapper.appendChild(empty);
+        }
+    }
+    // ==================================================
+    // EVENT DELEGATION — TODOS OS CLIQUES DO MODAL
+    // ==================================================
+    document.getElementById('modalContent').addEventListener('click', async function(e) {
+        var target = e.target;
+
+        // 1. TOGGLE BUTTONS (Visita/Cliente, Carro/Moto)
+        if (target.classList.contains('btn-toggle') && target.tagName === 'BUTTON') {
+            var group = target.closest('.btn-toggle-group');
+            if (group) {
+                var btns = group.querySelectorAll('.btn-toggle');
+                for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+                target.classList.add('active');
+
+                // Se for Carro/Moto, atualizar a lista
+                var targetNum = target.getAttribute('data-target');
+                if (targetNum === '1') {
+                    activeType1 = target.getAttribute('data-val');
+                    document.getElementById('labelDropdown1').textContent = '🔍 Buscar veículo';
+                    renderBrandList('listWrapper1');
+                } else if (targetNum === '2') {
+                    activeType2 = target.getAttribute('data-val');
+                    document.getElementById('labelDropdown2').textContent = '🔍 Buscar veículo';
+                    renderBrandList('listWrapper2');
+                }
+            }
+            e.stopPropagation();
+            return;
+        }
+
+        // 2. ABRIR DROPDOWN DE MARCAS
+        if (target.closest('.search-dropdown-btn')) {
+            var btn = target.closest('.search-dropdown-btn');
+            var panelId = btn.getAttribute('data-panel');
+            var panel = document.getElementById(panelId);
+            if (panel) {
+                var isOpen = panel.classList.contains('open');
+                // Fechar todas
+                document.getElementById('dropdownPanel1').classList.remove('open');
+                document.getElementById('dropdownPanel2').classList.remove('open');
+                if (!isOpen) {
+                    panel.classList.add('open');
+                    var wrapperId = (panelId === 'dropdownPanel1') ? 'listWrapper1' : 'listWrapper2';
+                    renderBrandList(wrapperId);
+                    var input = panel.querySelector('.search-input-box');
+                    if (input) { input.value = ''; input.focus(); }
+                }
+            }
+            e.stopPropagation();
+            return;
+        }
+
+        // 3. SELECIONAR MARCA DA LISTA
+        if (target.classList.contains('brand-item') && target.getAttribute('data-brand')) {
+            var brandName = target.getAttribute('data-brand');
+            var labelId = target.getAttribute('data-label');
+            var panelId = target.getAttribute('data-panel');
+            document.getElementById(labelId).textContent = '✔️ ' + brandName;
+            document.getElementById(panelId).classList.remove('open');
+            e.stopPropagation();
+            return;
+        }
+
+        // 4. FOTO / WEBCAM
+        if (target.id === 'photoBox' || target.closest('#photoBox')) { startWebcam(); return; }
+        if (target.id === 'btnCapture') { takeSnapshot(); return; }
+        if (target.id === 'btnFilePhysical') { document.getElementById('fileUploader').click(); return; }
+        if (target.id === 'btnCloseWebcam') { stopWebcam(); return; }
+        if (target.id === 'btnRemovePhoto') { resetPhoto(); return; }
+        if (target.id === 'btnRetakePhoto') { startWebcam(); return; }
+
+        // 5. CANCELAR / SALVAR
+        if (target.id === 'btnCancelar') { closeModal(); return; }
+        if (target.id === 'btnSalvar' || target.closest('#btnSalvar')) { 
+            try {
+                var modalContent = document.getElementById('modalContent');
+                var formData = window.formManager ? window.formManager.serialize('form-acesso') : {};
+                var nomeVal = formData.nome || '';
+                var placaVal = formData.placa || '';
+                var corVal = formData.cor || '';
+                var acompanhantesVal = formData.acompanhantes || '0';
+                var placaAcompanhanteVal = formData.placaAcomp || '';
+                var corAcompanhanteVal = formData.corAcomp || '';
+                
+                var btnType = modalContent.querySelector('.btn-toggle-group[data-group="tipo"] .active');
+                var typeStr = btnType ? btnType.getAttribute('data-val') : "Visita";
+                
+                if (!nomeVal || nomeVal.trim().length < 3) {
+                    alert("Nome deve conter pelo menos 3 caracteres.");
+                    return;
+                }
+                
+                var state = window.appStore ? window.appStore.getState('visitors') : null;
+                var currentDia = state ? state.diaAtivo : 'seg';
+                
+                var brandLabel1 = document.getElementById('labelDropdown1');
+                var brandStr1 = brandLabel1 ? brandLabel1.innerText.replace('✔️ ', '').replace('🔍 Buscar veículo', 'Sem Veículo') : 'Sem veículo';
+                var finalPlaca = placaVal ? placaVal + (corVal ? ' - ' + corVal : '') + ' (' + brandStr1 + ')' : 'Sem veículo';
+
+                var brandLabel2 = document.getElementById('labelDropdown2');
+                var brandStr2 = brandLabel2 ? brandLabel2.innerText.replace('✔️ ', '').replace('🔍 Buscar veículo', 'Sem Veículo') : 'Sem veículo';
+                var finalPlacaAcompanhante = placaAcompanhanteVal ? placaAcompanhanteVal + (corAcompanhanteVal ? ' - ' + corAcompanhanteVal : '') + ' (' + brandStr2 + ')' : '';
+
+                var histVal = formData.historico || ("Registro adicionado em " + new Date().toLocaleDateString('pt-BR'));
+
+                var novoRegistro = {
+                    id: Date.now().toString(),
+                    modulo: 'empresarial',
+                    dia: currentDia,
+                    hora: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}),
+                    nome: nomeVal,
+                    tipo: typeStr,
+                    unidade: '',
+                    placa: finalPlaca,
+                    acompanhantes: acompanhantesVal,
+                    placaAcompanhante: finalPlacaAcompanhante,
+                    historico: histVal,
+                    alerta: 0,
+                    status: 0
+                };
+                
+                var saveButton = document.getElementById('btnSalvar');
+                saveButton.disabled = true;
+                saveButton.textContent = 'Salvando...';
+
+                await window.VisitorRepository.save(novoRegistro);
+                closeModal();
+                window.formManager.clear('form-acesso');
+                document.getElementById('labelDropdown1').textContent = '🔍 Buscar veículo';
+                document.getElementById('labelDropdown2').textContent = '🔍 Buscar veículo';
+                if (window.renderController) await window.renderController.reloadDailyData(currentDia, 'empresarial');
+                alert('Cadastro salvo com sucesso.');
+                saveButton.disabled = false;
+                saveButton.textContent = 'Salvar Registro';
+                /*
+                window.VisitorRepository.save(novoRegistro).then(function() {
+                    closeModal();
+                    
+                    // Limpar formulário
+                    var allInputs = document.querySelectorAll('#modalContent .form-control');
+                    for(var i=0; i<allInputs.length; i++) {
+                        if(allInputs[i].tagName === 'SELECT') allInputs[i].selectedIndex = 0;
+                        else allInputs[i].value = '';
+                    }
+                    document.getElementById('labelDropdown1').textContent = '🔍 Buscar veículo';
+                    document.getElementById('labelDropdown2').textContent = '🔍 Buscar veículo';
+                    
+                    // Recarregar dados na tela
+                    if (window.renderController) window.renderController.reloadDailyData(currentDia, 'empresarial');
+                }).catch(function(err) {
+                    alert("Falha ao salvar no banco: " + err.message);
+                }); */
+            } catch(err) {
+                alert("Erro inesperado no salvamento: " + err.message);
+                var failedSaveButton = document.getElementById('btnSalvar');
+                if (failedSaveButton) {
+                    failedSaveButton.disabled = false;
+                    failedSaveButton.textContent = 'Salvar Registro';
+                }
+            }
+            return; 
+        }
+    });
+
+    // Filtrar marcas ao digitar
+    document.querySelectorAll('.search-input-box').forEach(function(input) {
+        input.addEventListener('input', function() {
+            var wrapperId = this.getAttribute('data-list');
+            renderBrandList(wrapperId, this.value);
+        });
+    });
+
+    // Fechar dropdowns ao clicar fora
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-dropdown-wrapper')) {
+            document.getElementById('dropdownPanel1').classList.remove('open');
+            document.getElementById('dropdownPanel2').classList.remove('open');
+        }
+    });
+
+    // ==================================================
+    // ABRIR / FECHAR MODAL
+    // ==================================================
+    document.getElementById('btnOpenModal').addEventListener('click', function() {
+        document.getElementById('mainModalOverlay').setAttribute('open', '');
+    });
+
+    function closeModal() {
+        document.getElementById('mainModalOverlay').removeAttribute('open');
+        stopWebcam();
+    }
+    
+    document.getElementById('mainModalOverlay').addEventListener('close', closeModal);
+
+    // ==================================================
+    // CÂMERA / WEBCAM
+    // ==================================================
+    var videoStream = null;
+
+    function startWebcam() {
+        document.getElementById('snapshotContainer').style.display = 'none';
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(function(stream) {
+                videoStream = stream;
+                document.getElementById('webcamVideo').srcObject = stream;
+                document.getElementById('photoBox').style.display = 'none';
+                document.getElementById('webcamContainer').style.display = 'block';
+            })
+            .catch(function() {
+                document.getElementById('fileUploader').click();
+            });
+    }
+
+    function stopWebcam() {
+        if (videoStream) { videoStream.getTracks().forEach(function(t) { t.stop(); }); videoStream = null; }
+        document.getElementById('webcamContainer').style.display = 'none';
+        if (window.getComputedStyle(document.getElementById('snapshotContainer')).display === 'none') {
+            document.getElementById('photoBox').style.display = 'block';
+        }
+    }
+
+    function takeSnapshot() {
+        var video = document.getElementById('webcamVideo');
+        var c = document.createElement('canvas');
+        c.width = video.videoWidth || 640; c.height = video.videoHeight || 480;
+        c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
+        document.getElementById('snapshotImage').src = c.toDataURL('image/jpeg');
+        stopWebcam();
+        document.getElementById('snapshotContainer').style.display = 'block';
+        document.getElementById('photoBox').style.display = 'none';
+    }
+
+    document.getElementById('fileUploader').addEventListener('change', function(e) {
+        var file = e.target.files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                document.getElementById('snapshotImage').src = ev.target.result;
+                document.getElementById('photoBox').style.display = 'none';
+                document.getElementById('webcamContainer').style.display = 'none';
+                document.getElementById('snapshotContainer').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function resetPhoto() {
+        document.getElementById('snapshotImage').src = '';
+        document.getElementById('snapshotContainer').style.display = 'none';
+        document.getElementById('photoBox').style.display = 'block';
+        document.getElementById('fileUploader').value = '';
+    }
+
+    async function handleAutoFillAI(isWebcam) {
+        var base64Image = '';
+        if (isWebcam) {
+            var video = document.getElementById('webcamVideo');
+            if (!video) return;
+            var c = document.createElement('canvas');
+            c.width = video.videoWidth || 640; c.height = video.videoHeight || 480;
+            c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
+            base64Image = c.toDataURL('image/jpeg').split(',')[1];
+        } else {
+            var imgEl = document.getElementById('snapshotImage');
+            if (!imgEl || !imgEl.src) return;
+            base64Image = imgEl.src.split(',')[1];
+        }
+        
+        var btn = isWebcam ? document.getElementById('btnOcrPlaca') : document.getElementById('btnOcrPlacaFile');
+        if (!btn) return;
+        
+        var origText = btn.innerText;
+        btn.innerText = "⏳ Analisando IA...";
+        btn.disabled = true;
+
+        try {
+            if (window.ocrService) {
+                await window.ocrService.processImage(base64Image);
+                if(isWebcam && typeof takeSnapshot === 'function') takeSnapshot();
+            } else {
+                alert("OcrService indisponível.");
+            }
+        } finally {
+            btn.innerText = origText;
+            btn.disabled = false;
+        }
+    }
+        
+
+
+    var btnOcrPlaca = document.getElementById('btnOcrPlaca');
+    if (btnOcrPlaca) btnOcrPlaca.addEventListener('click', function() { handleAutoFillAI(true); });
+    
+    var btnOcrPlacaFile = document.getElementById('btnOcrPlacaFile');
+    if (btnOcrPlacaFile) btnOcrPlacaFile.addEventListener('click', function() { handleAutoFillAI(false); });
+
+    // ==================================================
+    // DADOS E AGENDA - REATIVIDADE FASE 4
+    // ==================================================
+    
+    // O banco de dados agora é gerenciado pelo VisitorRepository (Fase 2)
+    // O estado visual é gerenciado pelo AppStore (Fase 1 e 4)
+    // A renderização é orquestrada pelo RenderController (Fase 4)
+    
+    var diasSemana = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
+    var diaAtual = window.KomodoDate ? window.KomodoDate.todayKey() : diasSemana[new Date().getDay()];
+    var allTabs = document.querySelectorAll('.tab');
+    // diaAtivo fica agora encapsulado na Store, usamos apenas para inicializar
+    
+    // (A formatação de datas e nomes agora é feita pelo RenderController.js para ambas as telas)
+
+    // Selecionar tab do dia atual
+    var tabAtual = document.querySelector('.tab[data-dia="' + diaAtual + '"]');
+    if(tabAtual) {
+        for(var i=0; i<allTabs.length; i++) allTabs[i].classList.remove('active');
+        tabAtual.classList.add('active');
+    }
+    
+    // Inicializa a carga diária via Controller Reativo (Fase 4)
+    if (window.renderController) {
+        window.renderController.reloadDailyData(diaAtual, 'empresarial');
+    }
+
+    // Abas de dias
+    document.getElementById('tabs').addEventListener('click', function(e) {
+        var tab = e.target.closest('.tab');
+        if (!tab) return;
+        var newDia = tab.getAttribute('data-dia');
+        var all = this.querySelectorAll('.tab');
+        for (var i = 0; i < all.length; i++) all[i].classList.remove('active');
+        tab.classList.add('active');
+        
+        // Pede pro controller atualizar o estado e recarregar dados do BD
+        if (window.renderController) {
+            window.renderController.reloadDailyData(newDia, 'empresarial');
+        }
+        document.getElementById('globalSearch').value = '';
+    });
+
+    // Expõe a função global para manter compatibilidade com o RenderController
+    window.renderDaily = function(data, searchTerm, showAll) {
+        var container = document.getElementById('cardsContainer');
+        if (!container) return;
+        container.replaceChildren();
+        searchTerm = String(searchTerm || '');
+
+        var state = window.appStore ? window.appStore.getState('visitors') : null;
+        var currentDia = state ? state.diaAtivo : diaAtual;
+        var filtered = (searchTerm || showAll) ? data.slice() : data.filter(function(item) { return item.dia === currentDia; });
+        if (!filtered.length) {
+            var empty = document.createElement('h3');
+            empty.className = 'empty-records-message';
+            empty.textContent = 'Nenhum registro para este período.';
+            container.appendChild(empty);
+            return;
+        }
+
+        filtered.sort(function(a, b) { return String(a.hora || '').localeCompare(String(b.hora || '')); });
+
+        function appendHighlighted(parent, value) {
+            var source = String(value == null ? '' : value);
+            var query = searchTerm.toLocaleLowerCase();
+            if (!query) {
+                parent.appendChild(document.createTextNode(source));
+                return;
+            }
+            var lower = source.toLocaleLowerCase();
+            var cursor = 0;
+            var matchAt;
+            while ((matchAt = lower.indexOf(query, cursor)) !== -1) {
+                if (matchAt > cursor) parent.appendChild(document.createTextNode(source.slice(cursor, matchAt)));
+                var mark = document.createElement('span');
+                mark.className = 'highlight';
+                mark.textContent = source.slice(matchAt, matchAt + query.length);
+                parent.appendChild(mark);
+                cursor = matchAt + query.length;
+            }
+            if (cursor < source.length) parent.appendChild(document.createTextNode(source.slice(cursor)));
+        }
+
+        function addInfoRow(card, prefix, value, className) {
+            var row = document.createElement('div');
+            row.className = className || 'info-row';
+            row.appendChild(document.createTextNode(prefix));
+            appendHighlighted(row, value);
+            card.appendChild(row);
+            return row;
+        }
+
+        filtered.forEach(function(item) {
+            var isMorador = !!(item.tipo && String(item.tipo).toLowerCase().indexOf('morador') !== -1);
+            var card = document.createElement('div');
+            card.className = item.alerta ? 'card alerta' : 'card';
+            if ('empresarial' === 'residencial') {
+                card.className = item.alerta ? 'card alerta' : (isMorador ? 'card morador' : 'card visitante');
+            }
+            card.dataset.id = String(item.id == null ? '' : item.id);
+
+            var deleteButton = document.createElement('button');
+            deleteButton.type = 'button';
+            deleteButton.className = 'btn-delete-card';
+            deleteButton.dataset.delid = String(item.id == null ? '' : item.id);
+            deleteButton.title = 'Excluir registro';
+            deleteButton.textContent = '🗑️';
+            card.appendChild(deleteButton);
+
+            // UX fase 2: estado visível + próxima ação em 1 toque (VisitStatus.js)
+            var statusBox = document.createElement('div');
+            statusBox.className = 'status-box';
+            statusBox.appendChild(window.VisitStatus.badge(item.status));
+            var nextBtn = window.VisitStatus.actionButton(item);
+            if (nextBtn) statusBox.appendChild(nextBtn);
+            card.appendChild(statusBox);
+
+            var header = document.createElement('div');
+            header.className = 'card-header-inline';
+            var time = document.createElement('span');
+            time.className = 'time';
+            time.appendChild(document.createTextNode('⏰ '));
+            appendHighlighted(time, item.hora);
+            header.appendChild(time);
+            var name = document.createElement('span');
+            name.className = 'name';
+            appendHighlighted(name, item.nome);
+            if (searchTerm || showAll) {
+                var extra = document.createElement('span');
+                extra.className = 'record-day-extra';
+                extra.textContent = ' (' + (('empresarial' === 'residencial') ? String(item.dia || '').toUpperCase() + (item.data ? ' ' + String(item.data).split('-').reverse().join('/') : '') : 'Agendado p/ ' + String(item.dia || '').toUpperCase() + (item.data ? ' ' + String(item.data).split('-').reverse().join('/') : '')) + ')';
+                name.appendChild(extra);
+            }
+            header.appendChild(name);
+            if ('empresarial' === 'residencial') {
+                var unit = document.createElement('span');
+                unit.className = 'unit-badge';
+                unit.appendChild(document.createTextNode('🏠 '));
+                appendHighlighted(unit, item.unidade);
+                header.appendChild(unit);
+            }
+            card.appendChild(header);
+
+            if ('empresarial' === 'residencial') {
+                var typeText = '👤 Tipo: ' + String(item.tipo == null ? '' : item.tipo);
+                var typeRow = document.createElement('div');
+                typeRow.className = 'info-row';
+                typeRow.appendChild(document.createTextNode('👤 Tipo: '));
+                appendHighlighted(typeRow, item.tipo);
+                if (isMorador && item.parentesco) {
+                    typeRow.appendChild(document.createTextNode(' (' + String(item.parentesco) + ')'));
+                }
+                card.appendChild(typeRow);
+                addInfoRow(card, '🚗 Placa Titular: ', item.placa);
+            } else {
+                addInfoRow(card, '🚗 Veículo Titular: ', item.placa);
+            }
+
+            if (item.acompanhantes && item.acompanhantes !== '0' && item.acompanhantes !== '-') {
+                var companions = document.createElement('div');
+                companions.className = 'info-row';
+                companions.style.marginTop = '5px';
+                companions.appendChild(document.createTextNode('👤 Acompanhantes: '));
+                var count = document.createElement('span');
+                count.className = 'companion-count';
+                count.textContent = String(item.acompanhantes);
+                companions.appendChild(count);
+                card.appendChild(companions);
+            }
+            if (item.placaAcompanhante) {
+                var companionPlate = document.createElement('div');
+                companionPlate.className = 'info-row companion-vehicle';
+                companionPlate.appendChild(document.createTextNode('🚗 Veículo Acompanhante: '));
+                appendHighlighted(companionPlate, item.placaAcompanhante);
+                card.appendChild(companionPlate);
+            }
+
+            var history = document.createElement('div');
+            history.className = item.alerta ? 'history-box bad' : 'history-box';
+            var historyLabel = document.createElement('strong');
+            historyLabel.textContent = 'Histórico:';
+            history.appendChild(historyLabel);
+            history.appendChild(document.createTextNode(' '));
+            appendHighlighted(history, item.historico);
+            card.appendChild(history);
+            container.appendChild(card);
+        });
+    }
+    // Excluir registro ou alternar status no Card
+    document.getElementById('cardsContainer').addEventListener('click', async function(e) {
+        var state = window.appStore ? window.appStore.getState('visitors') : null;
+        if (!state) return;
+
+        var btnDel = e.target.closest('.btn-delete-card');
+        if (btnDel) {
+            var regId = btnDel.getAttribute('data-delid');
+            var reg = state.dailyData.find(r => r.id === regId);
+            if (!reg) return;
+            if (!confirm('Tem certeza que deseja excluir "' + reg.nome + '"?')) return;
+            var card = btnDel.closest('.card');
+            card.classList.add('removing');
+            
+            try {
+                await window.VisitorRepository.delete(reg.id);
+                if (window.renderController) window.renderController.reloadDailyData(state.diaAtivo, 'empresarial');
+            } catch(ex) {
+                alert("Erro ao deletar: " + ex.message);
+                card.classList.remove('removing');
+            }
+            return;
+        }
+
+        var btnStatus = e.target.closest('.btn-status-toggle');
+        if (btnStatus) {
+            var regId = btnStatus.getAttribute('data-id');
+            var reg = state.dailyData.find(r => String(r.id) === regId);
+            if (reg && !btnStatus.disabled) {
+                await window.VisitStatus.advance(reg, window.VisitorRepository, async function () { if (window.renderController) await window.renderController.reloadDailyData(state.diaAtivo, 'empresarial'); }, btnStatus);
+            }
+        }
+    });
+
+    // Debounce Helper
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
+    // Busca global
+    document.getElementById('globalSearch').addEventListener('input', debounce(async function() {
+        var state = window.appStore ? window.appStore.getState('visitors') : null;
+        if (!state) return;
+        var term = this.value.toLowerCase().trim();
+        if (term) {
+            var all = document.querySelectorAll('.tab');
+            for (var i = 0; i < all.length; i++) all[i].classList.remove('active');
+            var source = state.dailyData;
+            try { source = await window.VisitorRepository.getAllByModule('empresarial'); } catch (e) { source = state.dailyData; }
+            var filtered = (source || []).filter(function(item) {
+                return Object.values(item).some(function(v) { return String(v).toLowerCase().indexOf(term) !== -1; });
+            });
+            window.renderDaily(filtered, term);
+        } else {
+            var tabs = document.querySelectorAll('.tab');
+            for (var i = 0; i < tabs.length; i++) { if (tabs[i].getAttribute('data-dia') === state.diaAtivo) tabs[i].classList.add('active'); }
+            window.renderDaily(state.dailyData);
+        }
+    }, 300));
+
+    // Autocomplete do agendamento rápido
+    var quickInput = document.getElementById('quickInput');
+    var quickAddModule = document.getElementById('quickAddModule');
+    var quickDropdown = document.getElementById('quickDropdown');
+
+    var historyCache = null;
+    async function loadHistory() {
+        if (historyCache) return historyCache;
+        try { historyCache = await window.VisitorRepository.getAllByModule('empresarial'); }
+        catch (e) { var st = window.appStore ? window.appStore.getState('visitors') : null; return st ? st.dailyData : []; }
+        return historyCache;
+    }
+    if (window.eventBus && window.SystemEvents) window.eventBus.on(window.SystemEvents.DB_SAVE_SUCCESS, function() { historyCache = null; });
+
+    quickInput.addEventListener('input', async function() {
+        var term = this.value.toLowerCase().trim();
+        if (term.length > 1) {
+            var database = await loadHistory();
+            // Filtrar itens unicos por nome do BD global
+            var mapS = {};
+            database.forEach(function(p) {
+                if(p.nome.toLowerCase().indexOf(term) !== -1) mapS[p.nome.toLowerCase()] = p;
+            });
+            var suggs = Object.values(mapS);
+            
+            quickAddModule.classList.add('active');
+            quickDropdown.replaceChildren();
+            if (suggs.length) {
+                suggs.forEach(function(s) {
+                    var item = document.createElement('div');
+                    item.className = 'auto-item';
+                    item.dataset.nome = String(s.nome == null ? '' : s.nome);
+
+                    var name = document.createElement('span');
+                    name.className = 'auto-name';
+                    name.textContent = String(s.nome == null ? '' : s.nome);
+
+                    var details = document.createElement('span');
+                    details.className = 'auto-doc';
+                    details.textContent = String(s.tipo || 'Visitante') + ' | Placa: ' + String(s.placa || '');
+
+                    var history = document.createElement('span');
+                    history.style.cssText = 'font-size:12px;font-weight:600;margin-top:2px;';
+                    history.style.color = s.alerta ? 'var(--danger)' : 'var(--success)';
+                    history.textContent = (s.alerta ? '⚠️' : '✅') + ' ' + String(s.historico || '');
+
+                    item.append(name, details, history);
+                    quickDropdown.appendChild(item);
+                });
+            } else {
+                var empty = document.createElement('div');
+                empty.className = 'auto-item';
+                empty.style.color = 'var(--gold)';
+                empty.style.textAlign = 'center';
+                empty.textContent = 'Não encontrado no histórico. Clique em CLIENTE E VISITA para cadastrar novo.';
+                quickDropdown.appendChild(empty);
+            }
+        } else {
+            quickAddModule.classList.remove('active');
+        }
+    });
+
+    quickDropdown.addEventListener('click', function(e) {
+        var item = e.target.closest('.auto-item');
+        if (item && item.getAttribute('data-nome')) {
+            quickInput.value = item.getAttribute('data-nome');
+            quickAddModule.classList.remove('active');
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!quickAddModule.contains(e.target)) quickAddModule.classList.remove('active');
+    });
+
+    document.getElementById('btnQuickAdd').addEventListener('click', async function() {
+        var state = window.appStore ? window.appStore.getState('visitors') : null;
+        var database = await loadHistory();
+        var nome = quickInput.value.trim();
+        var hora = document.getElementById('quickTime').value || "00:00";
+        if (!nome) { alert('Digite um nome ou selecione da lista.'); return; }
+        
+        var found = null;
+        for(var i = database.length - 1; i >= 0; i--) {
+            if (database[i].nome.toLowerCase() === nome.toLowerCase()) { found = database[i]; break; }
+        }
+        
+        var newRecord = {
+            id: Date.now().toString(),
+            modulo: 'empresarial',
+            dia: state.diaAtivo,
+            hora: hora,
+            nome: nome,
+            unidade: '',
+            tipo: found ? found.tipo : "Visitante",
+            placa: found ? found.placa : "Sem Veículo",
+            acompanhantes: found ? found.acompanhantes : "0",
+            placaAcompanhante: found ? found.placaAcompanhante : "",
+            historico: found ? found.historico : "Adicionado via Agendamento Rápido",
+            alerta: found ? found.alerta : 0,
+            status: 0
+        };
+        
+        try {
+            await window.VisitorRepository.save(newRecord);
+            if (window.renderController) window.renderController.reloadDailyData(state.diaAtivo, 'empresarial');
+            
+            quickInput.value = '';
+            quickAddModule.classList.remove('active');
+            alert('Registro Adicionado com Sucesso!');
+        } catch(err) {
+            alert("Erro ao salvar: " + err.message);
+        }
+    });
+
+    // Função exposta para a IA preencher o modal de cadastro (Empresarial)
+    window.fillFormWithAI = function(data) {
+        if (!data) return;
+        
+        var modalContent = document.getElementById('modalContent');
+        if (!modalContent) return;
+        
+        // Abre o modal se não estiver aberto
+        document.getElementById('mainModalOverlay').setAttribute('open', '');
+        
+        var inputs = modalContent.querySelectorAll('.form-control');
+        
+        if (data.nome && inputs[0]) inputs[0].value = data.nome;
+        if (data.placa && inputs[1]) inputs[1].value = data.placa;
+        if (data.cor && inputs[2]) inputs[2].value = data.cor;
+        
+    };
+
+    // ==================================================
+    // FASE 4: EXPORTAÇÃO PDF & DASHBOARD ANALYTICS
+    // ==================================================
+    document.getElementById('btnExportPDF').addEventListener('click', async function() {
+        // UX fase 1: jsPDF só é baixado agora (não no carregamento da agenda).
+        try { if (window.KacVendor) await window.KacVendor.pdf(); } catch (e) { alert('Não foi possível carregar o módulo de PDF. Verifique a conexão.'); return; }
+        if(typeof window.PdfExportService !== 'undefined') {
+            const state = window.appStore ? window.appStore.getState('visitors') : null;
+            const dailyData = state ? state.dailyData : [];
+            const diaAtivo = state ? state.diaAtivo : diaAtual;
+            window.PdfExportService.exportTurnReport(dailyData, diaAtivo, "EMPRESARIAL");
+        } else {
+            alert("Módulo de PDF não carregado.");
+        }
+    });
+
+    // Dashboard Desacoplado (Fase 5)
+    document.getElementById('btnOpenDashboard').addEventListener('click', function() {
+        if(window.dashboardManager) {
+            window.dashboardManager.openDashboard();
+        }
+    });
+
+    // ==================================================
+    // KOMODO AI ASSISTANT E CONFIGURAÇÕES
+    // ==================================================
+    document.getElementById('btnOpenConfig').addEventListener('click', function() {
+        document.getElementById('configAiProvider').value = localStorage.getItem('komodo_ai_provider') || 'groq';
+        document.getElementById('configApiKey').value = '';
+        document.getElementById('configModalOverlay').setAttribute('open', '');
+    });
+
+    document.getElementById('btnSaveConfig').addEventListener('click', function() {
+        localStorage.setItem('komodo_ai_provider', document.getElementById('configAiProvider').value);
+        document.getElementById('configModalOverlay').removeAttribute('open');
+        alert('Preferências salvas neste aparelho. A IA ainda não está habilitada no servidor.');
+    });
+
+    var aiPanel = document.getElementById('aiPanel');
+    var aiBody = document.getElementById('aiBody');
+    var aiInput = document.getElementById('aiInput');
+    var aiTyping = document.getElementById('aiTypingIndicator');
+
+    document.getElementById('btnToggleAi').addEventListener('click', function() { aiPanel.classList.toggle('open'); setTimeout(function(){aiInput.focus();}, 100); });
+    document.getElementById('btnCloseAi').addEventListener('click', function() { aiPanel.classList.remove('open'); });
+
+    var btnLogout = document.getElementById('btnLogout');
+    if (btnLogout) {
+        btnLogout.addEventListener('click', async function() {
+            if (window.authService) {
+                try { await window.authService.logout(); } catch (e) {}
+                window.location.href = 'login.html';
+            }
+        });
+    }
+
+    document.getElementById('btnSendAi').addEventListener('click', function() {
+        if (window.komodoCopilot) {
+            window.komodoCopilot.sendChatMessage();
+        }
+    });
+
+    aiInput.addEventListener('keypress', function(e) { if(e.key === 'Enter') document.getElementById('btnSendAi').click(); });
+
+    // Modificando os IDs para corresponderem ao KomodoCopilot
+    document.getElementById('aiInput').id = 'chat-input';
+    document.getElementById('aiBody').id = 'chat-messages';
+
+    // Init
+    // A carga inicial já foi feita via RenderController
+    renderBrandList('listWrapper1');
+    renderBrandList('listWrapper2');
+}); // fim DOMContentLoaded
+
+;
+/* src/db/dao/PacienteDAO.js */
+/**
+ * PacienteDAO.js
+ * 
+ * Data Access Object para isolar queries SQL de registros.
+ * Atualizado: usa komodo_tbl_registros (tabela migrada).
+ */
+class PacienteDAO {
+  constructor(dbService) {
+    this.db = dbService;
+  }
+
+  _sanitize(obj) {
+    const sanitized = {};
+    for (let key in obj) {
+      if (typeof obj[key] === 'string') {
+        sanitized[key] = obj[key]
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      } else {
+        sanitized[key] = obj[key];
+      }
+    }
+    return sanitized;
+  }
+
+  async insert(registro) {
+    try {
+      const clean = this._sanitize(registro);
+      clean.id = clean.id || Date.now().toString();
+      return await this.db.insert('komodo_tbl_registros', clean);
+    } catch (e) {
+      console.error('PacienteDAO.insert erro:', e);
+      throw e;
+    }
+  }
+
+  async findAll() {
+    try {
+      return await this.db.query('SELECT * FROM komodo_tbl_registros ORDER BY timestamp DESC');
+    } catch (e) {
+      console.error('PacienteDAO.findAll erro:', e);
+      return [];
+    }
+  }
+
+  async findById(id) {
+    try {
+      const res = await this.db.query('SELECT * FROM komodo_tbl_registros WHERE id = ?', [id]);
+      return res.length > 0 ? res[0] : null;
+    } catch (e) {
+      console.error('PacienteDAO.findById erro:', e);
+      return null;
+    }
+  }
+}
+
+window.pacienteDAO = new PacienteDAO(window.dbService);
+
+;
+/* src/services/TelemetryService.js */
+/**
+ * TelemetryService.js
+ * 
+ * Captura exceções não tratadas e monitora performance (Observabilidade).
+ */
+class TelemetryService {
+  constructor(dbService) {
+    this.db = dbService;
+    this.initGlobalListeners();
+  }
+
+  initGlobalListeners() {
+    window.addEventListener('error', (e) => {
+      this.logError(e.message, e.filename, e.lineno, e.error ? e.error.stack : null);
+    });
+    
+    window.addEventListener('unhandledrejection', (e) => {
+      this.logError(e.reason, 'Promise Rejection', 0, e.reason ? e.reason.stack : null);
+    });
+  }
+
+  async logError(message, source, lineno, stack) {
+    console.error(`[TELEMETRY] Captured: ${message}`);
+    const log = {
+      level: 'ERROR',
+      message: `[${source}:${lineno}] ${message}`,
+      timestamp: new Date().toISOString()
+    };
+    try {
+      if (this.db) {
+        await this.db.insert('sys_logs', log);
+      }
+    } catch (dbErr) {
+      console.error("Telemetry failed to write log:", dbErr);
+    }
+  }
+
+  async getRecentLogs(limit = 50) {
+    if (!this.db) return [];
+    return await this.db.query('SELECT * FROM sys_logs ORDER BY id DESC LIMIT ?', [limit]);
+  }
+}
+
+window.telemetryService = new TelemetryService(window.dbService);
+
+;
+/* src/services/OcrService.js */
+/**
+ * OcrService.js
+ * 
+ * Camada de serviço de Visão Computacional.
+ * Refatorado na Fase 2 para usar a Fábrica Abstrata de IA (AiProviderFactory).
+ * Não conhece mais os endpoints do Groq ou Gemini diretamente.
+ */
+class OcrService {
+  constructor() {
+    this.videoElement = null;
+    this.stream = null;
+    this.targetId = null;
+  }
+
+  start(target) {
+    this.targetId = target;
+    
+    // A IA só funciona pelo proxy autenticado do backend no desktop.
+    // Nunca consultar nem guardar chaves no armazenamento do navegador.
+    if (!window.authService || !window.authService.isRemoteMode()) {
+      alert('OCR com IA indisponível no modo offline. A configuração segura do servidor é necessária.');
+      return;
+    }
+
+    const modal = document.getElementById('modal-ocr');
+    const video = document.getElementById('ocr-video');
+    this.videoElement = video;
+    
+    if (modal) modal.classList.add('active');
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      .then(s => { 
+        this.stream = s; 
+        if (video) video.srcObject = s; 
+      })
+      .catch(e => {
+        alert('Erro ao acessar câmera: ' + e.message);
+        this.close();
+      });
+  }
+
+  async capture() {
+    if (!this.videoElement) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = this.videoElement.videoWidth;
+    canvas.height = this.videoElement.videoHeight;
+    canvas.getContext('2d').drawImage(this.videoElement, 0, 0);
+    const b64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+    
+    this.close();
+    
+    const targetEl = document.getElementById(this.targetId);
+    if (targetEl && this.targetId !== 'autofill') targetEl.value = 'Processando...';
+
+    let prompt = "";
+    if (this.targetId === 'autofill') {
+      prompt = "Analise esta imagem. Extraia os dados estruturados e retorne APENAS no formato JSON válido: {\"nome\": \"...\", \"doc\": \"...\", \"placa\": \"...\", \"cor\": \"...\"}. NENHUM texto extra.";
+      if (typeof window.showGlobalLoader === 'function') window.showGlobalLoader("Analisando imagem via Factory...");
+    } else {
+      const type = this.targetId.includes('placa') ? 'placa' : 'doc';
+      prompt = type === 'placa' 
+        ? "Extraia APENAS a placa do veículo desta imagem. Formato AAA-1234 ou Mercosul." 
+        : "Extraia o CPF ou RG deste documento. Retorne APENAS os números formatados.";
+    }
+
+    await this.processImage(b64, prompt, targetEl);
+  }
+
+  async processImage(base64Image, customPrompt = null, targetEl = null) {
+    let prompt = customPrompt || "Analise esta imagem. Extraia os dados estruturados e retorne APENAS no formato JSON válido: {\"nome\": \"...\", \"doc\": \"...\", \"placa\": \"...\", \"cor\": \"...\"}. Se não houver, deixe vazio.";
+    
+    try {
+        const aiEngine = window.AiProviderFactory.getProvider();
+        const res = await aiEngine.analyzeImage(base64Image, prompt);
+
+        if (this.targetId === 'autofill' || !this.targetId) {
+          if (typeof window.hideGlobalLoader === 'function') window.hideGlobalLoader();
+          
+          let jsonStr = res.replace(/```json/gi, '').replace(/```/g, '').trim();
+          const data = JSON.parse(jsonStr);
+          
+          if (typeof window.formManager !== 'undefined' && typeof window.formManager.fill === 'function') {
+             // Injeta no form ativo via FormManager (Fase 4/5)
+             const formId = document.getElementById('sectionMorador').classList.contains('active') ? 'form-morador' : 'form-visitante';
+             window.formManager.fill(formId, data);
+             alert('✨ Dados extraídos pela IA!\n\n' + JSON.stringify(data, null, 2));
+          } else if (typeof window.fillFormWithAI === 'function') {
+             window.fillFormWithAI(data);
+          }
+        } else {
+          if (targetEl) targetEl.value = res;
+        }
+
+    } catch (err) {
+        if (this.targetId === 'autofill' || !this.targetId) {
+          if (typeof window.hideGlobalLoader === 'function') window.hideGlobalLoader();
+        } else {
+          if (targetEl) targetEl.value = 'Erro OCR';
+        }
+        alert('Falha OCR (Adapter): ' + err.message);
+    }
+  }
+
+  close() {
+    if (this.stream) {
+      this.stream.getTracks().forEach(t => t.stop());
+    }
+    const modal = document.getElementById('modal-ocr');
+    if (modal) modal.classList.remove('active');
+  }
+}
+
+window.ocrService = new OcrService();
+window.triggerOCR = (id) => window.ocrService.start(id);
+window.closeOCR = () => window.ocrService.close();
+window.captureOCR = () => window.ocrService.capture();
+
+;
+/* src/services/PdfExportService.js */
+/**
+ * PdfExportService.js
+ * 
+ * Desacopla a lógica de formatação e exportação de relatórios em PDF.
+ * Usa as bibliotecas globais jsPDF e jspdf-autotable nativamente caso injetadas.
+ */
+
+class PdfExportService {
+    /**
+     * Exporta os registros do dia atual.
+     * @param {Array} dailyData - Dados diários (vindas da Store)
+     * @param {String} diaAtivo - String do dia atual (ex: 'qui')
+     * @param {String} moduleName - 'RESIDENCIAL' ou 'EMPRESARIAL'
+     */
+    static exportTurnReport(dailyData, diaAtivo, moduleName = "RESIDENCIAL") {
+        if (typeof window.jspdf === 'undefined') {
+            alert('A biblioteca jsPDF não foi carregada no sistema offline.');
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        doc.setFontSize(18); 
+        doc.text(`GUARDIÃO KOMODO - RELATÓRIO ${moduleName}`, 14, 22);
+        
+        doc.setFontSize(12); 
+        doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')} | Dia: ${diaAtivo.toUpperCase()}`, 14, 32);
+        
+        const head = [['Hora', 'Nome', 'Unidade', 'Tipo/Parentesco', 'Placa', 'Alerta']];
+        const body = [];
+        
+        // Garante a ordenação temporal
+        const sortedData = [...dailyData].sort((a, b) => a.hora.localeCompare(b.hora));
+        
+        sortedData.forEach(item => {
+            const parentescoStr = item.parentesco && item.parentesco !== '-' ? ` (${item.parentesco})` : '';
+            const isAlert = item.alerta ? 'SIM (RISCO)' : 'NORMAL';
+            body.push([
+                item.hora, 
+                item.nome, 
+                item.unidade, 
+                item.tipo + parentescoStr, 
+                item.placa, 
+                isAlert
+            ]);
+        });
+
+        // Caso a biblioteca autoTable tenha sido injetada (plugin do jsPDF)
+        if (typeof doc.autoTable === 'function') {
+            doc.autoTable({ 
+                startY: 40, 
+                head: head, 
+                body: body, 
+                theme: 'grid', 
+                headStyles: { fillColor: [194, 160, 87] } 
+            });
+        }
+
+        doc.save(`komodo_${moduleName.toLowerCase()}_turno.pdf`);
+    }
+
+    /**
+     * Exporta um relatório analítico avançado (Fase 6).
+     * Inclui metadados oficiais, contagem de incidentes e exportação massiva.
+     */
+    static exportAdvancedReport(dataset, reportTitle = "Relatório Geral Analítico", moduleName = "GERAL") {
+        if (typeof window.jspdf === 'undefined') {
+            alert('A biblioteca jsPDF não foi carregada.');
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('landscape'); // Landscape para caber mais dados
+        
+        // Cabeçalho Oficial
+        doc.setFontSize(22);
+        doc.setTextColor(194, 160, 87); // Dourado Komodo
+        doc.text("GUARDIÃO KOMODO ENTERPRISE", 14, 20);
+        
+        doc.setFontSize(14);
+        doc.setTextColor(50, 50, 50);
+        doc.text(reportTitle.toUpperCase(), 14, 30);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Data de Emissão: ${new Date().toLocaleString('pt-BR')} | Módulo: ${moduleName.toUpperCase()}`, 14, 38);
+        
+        // Totais e Incidentes
+        const totalRegistros = dataset.length;
+        const totalAlertas = dataset.filter(i => i.alerta === true || i.alerta === 1 || i.alerta === 'true' || i.alerta === '1').length;
+        
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Resumo: ${totalRegistros} Acessos Registrados | Incidentes / Alertas: ${totalAlertas}`, 14, 48);
+
+        const head = [['Data', 'Hora', 'Nome', 'Unidade', 'Tipo/Parentesco', 'Placa', 'Alerta', 'Hitórico/Obs']];
+        const body = [];
+        
+        dataset.forEach(item => {
+            const parentescoStr = item.parentesco && item.parentesco !== '-' ? ` (${item.parentesco})` : '';
+            const isAlert = (item.alerta === true || item.alerta === 1 || item.alerta === 'true' || item.alerta === '1') ? 'SIM (RISCO)' : 'NORMAL';
+            const hist = item.historico ? item.historico.substring(0, 50) + (item.historico.length > 50 ? '...' : '') : '-';
+            
+            body.push([
+                item.dia ? item.dia.toUpperCase() : 'N/A',
+                item.hora || '00:00', 
+                item.nome || '-', 
+                item.unidade || '-', 
+                (item.tipo || '-') + parentescoStr, 
+                item.placa || '-', 
+                isAlert,
+                hist
+            ]);
+        });
+
+        if (typeof doc.autoTable === 'function') {
+            doc.autoTable({ 
+                startY: 55, 
+                head: head, 
+                body: body, 
+                theme: 'grid', 
+                headStyles: { fillColor: [194, 160, 87] },
+                alternateRowStyles: { fillColor: [245, 245, 245] },
+                styles: { fontSize: 9 }
+            });
+        }
+
+        // Rodapé com assinatura
+        const pageCount = doc.internal.getNumberOfPages();
+        for(let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(150, 150, 150);
+            doc.text(`Gerado por Guardião Komodo - Core Security Engine | Página ${i} de ${pageCount}`, 14, doc.internal.pageSize.height - 10);
+        }
+
+        doc.save(`komodo_${moduleName.toLowerCase()}_relatorio_avancado.pdf`);
+    }
+}
+
+window.PdfExportService = PdfExportService;
+
+;
+/* src/services/KomodoCopilot.js */
+/**
+ * KomodoCopilot.js
+ * 
+ * Camada de serviço de Inteligência Artificial para atuar como Copiloto.
+ * Refatorado na Fase 2 para delegar a comunicação HTTP à Factory (AiProviderAdapter).
+ */
+class KomodoCopilot {
+  constructor() {
+    this.contextFiles = [];
+    this.recognition = null;
+  }
+
+  startVoice(inputId, statusId) {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Seu navegador não suporta reconhecimento de voz.');
+      return;
+    }
+    
+    const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+    this.recognition = new Speech();
+    this.recognition.lang = 'pt-BR';
+    this.recognition.interimResults = false;
+    this.recognition.maxAlternatives = 1;
+
+    const btn = event ? event.currentTarget : null;
+    if (btn) btn.classList.add('recording');
+    
+    if (statusId) {
+      const s = document.getElementById(statusId);
+      if (s) s.textContent = 'Ouvindo...';
+    }
+
+    this.recognition.onresult = (e) => {
+      const res = e.results[0][0].transcript;
+      const target = document.getElementById(inputId);
+      
+      if (inputId === 'chat-input') {
+        if (target) target.value = res;
+        this.sendChatMessage(res);
+      } else {
+        if (target) {
+          target.value = res;
+          target.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }
+    };
+
+    this.recognition.onend = () => {
+      if (btn) btn.classList.remove('recording');
+      if (statusId) {
+        const s = document.getElementById(statusId);
+        if (s) s.textContent = '';
+      }
+    };
+
+    this.recognition.start();
+  }
+
+  async sendChatMessage(manualText = null) {
+    const input = document.getElementById('chat-input');
+    const text = manualText || (input ? input.value.trim() : '');
+    if (!text) return;
+
+    if (input && !manualText) input.value = '';
+    
+    this._appendMsg(text, 'user');
+
+    const loaderId = 'loader_' + Date.now();
+    this._appendMsg('<div class="chat-loader"><span></span><span></span><span></span></div>', 'bot', loaderId);
+
+    try {
+      const systemPrompt = "Você é o Guardião Komodo, IA de segurança e gestão de acesso. Responda de forma concisa e direta. SE o usuário pedir para CADASTRAR, REGISTRAR ou INSERIR, responda APENAS com um JSON neste formato exato (sem formatação markdown): {\"action\": \"CADASTRO\", \"data\": {\"nome\": \"...\", \"doc\": \"...\", \"placa\": \"...\", \"cor\": \"...\"}}. Caso contrário, responda normalmente em texto livre.";
+
+      // [REFATORAÇÃO FASE 2] Usando a Factory em vez de fetch hardcoded
+      const aiEngine = window.AiProviderFactory.getProvider();
+      
+      let response = "";
+      if (this.contextFiles.length > 0) {
+          // Extrai o base64 (vamos assumir que a imagem 0 é usada)
+          const base64 = this.contextFiles[0].data;
+          this.contextFiles = [];
+          response = await aiEngine.analyzeImage(base64, systemPrompt + " IMAGEM EM ANEXO. APLIQUE OCR E CHAT.");
+      } else {
+          response = await aiEngine.chat(systemPrompt, text);
+      }
+
+      const loader = document.getElementById(loaderId);
+      let cleanResponse = response.replace(/```json/gi, '').replace(/```/g, '').trim();
+      
+      let parsed = null;
+      try {
+        if (cleanResponse.startsWith('{') && cleanResponse.includes('"action"')) {
+          parsed = JSON.parse(cleanResponse);
+        }
+      } catch(e) {}
+      
+      if (parsed && parsed.action === 'CADASTRO') {
+        if (loader) this._renderMd(loader, "Entendido! Abrindo formulário de cadastro com os dados pré-preenchidos.");
+        // Na Fase 3 será emitido um evento via EventBus
+        if (typeof window.fillFormWithAI === 'function') {
+           window.fillFormWithAI(parsed.data);
+        } else {
+           alert("Função de auto-preenchimento não encontrada na tela atual.");
+        }
+      } else {
+        if (loader) this._renderMd(loader, response);
+      }
+    } catch (e) {
+      const loader = document.getElementById(loaderId);
+      if (loader) loader.textContent = String(e.message || 'Assistente de IA indisponível no momento.');
+    }
+  }
+
+  _appendMsg(content, sender, id = null) {
+    const chatMsgs = document.getElementById('chat-messages');
+    if (!chatMsgs) return;
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + sender;
+    if (id) div.id = id;
+    if (content === '<div class="chat-loader"><span></span><span></span><span></span></div>') {
+      const loader = document.createElement('div');
+      loader.className = 'chat-loader';
+      for (let i = 0; i < 3; i++) loader.appendChild(document.createElement('span'));
+      div.appendChild(loader);
+    } else {
+      div.textContent = String(content == null ? '' : content);
+    }
+    chatMsgs.appendChild(div);
+    chatMsgs.scrollTop = chatMsgs.scrollHeight;
+  }
+
+  _renderMd(message, text) {
+    if (!message) return;
+    const source = String(text == null ? '' : text);
+    const pattern = /\*\*(.+?)\*\*|\*(.+?)\*|\n/g;
+    let cursor = 0;
+    let match;
+    message.replaceChildren();
+
+    while ((match = pattern.exec(source)) !== null) {
+      if (match.index > cursor) {
+        message.appendChild(document.createTextNode(source.slice(cursor, match.index)));
+      }
+      if (match[0] === '\n') {
+        message.appendChild(document.createElement('br'));
+      } else {
+        const element = document.createElement(match[1] !== undefined ? 'strong' : 'em');
+        element.textContent = match[1] !== undefined ? match[1] : match[2];
+        message.appendChild(element);
+      }
+      cursor = pattern.lastIndex;
+    }
+    if (cursor < source.length) {
+      message.appendChild(document.createTextNode(source.slice(cursor)));
+    }
+  }
+  _formatMd(text) {
+    const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    let html = String(text == null ? '' : text).replace(/[&<>"']/g, character => entities[character]);
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    html = html.replace(/\n/g, '<br>');
+    return html;
+  }
+}
+
+window.komodoCopilot = new KomodoCopilot();
+window.startVoice = (inputId, statusId) => window.komodoCopilot.startVoice(inputId, statusId);
+window.sendChatMessage = () => window.komodoCopilot.sendChatMessage();
+
+;
+/* src/ui/DashboardManager.js */
+/**
+ * DashboardManager.js
+ * 
+ * Controlador isolado para gerenciar as visualizações de Dashboard (Chart.js).
+ * Escuta atualizações no AppStore para se manter em sincronia.
+ */
+
+class DashboardManager {
+    constructor() {
+        this.chartTiposInstance = null;
+        this.chartHorariosInstance = null;
+        this._bindEvents();
+    }
+
+    _bindEvents() {
+        if (!window.eventBus || !window.SystemEvents) return;
+        
+        // Mantém os gráficos atualizados passivamente
+        window.eventBus.on('STORE_VISITORS_UPDATED', (state) => {
+            const overlay = document.getElementById('dashModalOverlay');
+            // Só redesenha se o dashboard estiver aberto; o estado inicial agora vem de CSS externo.
+            const isOpen = overlay && (overlay.tagName.toLowerCase() === 'komodo-modal'
+                ? overlay.hasAttribute('open')
+                : (typeof window.getComputedStyle === 'function'
+                    ? window.getComputedStyle(overlay).display !== 'none'
+                    : overlay.classList.contains('aberto')));
+            if (isOpen) this.renderDashboard(state.dailyData);
+        });
+    }
+
+    /**
+     * Calcula as métricas matemáticas e engatilha o Chart.js
+     * @param {Array} dataset - Dados analíticos completos
+     */
+    renderDashboard(dataset) {
+        if (!dataset) return;
+        
+        const tiposCount = { 'Morador': 0, 'Visitante': 0, 'Prestador': 0, 'Delivery': 0, 'Outros': 0 };
+        const horariosCount = { 'Manhã (06-12)': 0, 'Tarde (12-18)': 0, 'Noite (18-24)': 0 };
+        const alertasCount = { 'Normal': 0, 'Alerta de Risco': 0 };
+        const fluxosCount = {};
+
+        dataset.forEach(item => {
+            const t = (item.tipo || '').toLowerCase();
+            if (t.includes('morador')) tiposCount['Morador']++;
+            else if (t.includes('visitante')) tiposCount['Visitante']++;
+            else if (t.includes('prestador') || t.includes('manutenção')) tiposCount['Prestador']++;
+            else if (t.includes('delivery')) tiposCount['Delivery']++;
+            else tiposCount['Outros']++;
+            
+            const horaStr = item.hora || '00:00';
+            const h = parseInt(horaStr.split(':')[0]) || 0;
+            
+            if (h >= 6 && h < 12) horariosCount['Manhã (06-12)']++;
+            else if (h >= 12 && h < 18) horariosCount['Tarde (12-18)']++;
+            else horariosCount['Noite (18-24)']++;
+
+            // Fase 6: Incidentes
+            const isAlerta = (item.alerta === true || item.alerta === 1 || item.alerta === 'true' || item.alerta === '1');
+            if (isAlerta) alertasCount['Alerta de Risco']++;
+            else alertasCount['Normal']++;
+
+            // Fase 6: Fluxo Semanal (agrupado por dia, se aplicável)
+            const d = (item.dia || 'N/A').toUpperCase();
+            if (!fluxosCount[d]) fluxosCount[d] = 0;
+            fluxosCount[d]++;
+        });
+
+        if (this.chartTiposInstance) this.chartTiposInstance.destroy();
+        if (this.chartHorariosInstance) this.chartHorariosInstance.destroy();
+        if (this.chartAlertasInstance) this.chartAlertasInstance.destroy();
+        if (this.chartFluxoInstance) this.chartFluxoInstance.destroy();
+        
+        if (typeof window.Chart !== 'undefined') {
+            const Chart = window.Chart;
+            Chart.defaults.color = '#a0a0a0'; 
+            Chart.defaults.font.family = 'Poppins';
+            
+            const ctxTipos = document.getElementById('chartTipos');
+            if (ctxTipos) {
+                this.chartTiposInstance = new Chart(ctxTipos.getContext('2d'), { 
+                    type: 'doughnut', 
+                    data: { 
+                        labels: Object.keys(tiposCount), 
+                        datasets: [{ 
+                            data: Object.values(tiposCount), 
+                            backgroundColor: ['#22c55e', '#3b82f6', '#c2a057', '#eab308', '#a0a0a0'], 
+                            borderWidth: 0 
+                        }] 
+                    }, 
+                    options: { 
+                        plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Distribuição por Tipo', color: '#c2a057' } } 
+                    } 
+                });
+            }
+            
+            const ctxHorarios = document.getElementById('chartHorarios');
+            if (ctxHorarios) {
+                this.chartHorariosInstance = new Chart(ctxHorarios.getContext('2d'), { 
+                    type: 'bar', 
+                    data: { 
+                        labels: Object.keys(horariosCount), 
+                        datasets: [{ 
+                            label: 'Acessos', 
+                            data: Object.values(horariosCount), 
+                            backgroundColor: '#c2a057', 
+                            borderRadius: 4 
+                        }] 
+                    }, 
+                    options: { 
+                        scales: { y: { beginAtZero: true, grid: { color: 'rgba(194,160,87,0.1)' } }, x: { grid: { display: false } } },
+                        plugins: { legend: { display: false }, title: { display: true, text: 'Picos de Horários', color: '#c2a057' } } 
+                    } 
+                });
+            }
+
+            // Novo Gráfico de Incidentes (Alerta de Risco)
+            const ctxAlertas = document.getElementById('chartAlertas');
+            if (ctxAlertas) {
+                this.chartAlertasInstance = new Chart(ctxAlertas.getContext('2d'), { 
+                    type: 'pie', 
+                    data: { 
+                        labels: Object.keys(alertasCount), 
+                        datasets: [{ 
+                            data: Object.values(alertasCount), 
+                            backgroundColor: ['#22c55e', '#ef4444'], 
+                            borderWidth: 0 
+                        }] 
+                    }, 
+                    options: { 
+                        plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Nível de Risco (Incidentes)', color: '#ef4444' } } 
+                    } 
+                });
+            }
+
+            // Novo Gráfico de Fluxo Semanal
+            const ctxFluxo = document.getElementById('chartFluxo');
+            if (ctxFluxo) {
+                this.chartFluxoInstance = new Chart(ctxFluxo.getContext('2d'), { 
+                    type: 'line', 
+                    data: { 
+                        labels: Object.keys(fluxosCount), 
+                        datasets: [{ 
+                            label: 'Volume de Tráfego', 
+                            data: Object.values(fluxosCount), 
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59,130,246,0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }] 
+                    }, 
+                    options: { 
+                        scales: { y: { beginAtZero: true, grid: { color: 'rgba(59,130,246,0.1)' } }, x: { grid: { display: false } } },
+                        plugins: { legend: { display: false }, title: { display: true, text: 'Fluxo por Dia (Tráfego)', color: '#3b82f6' } } 
+                    } 
+                });
+            }
+
+        } else {
+            console.warn("Chart.js não carregado. Módulo Dashboard ignorado.");
+        }
+    }
+
+    async openDashboard() {
+        // UX fase 1: Chart.js só é baixado ao abrir o dashboard.
+        if (window.KacVendor) { try { await window.KacVendor.chart(); } catch (e) { console.warn('Chart.js indisponível:', e.message); } }
+        // Mostra overlay primeiro com carregamento
+        const overlay = document.getElementById('dashModalOverlay') || document.querySelector('#dashModalOverlay');
+        if (overlay) {
+            if (overlay.tagName.toLowerCase() === 'komodo-modal') {
+                overlay.setAttribute('open', '');
+            } else {
+                overlay.classList.add('aberto');
+                overlay.style.display = 'flex';
+            }
+        }
+        
+        // Fase 6: Ao invés de puxar apenas o dailyData do Store, busca os dados agregados globais do Repositório
+        if (window.VisitorRepository) {
+            try {
+                const moduloAtual = window.location.pathname.includes('index') ? 'empresarial' : 'residencial';
+                this.currentGlobalData = await window.VisitorRepository.getAllByModule(moduloAtual);
+                this.currentModulo = moduloAtual;
+                this.renderDashboard(this.currentGlobalData);
+            } catch (e) {
+                console.error("Erro ao carregar métricas analíticas:", e);
+            }
+        }
+    }
+
+    // Exporta os dados atuais do Dashboard
+    async exportCurrentData() {
+        if (!this.currentGlobalData || !window.PdfExportService) return;
+        if (window.KacVendor) { try { await window.KacVendor.pdf(); } catch (e) { alert('Não foi possível carregar o módulo de PDF. Verifique a conexão.'); return; } }
+        window.PdfExportService.exportAdvancedReport(this.currentGlobalData, "Relatório Analítico Completo", this.currentModulo.toUpperCase());
+    }
+}
+
+window.dashboardManager = new DashboardManager();
+window.exportAdvancedDashboardReport = () => {
+    if (window.dashboardManager) {
+        window.dashboardManager.exportCurrentData();
+    }
+};
+
+;
+/* src/ui/components/PacienteForm.js */
+/**
+ * PacienteForm.js
+ * 
+ * Componente responsável por gerenciar a lógica de negócios, validação
+ * e persistência atômica do Formulário de Pacientes.
+ * 
+ * Atualizado: usa komodo_tbl_registros. Protegido contra crash em tabelas
+ * auxiliares que ainda não foram criadas no schema.
+ */
+class PacienteForm {
+  constructor(dbService) {
+    this.db = dbService;
+  }
+
+  gv(id) {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  }
+
+  async save() {
+    try {
+      const nome = this.gv('paciente-nome');
+      if (!nome) { 
+        alert('Nome do paciente é obrigatório.'); 
+        return; 
+      }
+
+      const now = new Date();
+      
+      const registro = {
+        nome: nome,
+        cpf: this.gv('paciente-cpf'),
+        rg: this.gv('paciente-rg'),
+        doc: this.gv('paciente-doc'),
+        tel: this.gv('paciente-tel'),
+        sexo: this.gv('paciente-sexo'),
+        nasc: this.gv('paciente-nasc'),
+        hora_prevista: this.gv('paciente-hora'),
+        local: this.gv('paciente-clinica'),
+        responsavel: this.gv('paciente-medico'),
+        tipo_acesso: this.gv('paciente-espec') || 'Paciente',
+        portaria: this.gv('paciente-sala'),
+        obs: this.gv('paciente-obs'),
+        horario: now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}),
+        timestamp: now.toISOString()
+      };
+
+      // 1. Salva Registro Principal
+      const saved = await this.db.insert('komodo_tbl_registros', registro);
+      const registroId = saved.id;
+
+      // 2. Integração legada (Feed do Residencial)
+      const entry = {
+        id: registroId,
+        nome: nome,
+        tipo: 'Paciente',
+        doc: registro.doc || registro.cpf || registro.rg,
+        destino: registro.local + (registro.portaria ? ' / Sala ' + registro.portaria : ''),
+        placa: this.gv('paciente-v-placa'),
+        marca: this.gv('paciente-v-marca'),
+        obs: registro.obs,
+        horario: registro.horario,
+        alerta: false,
+        foto: (window.state && window.state.capturedPhoto) ? window.state.capturedPhoto : null,
+        veiculo: this.gv('paciente-v-marca') || 'A pé',
+        medico: registro.responsavel,
+        acompanhante: this.gv('paciente-a-nome')
+      };
+      
+      if (typeof window.addToResDB === 'function') {
+        window.addToResDB(entry);
+        if (typeof window.renderResCards === 'function') window.renderResCards();
+      }
+
+      if (typeof window.closeModal === 'function') window.closeModal('modal-form-paciente');
+      if (typeof window.tryVibrate === 'function') window.tryVibrate([50, 30, 50]);
+      
+      alert(`✅ Paciente ${nome} registrado com sucesso!`);
+      this.clearForm();
+
+    } catch (e) {
+      console.error("Erro ao salvar paciente:", e);
+      alert('Erro ao salvar paciente. Verifique o log.');
+    }
+  }
+
+  clearForm() {
+    const ids = [
+      'paciente-nome', 'paciente-cpf', 'paciente-rg', 'paciente-doc', 'paciente-tel',
+      'paciente-sexo', 'paciente-nasc', 'paciente-hora', 'paciente-clinica', 'paciente-medico',
+      'paciente-espec', 'paciente-sala', 'paciente-obs',
+      'paciente-v-tipo', 'paciente-v-marca', 'paciente-v-modelo', 'paciente-v-versao', 'paciente-v-ano',
+      'paciente-v-cor', 'paciente-v-placa', 'paciente-v-vaga',
+      'paciente-a-nome', 'paciente-a-parentesco', 'paciente-a-doc', 'paciente-a-tel',
+      'paciente-a-v-tipo', 'paciente-a-v-marca', 'paciente-a-v-modelo', 'paciente-a-v-cor',
+      'paciente-a-v-placa', 'paciente-a-v-vaga'
+    ];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        if (el.tagName === 'SELECT') el.selectedIndex = 0;
+        else el.value = '';
+      }
+    });
+  }
+}
+
+// Expõe globalmente
+window.pacienteForm = new PacienteForm(window.dbService);
+window.saveRelationalPaciente = () => window.pacienteForm.save();
+
+;
+/* src/ui/components/FormulariosBase.js */
+/**
+ * FormulariosBase.js
+ * 
+ * Componente responsável por gerenciar a lógica de negócios, validação
+ * e persistência dos Formulários Auxiliares (Visitante, Morador, Prestador, Entregador, Representante).
+ * 
+ * Atualizado: usa komodo_tbl_registros (tabela unificada).
+ */
+class FormulariosBase {
+  constructor(dbService) {
+    this.db = dbService;
+  }
+
+  gv(id) {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  }
+
+  async _saveBase(tipo, idPrefix, buildEntry) {
+    const nome = this.gv(`${idPrefix}-nome`);
+    if (!nome) { 
+      alert(`Nome do ${tipo.toLowerCase()} é obrigatório.`); 
+      return; 
+    }
+
+    const now = new Date();
+    const baseEntry = {
+      nome: nome,
+      tipo_acesso: tipo,
+      horario: now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}),
+      timestamp: now.toISOString()
+    };
+
+    const specificData = buildEntry(this);
+    const entry = { ...baseEntry, ...specificData };
+
+    try {
+      const savedEntry = await this.db.insert('komodo_tbl_registros', entry);
+      
+      // Inject into ResDB
+      entry.id = savedEntry.id;
+      entry.tipo = tipo;
+      entry.alerta = false;
+      entry.foto = (window.state && window.state.capturedPhoto) ? window.state.capturedPhoto : null;
+      
+      if (typeof window.addToResDB === 'function') {
+        window.addToResDB(entry);
+        if (typeof window.renderResCards === 'function') window.renderResCards();
+      }
+
+      if (typeof window.closeModal === 'function') window.closeModal(`modal-form-${idPrefix}`);
+      if (typeof window.tryVibrate === 'function') window.tryVibrate([50, 30, 50]);
+      
+      alert(`✅ ${tipo} ${nome} registrado(a)!`);
+      this._clearForm(idPrefix);
+    } catch (e) {
+      console.error(`Erro ao salvar ${tipo}:`, e);
+      alert(`Erro ao salvar ${tipo}. Verifique o log.`);
+    }
+  }
+
+  _clearForm(prefix) {
+    const inputs = document.querySelectorAll(`[id^="${prefix}-"]`);
+    inputs.forEach(el => {
+      if (el.tagName === 'SELECT') el.selectedIndex = 0;
+      else el.value = '';
+    });
+  }
+
+  async saveVisitante() {
+    await this._saveBase('Visitante', 'visitante', (ctx) => ({
+      doc: ctx.gv('visitante-doc'),
+      local: ctx.gv('visitante-destino'),
+      obs: ctx.gv('visitante-obs')
+    }));
+  }
+
+  async saveMorador() {
+    await this._saveBase('Morador', 'morador', (ctx) => ({
+      local: ctx.gv('morador-unidade')
+    }));
+  }
+
+  async savePrestador() {
+    await this._saveBase('Prestador', 'prestador', (ctx) => ({
+      local: ctx.gv('prestador-destino'),
+      responsavel: ctx.gv('prestador-empresa'),
+      obs: ctx.gv('prestador-obs')
+    }));
+  }
+
+  async saveEntregador() {
+    await this._saveBase('Entregador', 'entregador', (ctx) => ({
+      local: ctx.gv('entregador-destino'),
+      responsavel: ctx.gv('entregador-app')
+    }));
+  }
+
+  async saveRepresentante() {
+    await this._saveBase('Representante', 'representante', (ctx) => ({
+      local: ctx.gv('representante-contato'),
+      responsavel: ctx.gv('representante-marca')
+    }));
+  }
+}
+
+// Expõe globalmente
+window.formulariosBase = new FormulariosBase(window.dbService);
+window.saveVisitante = () => window.formulariosBase.saveVisitante();
+window.saveMorador = () => window.formulariosBase.saveMorador();
+window.savePrestador = () => window.formulariosBase.savePrestador();
+window.saveEntregador = () => window.formulariosBase.saveEntregador();
+window.saveRepresentante = () => window.formulariosBase.saveRepresentante();
+
+;
+/* src/ui/InlineActionHandlers.js */
+/*
+ * Delegated UI actions for the legacy HTML pages.
+ * Keeps behavior explicit without inline event-handler attributes.
+ */
+(function () {
+    'use strict';
+
+    function closeModal(targetId) {
+        if (!targetId) return;
+        var modal = document.getElementById(targetId);
+        if (!modal) return;
+        if (modal.tagName && modal.tagName.toLowerCase() === 'komodo-modal') {
+            modal.removeAttribute('open');
+        } else {
+            modal.style.display = 'none';
+        }
+    }
+
+    document.addEventListener('submit', function (event) {
+        if (event.target && event.target.matches('form[data-prevent-submit]')) {
+            event.preventDefault();
+        }
+    });
+
+    document.addEventListener('input', function (event) {
+        var target = event.target;
+        if (target && target.matches('input[data-uppercase]')) {
+            var start = target.selectionStart;
+            var end = target.selectionEnd;
+            var upper = target.value.toUpperCase();
+            if (target.value !== upper) {
+                target.value = upper;
+                if (typeof start === 'number' && typeof end === 'number') {
+                    try { target.setSelectionRange(start, end); } catch (_) {}
+                }
+            }
+        }
+    });
+
+    document.addEventListener('click', function (event) {
+        var target = event.target && event.target.closest
+            ? event.target.closest('[data-action]')
+            : null;
+        if (!target) return;
+
+        var action = target.dataset.action;
+        if (action === 'close-config' || action === 'close-dashboard') {
+            closeModal(target.dataset.target);
+            return;
+        }
+
+        if (action === 'export-advanced-dashboard') {
+            if (typeof window.exportAdvancedDashboardReport === 'function') {
+                window.exportAdvancedDashboardReport();
+            } else {
+                console.warn('Exportação avançada indisponível: função não carregada.');
+            }
+            return;
+        }
+
+        if (action === 'set-access-type') {
+            var hidden = document.getElementById(target.dataset.target || '');
+            if (!hidden) return;
+            hidden.value = target.dataset.value || '';
+            var group = target.closest('[data-group="tipoAcesso"]');
+            if (group) {
+                group.querySelectorAll('[data-action="set-access-type"]').forEach(function (button) {
+                    button.classList.toggle('active', button === target);
+                    button.setAttribute('aria-pressed', button === target ? 'true' : 'false');
+                });
+            }
+        }
+    });
+})();

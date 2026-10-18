@@ -17,3 +17,12 @@ test('ALPR: 1 caractere diferente (OCR 8/B) → revisão com candidato, nunca su
 test('ALPR: placa duplicada na agenda → ambígua (revisão)',()=>{const r=A.decide({plate:'BRA2E19',confidence:0.99},[...V,{id:'v4',placa:'BRA2E19'}]);assert.deepEqual([r.action,r.reason],['review','ambiguous']);});
 test('ALPR: limiares por portaria validados',()=>{assert.equal(A.decide({plate:'BRA2E19',confidence:0.85},V,{suggest:0.8,review:0.5}).action,'suggest');assert.throws(()=>A.thresholds({suggest:0.5,review:0.7}),/INVALID/);assert.throws(()=>A.thresholds({suggest:1.2,review:0.5}),/INVALID/);});
 test('ALPR: decisão humana exige operador; correção exige placa válida',()=>{const r=A.decide({plate:'ABC1284',confidence:0.99},V);assert.throws(()=>A.humanDecision(r,{decision:'accepted'}),/OPERATOR/);assert.throws(()=>A.humanDecision(r,{operatorId:'u',decision:'corrected',correctedPlate:'x'}),/CORRECTED/);const d=A.humanDecision(r,{operatorId:'u',decision:'corrected',correctedPlate:'abc-1234'});assert.equal(d.corrected_plate,'ABC1234');assert.equal(d.system_action,'review');});
+test('IA por empresa: KAC_AI_ORGS restringe; ausente = todas', () => {
+  const G = require('../lib/ai-guardrails.cjs'); const A = '00000000-0000-4000-8000-000000000001', B = '11111111-1111-4111-8111-111111111111';
+  const env = { KAC_AI: 'on', GROQ_API_KEY: 'x'.repeat(30) };
+  assert.strictEqual(G.orgAllowed(B, env), true);
+  const env2 = { ...env, KAC_AI_ORGS: ' ' + A.toUpperCase() + ' , lixo' };
+  assert.deepStrictEqual(G.allowedOrgs(env2), [A]); assert.strictEqual(G.orgAllowed(A, env2), true); assert.strictEqual(G.orgAllowed(B, env2), false); assert.strictEqual(G.orgAllowed(null, env2), false);
+  const p = G.prepare('quantas visitas hoje?', [], { store: new Map(), orgId: B, env: env2 }); assert.strictEqual(p.status, 403); assert.strictEqual(p.reason, 'org_not_enabled');
+  assert.strictEqual(G.prepare('quantas visitas hoje?', [], { store: new Map(), orgId: A, env: env2 }).ok, true);
+});
