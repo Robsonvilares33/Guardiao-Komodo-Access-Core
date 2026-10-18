@@ -23,10 +23,14 @@
     if (c === 'signup_disabled' || /signups? not allowed/i.test(m)) return 'O cadastro de novas contas está desativado. Peça um convite ao administrador.';
     if (c === 'email_address_invalid' || /unable to validate email|invalid format|email address .* invalid/i.test(m)) return 'E-mail inválido. Confira o endereço digitado.';
     if (c === 'validation_failed' && /password/i.test(m)) return 'Informe a senha.';
+    if (c === 'same_password') return 'A nova senha precisa ser diferente da atual.';
+    if (c === 'insufficient_aal') return 'Confirme primeiro o código do app autenticador (verificação em duas etapas).';
+    if (c === 'otp_expired') return 'O link expirou ou já foi usado. Peça um novo.';
     if (c === 'session_expired' || c === 'session_not_found' || c === 'refresh_token_not_found' || status === 401 || status === 403) return 'Sua sessão expirou. Entre novamente.';
     if (/[\u00C0-\u00FF]|\b(não|senha|código|tente)\b/i.test(m)) return m;
     return 'Não foi possível concluir agora. Tente de novo em instantes. Se continuar, use "Entrar com Google" ou fale com o administrador.';
   }
+  function checkPassword(pw) { pw = String(pw || ''); if (pw.length < 12) return 'A senha precisa ter pelo menos 12 caracteres.'; if (pw.length > 72) return 'A senha pode ter no máximo 72 caracteres.'; if (!/[A-Za-z]/.test(pw) || !/[0-9]/.test(pw)) return 'Use letras e números na senha (símbolos também ajudam).'; return ''; }
   var INVITE_RE = /^[A-Za-z0-9_-]{40,64}$/;
   function inviteFrom(search) { var m = /[?&]convite=([^&]+)/.exec(String(search || '')); var t = m ? decodeURIComponent(m[1]) : ''; return INVITE_RE.test(t) ? t : null; }
   function create(opts) {
@@ -47,7 +51,11 @@
       session: function () { return session; },
       claims: function () { return session ? claims(session.access_token) : null; },
       aal: function () { var c = session && claims(session.access_token); return c ? c.aal || 'aal1' : null; },
-      fromRedirect(hash) { var p = parseHash(hash); if (p.error || p.error_description) throw new Error(p.error_description || p.error); return p.access_token ? setSession(p) : null; },
+      fromRedirect(hash) { var p = parseHash(hash); this.redirectType = p.type || null; if (p.error || p.error_description) { var ec = String(p.error_code || ''); throw new Error(ec === 'otp_expired' ? 'O link expirou ou já foi usado. Peça um novo.' : ptError(0, ec, p.error_description || p.error)); } return p.access_token ? setSession(p) : null; },
+      // Cadastro: o Supabase responde 200 mesmo quando o e-mail já existe (não revela contas), mas sem identidades e sem enviar e-mail.
+      async signUpChecked(email, password, redirectTo) { var r = await this.signUp(email, password, redirectTo); var exists = !!(r && Array.isArray(r.identities) && r.identities.length === 0); return { exists: exists, session: !!(r && r.access_token) }; },
+      recover(email, redirectTo) { email = String(email || '').trim(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Promise.reject(new Error('Digite o seu e-mail no campo E-mail.')); return gt('/recover?redirect_to=' + encodeURIComponent(redirectTo), { method: 'POST', auth: false, body: { email: email } }); },
+      async updatePassword(password) { if (!session) throw new Error('Sua sessão expirou. Peça um novo link.'); var v = checkPassword(password); if (v) throw new Error(v); return gt('/user', { method: 'PUT', body: { password: String(password) } }); },
       signUp(email, password, redirectTo) { return gt('/signup?redirect_to=' + encodeURIComponent(redirectTo), { method: 'POST', auth: false, body: { email: email, password: password } }); },
       async signIn(email, password) { return setSession(await gt('/token?grant_type=password', { method: 'POST', auth: false, body: { email: email, password: password } })); },
       googleUrl(redirectTo) { return cfg.url + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(redirectTo); },
@@ -69,5 +77,5 @@
       async signOut() { if (session) { try { await gt('/logout', { method: 'POST' }); } catch (_) {} } setSession(null); }
     };
   }
-  root.SupabaseAuthClient = { create: create, _util: { qrSrc: qrSrc, groupSecret: groupSecret, claims: claims, parseHash: parseHash, inviteFrom: inviteFrom, ptError: ptError, validCnpj: validCnpj, KINDS: KINDS } };
+  root.SupabaseAuthClient = { create: create, _util: { qrSrc: qrSrc, groupSecret: groupSecret, claims: claims, parseHash: parseHash, inviteFrom: inviteFrom, ptError: ptError, checkPassword: checkPassword, validCnpj: validCnpj, KINDS: KINDS } };
 })(typeof window !== 'undefined' ? window : globalThis);

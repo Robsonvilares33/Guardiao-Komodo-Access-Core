@@ -84,3 +84,5 @@ html body .pw-eye .pw-ico{fill:none;stroke:currentColor;stroke-width:2;stroke-li
 html body .pw-eye .pw-ico-hide,html body .pw-eye[aria-pressed=true] .pw-ico-show{display:none}
 html body .pw-eye[aria-pressed=true] .pw-ico-hide{display:block}
 @media (forced-colors:active){html body .pw-eye{border:1px solid ButtonText}}
+html body .auth-card button.linkish{background:transparent!important;color:var(--kac-primary)!important;border:0;text-decoration:underline;font-weight:600;box-shadow:none}
+html body .auth-card button.linkish:hover{color:var(--kac-primary-hover)!important;transform:none!important}

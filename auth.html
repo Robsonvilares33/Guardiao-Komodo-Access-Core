@@ -29,6 +29,19 @@
         <button type="button" id="btnSignup" class="sec">Criar conta</button>
       </form>
       <button type="button" id="btnGoogle" class="sec">Entrar com Google</button>
+      <button type="button" id="btnForgot" class="linkish">Esqueci minha senha / criar senha</button>
+      <p class="hint">Entrou até hoje só com o Google? Use "Esqueci minha senha / criar senha" para definir uma senha para este e-mail.</p>
+    </section>
+    <section id="secSetPw" hidden>
+      <h2>Definir nova senha</h2>
+      <p>Conta: <strong id="whoSetPw"></strong></p>
+      <form id="formSetPw" novalidate>
+        <label for="newPw">Nova senha</label><input id="newPw" type="password" autocomplete="new-password" minlength="12" maxlength="72" required aria-describedby="newPwHelp">
+        <small id="newPwHelp" class="hint">Pelo menos 12 caracteres, com letras e números. Símbolos ajudam.</small>
+        <label for="newPw2">Repita a nova senha</label><input id="newPw2" type="password" autocomplete="new-password" minlength="12" maxlength="72" required aria-describedby="newPwErr">
+        <small id="newPwErr" class="field-err" aria-live="polite"></small>
+        <button type="submit" id="btnSetPw">Salvar senha</button>
+      </form>
     </section>
     <section id="secMfa" hidden>
       <h2>Verificação em duas etapas</h2>
