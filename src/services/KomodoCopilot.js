@@ -107,7 +107,7 @@ class KomodoCopilot {
       }
     } catch (e) {
       const loader = document.getElementById(loaderId);
-      if (loader) loader.textContent = 'Erro da IA (Adapter): ' + String(e.message || 'erro inesperado');
+      if (loader) loader.textContent = String(e.message || 'Assistente de IA indisponível no momento.');
     }
   }
 
