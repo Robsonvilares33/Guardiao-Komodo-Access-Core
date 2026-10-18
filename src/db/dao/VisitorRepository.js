@@ -22,7 +22,9 @@ class VisitorRepository {
       if (!window.apiService) throw new Error('ApiService não carregado.');
       result = await window.apiService.post('/visitantes', visitorDTO);
     } else {
-      result = await window.dbService.insert('komodo_acessos', { ...visitorDTO });
+      // salvar/visitante só valem para a API (visitantes salvos); não são colunas da tabela local.
+      const { salvar, visitante, ...row } = visitorDTO;
+      result = await window.dbService.insert('komodo_acessos', row);
     }
     if (window.eventBus && window.SystemEvents) window.eventBus.emit(window.SystemEvents.DB_SAVE_SUCCESS, result);
     return result;

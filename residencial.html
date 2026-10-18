@@ -65,6 +65,7 @@
         <div id="agendaNavSlot" class="agenda-nav-slot"></div>
         <div class="kac-inline-1d6d9e5b9f">
             <button class="btn-outline kac-inline-21349d3fb7" id="btnOpenDashboard">Painel</button>
+            <button type="button" class="btn-outline kac-inline-21349d3fb7" id="btnSavedVisitors" data-sv-module="residencial">Visitantes salvos</button>
             <button class="btn-outline kac-inline-1da9facb4d" id="btnExportPDF">Exportar PDF do turno</button>
         </div>
     </div>
@@ -75,7 +76,7 @@
             <div class="quick-add-row">
                 <input aria-label="Horário do agendamento rápido" type="time" class="quick-input" value="09:00" id="quickTime">
                 <div class="kac-inline-2cf2955a81">
-                    <input aria-label="Cadastro rápido" type="text" id="quickInput" class="quick-input kac-inline-69d66e5b2e" placeholder="Digite o nome para puxar do Banco de Dados..." autocomplete="off">
+                    <input aria-label="Cadastro rápido" type="text" id="quickInput" class="quick-input kac-inline-69d66e5b2e" placeholder="Nome do visitante (sugere os salvos)" autocomplete="off">
                     <div class="autocomplete-dropdown" id="quickDropdown"></div>
                 </div>
                 <button class="btn-gold kac-inline-198dd89477" id="btnQuickAdd">Adicionar</button>
@@ -92,6 +93,7 @@
         <details class="bn-more">
             <summary><svg class="kac-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Mais</summary>
             <div class="bn-menu">
+                <button type="button" data-nav="saved">Visitantes salvos</button>
                 <button type="button" data-nav="dashboard">Dashboard</button>
                 <button type="button" data-nav="pdf">Exportar PDF do turno</button>
                 <button type="button" data-nav="config">Configurações</button>
@@ -115,6 +117,7 @@
                     <div class="form-group">
                         <label for="resF1">Nome do Visitante</label>
                         <input id="resF1" aria-label="Nome" type="text" class="form-control" data-field="nome" placeholder="Ex: Carlos Silva">
+                        <p id="svNote" class="sv-note" role="status" hidden></p>
                     </div>
                     <div class="form-group kac-inline-cd7e46ee9c">
                         <label for="resF2">Documento</label>
@@ -208,6 +211,7 @@
                 <div class="form-group">
                     <label for="resF5">Observação / Motivo</label>
                     <textarea id="resF5" class="form-control" data-field="observacao" placeholder="Ex: Encanador autorizado pelo morador da casa 12..."></textarea>
+                    <label class="sv-remember" for="svRemember"><input type="checkbox" id="svRemember" checked> Salvar este visitante para as próximas visitas</label>
                 </div>
                 </form>
             </div>
@@ -421,6 +425,7 @@
     <script src="src/ui/ConnectionMonitor.js"></script>
     <script src="src/services/OfflineGate.js"></script>
     <script src="src/db/dao/VisitorRepository.js"></script>
+    <script src="src/ui/SavedVisitors.js"></script>
     ( Komodo UI Managers (Fase 3 & 4) )
     <script src="src/ui/FormManager.js"></script>
     <script src="src/ui/RenderController.js"></script>
