@@ -1,4 +1,4 @@
-/*! Guardião Komodo — bundle residencial (gerado por scripts/build-bundles.mjs, não editar) src-sha256=ffad4b9c2d345b08404aad8b211829503e8a69ca5a55419c94df5dce0a27423b */
+/*! Guardião Komodo — bundle residencial (gerado por scripts/build-bundles.mjs, não editar) src-sha256=d05ded06345efef1d1c852bde932a76a363435229ca48736967fec18e8d58acf */
 /* src/core/KomodoDate.js */
 /**
  * KomodoDate — data "de hoje" sempre no fuso America/Sao_Paulo,
@@ -1543,7 +1543,7 @@ if (typeof window !== 'undefined' && window.addEventListener) {
     var all = [];
     function done() { dlg.close(); }
     x.addEventListener('click', done);
-    dlg.addEventListener('close', function () { dlg.remove(); if (opener && opener.focus) opener.focus(); });
+    dlg.addEventListener('close', function () { dlg.remove(); var back = opener && opener.offsetParent !== null ? opener : doc.querySelector('.bn-more summary'); if (back && back.focus) back.focus(); });
     function draw() {
       var t = s.value.trim().toLowerCase(); var shown = all.filter(function (r) { return !t || String(r.nome).toLowerCase().indexOf(t) !== -1 || String(r.placa || '').toLowerCase().indexOf(t) !== -1; });
       ul.replaceChildren();

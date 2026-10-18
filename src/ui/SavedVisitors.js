@@ -107,7 +107,7 @@
     var all = [];
     function done() { dlg.close(); }
     x.addEventListener('click', done);
-    dlg.addEventListener('close', function () { dlg.remove(); if (opener && opener.focus) opener.focus(); });
+    dlg.addEventListener('close', function () { dlg.remove(); var back = opener && opener.offsetParent !== null ? opener : doc.querySelector('.bn-more summary'); if (back && back.focus) back.focus(); });
     function draw() {
       var t = s.value.trim().toLowerCase(); var shown = all.filter(function (r) { return !t || String(r.nome).toLowerCase().indexOf(t) !== -1 || String(r.placa || '').toLowerCase().indexOf(t) !== -1; });
       ul.replaceChildren();

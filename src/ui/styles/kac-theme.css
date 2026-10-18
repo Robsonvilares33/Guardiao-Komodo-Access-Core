@@ -99,7 +99,7 @@ html body .sv-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rec
 html body .sv-remember{display:flex;align-items:center;gap:var(--kac-sp-3);min-height:var(--kac-tap);font-weight:500!important;cursor:pointer}
 html body .sv-remember input{width:22px;height:22px;accent-color:var(--kac-primary);flex:0 0 auto}
 html body .sv-note{margin:6px 0 0;font-size:var(--kac-fs-sm);color:var(--kac-muted)}
-html body .sv-dialog{width:min(560px,calc(100vw - 16px));max-height:calc(100dvh - 16px);padding:0;border:1px solid var(--kac-border);border-radius:var(--kac-r-lg);background:var(--kac-bg);color:var(--kac-text)}
+html body .sv-dialog{margin:auto;inset:0;width:min(560px,calc(100vw - 16px));max-height:calc(100dvh - 16px);padding:0;border:1px solid var(--kac-border);border-radius:var(--kac-r-lg);background:var(--kac-bg);color:var(--kac-text)}
 html body .sv-dialog::backdrop{background:rgba(0,0,0,.65)}
 html body .sv-head{display:flex;align-items:center;justify-content:space-between;gap:var(--kac-sp-2);padding:var(--kac-sp-3) var(--kac-sp-4);border-bottom:1px solid var(--kac-border);position:sticky;top:0;background:var(--kac-bg);z-index:1}
 html body .sv-title{margin:0;font-size:var(--kac-fs-lg)}
@@ -117,3 +117,7 @@ html body .sv-form{display:flex;flex-direction:column;gap:var(--kac-sp-1)}
 html body .sv-form .form-control{width:100%;box-sizing:border-box}
 html body .sv-err{margin:0;color:var(--kac-danger);font-size:var(--kac-fs-sm);min-height:1.2em}
 @media (min-width:600px){html body .sv-row{flex-direction:row;align-items:center;justify-content:space-between}}
+/* Sugestão do agendamento rápido: largura do campo (o CSS antigo deslocava 155px à esquerda) */
+html body #quickDropdown.autocomplete-dropdown{left:0;right:0;max-height:min(50vh,360px);overflow:auto;border-radius:var(--kac-r-md)}
+/* No celular o acesso fica no menu "Mais" (como Painel e PDF) */
+@media (max-width:768px){html body .calendar-nav #btnSavedVisitors{display:none}}

@@ -1,4 +1,4 @@
-/*! Guardião Komodo — bundle agenda (gerado por scripts/build-bundles.mjs, não editar) src-sha256=a60d4a29359169b89b3d8a704f4f7b69cafe48d2163e90af3700f3cb1cbf775b */
+/*! Guardião Komodo — bundle agenda (gerado por scripts/build-bundles.mjs, não editar) src-sha256=0a7336bba401f17bd91d60dfa55d25c880bd9ac3101023efe3a0f6c315c2612e */
 /* cordova.js */
 /* Stub vazio para a versão web: o app Android (Capacitor/Cordova) substitui este arquivo no build. Evita 404 no navegador. */
 
@@ -639,7 +639,7 @@ if (typeof window !== 'undefined' && window.addEventListener) {
     var all = [];
     function done() { dlg.close(); }
     x.addEventListener('click', done);
-    dlg.addEventListener('close', function () { dlg.remove(); if (opener && opener.focus) opener.focus(); });
+    dlg.addEventListener('close', function () { dlg.remove(); var back = opener && opener.offsetParent !== null ? opener : doc.querySelector('.bn-more summary'); if (back && back.focus) back.focus(); });
     function draw() {
       var t = s.value.trim().toLowerCase(); var shown = all.filter(function (r) { return !t || String(r.nome).toLowerCase().indexOf(t) !== -1 || String(r.placa || '').toLowerCase().indexOf(t) !== -1; });
       ul.replaceChildren();
