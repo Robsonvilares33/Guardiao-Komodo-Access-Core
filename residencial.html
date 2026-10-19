@@ -66,6 +66,7 @@
         <div class="kac-inline-1d6d9e5b9f">
             <button class="btn-outline kac-inline-21349d3fb7" id="btnOpenDashboard">Painel</button>
             <button type="button" class="btn-outline kac-inline-21349d3fb7" id="btnSavedVisitors" data-sv-module="residencial">Visitantes salvos</button>
+            <button type="button" class="btn-outline kac-inline-21349d3fb7" id="btnInvites" data-inv-module="residencial">Convites</button>
             <button class="btn-outline kac-inline-1da9facb4d" id="btnExportPDF">Exportar PDF do turno</button>
         </div>
     </div>
@@ -94,6 +95,7 @@
             <summary><svg class="kac-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Mais</summary>
             <div class="bn-menu">
                 <button type="button" data-nav="saved">Visitantes salvos</button>
+                <button type="button" data-nav="invites">Convites de visita</button>
                 <button type="button" data-nav="dashboard">Dashboard</button>
                 <button type="button" data-nav="pdf">Exportar PDF do turno</button>
                 <button type="button" data-nav="config">Configurações</button>
@@ -426,6 +428,7 @@
     <script src="src/services/OfflineGate.js"></script>
     <script src="src/db/dao/VisitorRepository.js"></script>
     <script src="src/ui/SavedVisitors.js"></script>
+  <script src="src/ui/VisitInvites.js"></script>
     ( Komodo UI Managers (Fase 3 & 4) )
     <script src="src/ui/FormManager.js"></script>
     <script src="src/ui/RenderController.js"></script>

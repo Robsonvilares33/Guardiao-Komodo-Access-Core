@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Guardião Komodo - Convite de visita</title>
+  <link rel="icon" href="/assets/favicon-64.png" type="image/png" sizes="64x64">
+  <link rel="stylesheet" href="src/ui/styles/auth.css">
+  <link rel="stylesheet" href="src/ui/styles/kac-theme.css">
+  <link rel="stylesheet" href="src/ui/styles/kac-brand.css">
+</head>
+<body>
+  <main class="auth-card inv-public" id="invMain" aria-labelledby="invTitle">
+    <div class="auth-brand"><img src="assets/brand/guardiao-komodo-logo-256.webp" alt="" width="96" height="98"><p class="auth-brand-name">Guardião Komodo</p></div>
+    <h1 id="invTitle" tabindex="-1">Convite de visita</h1>
+    <p id="invStatus" class="inv-status" role="status" aria-live="polite">Carregando o convite...</p>
+    <section id="invDetails" class="inv-details" hidden aria-label="Dados do convite">
+      <dl class="inv-dl">
+        <div id="invRowEmpresa"><dt>Local</dt><dd id="invEmpresa"></dd></div>
+        <div id="invRowAnfitriao"><dt>Quem recebe</dt><dd id="invAnfitriao"></dd></div>
+        <div id="invRowUnidade"><dt>Destino</dt><dd id="invUnidade"></dd></div>
+        <div><dt>Quando</dt><dd id="invQuando"></dd></div>
+      </dl>
+    </section>
+    <form id="invForm" class="inv-form" hidden novalidate aria-describedby="invFormHint">
+      <p id="invFormHint" class="hint">Preencha para deixar a sua entrada pré-cadastrada. Não precisa criar conta.</p>
+      <label for="invNome">Nome completo</label>
+      <input type="text" id="invNome" name="nome" class="form-control" autocomplete="name" maxlength="120" required aria-required="true" aria-describedby="invNomeErr">
+      <p id="invNomeErr" class="inv-err" role="alert"></p>
+      <label for="invPlaca">Placa do veículo <span class="hint">(opcional)</span></label>
+      <input type="text" id="invPlaca" name="placa" class="form-control" autocomplete="off" autocapitalize="characters" maxlength="10" placeholder="ABC1D23">
+      <div class="inv-hp" aria-hidden="true"><label for="invSite">Não preencha</label><input type="text" id="invSite" name="website" tabindex="-1" autocomplete="off"></div>
+      <div class="inv-lgpd">
+        <p><strong>Privacidade:</strong> o local usa o seu nome e a placa (se informar) só para controlar o acesso nesta visita. Os dados ficam guardados pelo prazo do local (até 12 meses) e você pode pedir para ver, corrigir ou apagar. <a href="privacidade-visitante.html" target="_blank" rel="noopener">Ler o aviso de privacidade completo</a>.</p>
+        <label class="inv-consent" for="invConsent"><input type="checkbox" id="invConsent" name="consentimento" required aria-required="true" aria-describedby="invConsentErr"> Li o aviso de privacidade e concordo com o uso dos meus dados para esta visita.</label>
+        <p id="invConsentErr" class="inv-err" role="alert"></p>
+      </div>
+      <button type="submit" class="btn-gold inv-submit" id="invSubmit">Confirmar visita</button>
+    </form>
+    <section id="invDone" class="inv-done" hidden tabindex="-1" aria-labelledby="invDoneTitle">
+      <h2 id="invDoneTitle">Visita confirmada</h2>
+      <p id="invDoneText"></p>
+      <p class="hint">Na chegada, informe o seu nome na portaria. Pode fechar esta página.</p>
+    </section>
+  </main>
+  <script src="src/ui/convite-page.js"></script>
+</body>
+</html>

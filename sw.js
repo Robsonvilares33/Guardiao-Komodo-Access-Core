@@ -4,7 +4,7 @@
    Sempre REDE PRIMEIRO (HTML, JS e CSS): depois de um deploy nunca serve código velho; o cache só é usado sem conexão.
    Atualização segura: a nova versão espera ("waiting") até o usuário tocar em "Atualizar" (mensagem SKIP_WAITING). */
 'use strict';
-var VERSION = 'kac-shell-2026-10-18-v1';
+var VERSION = 'kac-shell-2026-10-18-v2';
 var SHELL = ['/index.html', '/residencial.html', '/login.html', '/auth.html', '/manifest.webmanifest',
   '/src/ui/styles/design-tokens.css', '/src/ui/styles/main.css', '/src/ui/styles/login.css', '/src/ui/styles/auth.css', '/src/ui/styles/kac-theme.css', '/src/ui/styles/kac-brand.css', '/src/ui/KomodoBrand3D.js', '/src/ui/PasswordToggle.js',
   '/assets/brand/guardiao-komodo-logo-256.webp', '/assets/brand/guardiao-komodo-logo-128.webp', '/assets/fonts/poppins-400-latin.woff2', '/assets/fonts/poppins-700-latin.woff2',
