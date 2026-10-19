@@ -51,6 +51,13 @@ Guardados em `/workspace/backups` (box, pasta 700/arquivos 600) e `C:\Users\yyy\
 5. Restauração real (só com autorização): inserir tabela a tabela na ordem do `restore-check.mjs` (organizações → usuários → membros → visitas → sessões → tentativas → histórico → auditoria → convites → planos → assinaturas → eventos), `OVERRIDING SYSTEM VALUE` em `kac_payment_events` e reposicionar sequências (`setval`).
 - Validado em 14/10/2026 no box com dados reais: dump (12 tabelas) → cifra → decifra → PGlite: todas as contagens, SHA-256 e md5 `cc9fe7b3…` PASS; senha errada → falha ao decifrar.
 
+### Correção 19/10/2026 — teste de restauração acompanha as migrações
+- Falha das execuções agendadas de 17/10 e 18/10 (`42703 column "kind" of relation "kac_organizations" does not exist`): o `restore-check.mjs` montava o esquema só até a 007 (lista fixa), e o banco já tinha 009–015. O dump e a cifra estavam certos, mas o artefato não foi publicado porque o passo de restauração falhou antes.
+- Agora o `restore-check.mjs` aplica **todas** as migrações de `docs/master/migrations` (exceto `*_rollback.sql`) na ordem de produção (`scripts/backup/migration-order.cjs`: numérica, 008 antes de 007). A ordem de carga vem das FKs do esquema restaurado, e colunas IDENTITY/sequências são tratadas sem lista fixa. Uma migração nova entra no teste sozinha, sem editar o script.
+- Deriva tolerada: tabela ou coluna que está no backup mas ainda não nas migrações do repo vira `WARN` (é criada como texto/jsonb só no PGlite) em vez de quebrar a restauração.
+- Pendente (precisa de token com escopo `workflow`): publicar o artefato **cifrado** mesmo se o teste de restauração falhar (`id: enc` no passo Cifrar e `if: always() && steps.guard.outputs.ready == 'true' && steps.enc.outcome == 'success'` no upload). Hoje, se a restauração falhar, o artefato não sai.
+- Restauração real (passo 5 acima): use a ordem de carga que o `restore-check.mjs` calcula (pais antes de filhos pelas FKs).
+
 ## Usuário dedicado de smoke (15/10/2026)
 - Criado em produção (aditivo; backup antes: `kac_presmoke_20261015T220144.json`, SHA-256 72489f15…edf0947): org fictícia `Smoke CI (fictícia, sem dados reais)` (`53b19a65-0627-41eb-a662-48c2fee0a81a`), usuário `user_smoke_ci` / `smoke-ci@komodo-smoke.invalid` (papel `operador`, membro `viewer`), assinatura free.
 - Isolamento: toda consulta de visitas filtra `organization_id` da sessão; verificado ao vivo (0 visitas visíveis, real intacta). Os jobs `smoke-auth` e `smoke-a11y` só leem.
