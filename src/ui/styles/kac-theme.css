@@ -167,7 +167,7 @@ html body .inv-dialog [hidden],html body .inv-public [hidden]{display:none!impor
 @media (max-width:768px){html body .calendar-nav #btnAlerts{display:none}}
 html body .al-row{background:var(--kac-surface);border:1px solid var(--kac-border);border-radius:var(--kac-r-md);padding:var(--kac-sp-3)}
 html body .al-switch{display:flex;align-items:flex-start;gap:var(--kac-sp-3);min-height:var(--kac-tap);cursor:pointer}
-html body .al-switch input{appearance:none;-webkit-appearance:none;flex:0 0 auto;width:52px;height:30px;border-radius:999px;background:var(--kac-surface-2);border:1px solid var(--kac-border);position:relative;margin:2px 0 0;cursor:pointer;transition:background .15s}
+html body .al-switch input{appearance:none;-webkit-appearance:none;flex:0 0 auto;width:52px;height:30px;min-width:52px;max-width:52px;min-height:30px;max-height:30px;padding:0;box-sizing:border-box;font-size:0;border-radius:999px;background:var(--kac-surface-2);border:1px solid var(--kac-border);position:relative;margin:2px 0 0;cursor:pointer;transition:background .15s}
 html body .al-switch input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--kac-muted);transition:transform .15s,background .15s}
 html body .al-switch input:checked{background:var(--kac-primary);border-color:var(--kac-primary)}
 html body .al-switch input:checked::after{transform:translateX(22px);background:#111}

@@ -1,4 +1,4 @@
-/*! Guardião Komodo — bundle residencial (gerado por scripts/build-bundles.mjs, não editar) src-sha256=a7e5e011668686f060de7b3951887baca893f8a30eb995a48d9c7ce4a3a0ec3a */
+/*! Guardião Komodo — bundle residencial (gerado por scripts/build-bundles.mjs, não editar) src-sha256=0513fe180da2074c09ee68281a224f26b6c22453bee25e22623c2ce1af5db76a */
 /* src/core/KomodoDate.js */
 /**
  * KomodoDate — data "de hoje" sempre no fuso America/Sao_Paulo,
@@ -1829,7 +1829,7 @@ if (typeof window !== 'undefined' && window.addEventListener) {
       devs.replaceChildren(); var list = (state && state.aparelhos) || [];
       if (!list.length) devs.appendChild(el('li', 'sv-hint', 'Nenhum aparelho ainda.'));
       list.forEach(function (d) {
-        var li = el('li', 'sv-row'); var info = el('div', 'sv-info'); info.append(el('span', 'auto-name', d.label), el('span', 'auto-doc', d.ultimoOk ? 'Último aviso recebido: ' + new Date(d.ultimoOk).toLocaleString('pt-BR') : 'Ligado em ' + new Date(d.desde).toLocaleDateString('pt-BR')));
+        var li = el('li', 'sv-row'); var info = el('div', 'sv-info'); info.append(el('span', 'auto-name', d.label), el('span', 'auto-doc', d.ultimoOk ? 'Último aviso enviado: ' + new Date(d.ultimoOk).toLocaleString('pt-BR') : 'Ligado em ' + new Date(d.desde).toLocaleDateString('pt-BR')));
         var rm = btn('btn-cancel sv-btn', 'Remover'); rm.setAttribute('aria-label', 'Remover ' + d.label);
         rm.addEventListener('click', function () { rm.disabled = true; api().post('/avisos/aparelhos/remover', { id: d.id }).then(load).then(function () { status.textContent = 'Aparelho removido.'; }).catch(function (e) { rm.disabled = false; status.textContent = e.message; }); });
         var act = el('div', 'sv-actions'); act.appendChild(rm); li.append(info, act); devs.appendChild(li);

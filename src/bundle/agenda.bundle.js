@@ -1,4 +1,4 @@
-/*! Guardião Komodo — bundle agenda (gerado por scripts/build-bundles.mjs, não editar) src-sha256=1d389611410f2dd655fdb45d9646099902da4f88ee6af87c554767d8a4665cdf */
+/*! Guardião Komodo — bundle agenda (gerado por scripts/build-bundles.mjs, não editar) src-sha256=b7ad950f5511dbbd9a3bfb8c67631eb88def5c2b9e763558da4315994e5b3c76 */
 /* cordova.js */
 /* Stub vazio para a versão web: o app Android (Capacitor/Cordova) substitui este arquivo no build. Evita 404 no navegador. */
 
@@ -925,7 +925,7 @@ if (typeof window !== 'undefined' && window.addEventListener) {
       devs.replaceChildren(); var list = (state && state.aparelhos) || [];
       if (!list.length) devs.appendChild(el('li', 'sv-hint', 'Nenhum aparelho ainda.'));
       list.forEach(function (d) {
-        var li = el('li', 'sv-row'); var info = el('div', 'sv-info'); info.append(el('span', 'auto-name', d.label), el('span', 'auto-doc', d.ultimoOk ? 'Último aviso recebido: ' + new Date(d.ultimoOk).toLocaleString('pt-BR') : 'Ligado em ' + new Date(d.desde).toLocaleDateString('pt-BR')));
+        var li = el('li', 'sv-row'); var info = el('div', 'sv-info'); info.append(el('span', 'auto-name', d.label), el('span', 'auto-doc', d.ultimoOk ? 'Último aviso enviado: ' + new Date(d.ultimoOk).toLocaleString('pt-BR') : 'Ligado em ' + new Date(d.desde).toLocaleDateString('pt-BR')));
         var rm = btn('btn-cancel sv-btn', 'Remover'); rm.setAttribute('aria-label', 'Remover ' + d.label);
         rm.addEventListener('click', function () { rm.disabled = true; api().post('/avisos/aparelhos/remover', { id: d.id }).then(load).then(function () { status.textContent = 'Aparelho removido.'; }).catch(function (e) { rm.disabled = false; status.textContent = e.message; }); });
         var act = el('div', 'sv-actions'); act.appendChild(rm); li.append(info, act); devs.appendChild(li);
