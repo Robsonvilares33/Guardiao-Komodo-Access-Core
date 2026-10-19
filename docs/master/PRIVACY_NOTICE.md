@@ -17,6 +17,8 @@ Controle de acesso e segurança da portaria; prestação e cobrança do serviço
 | **Groq, Inc.** | **Assistente de IA (respostas a perguntas do operador)** | **Somente dados minimizados: módulo, data, hora e status das visitas do dia + a pergunta com CPF/placa/e-mail/telefone mascarados. Nunca nome, unidade, placa, documento, fotos.** | **EUA (GCP)** | **Somente ambiente de teste; desligado em produção (`KAC_AI`)** |
 | Mercado Pago | Pagamento de planos | Dados de cobrança da organização (não de visitantes) | Brasil | Sandbox; desligado em produção |
 | Google (Gmail SMTP) | Envio de e-mails de autenticação | E-mail do usuário da portaria | EUA/global | Planejado |
+| Serviços de push do navegador (Google FCM, Apple, Mozilla, Microsoft) | Entregar o aviso "seu visitante chegou" (opt-in) | Endereço de inscrição do aparelho; texto do aviso SEM dados do visitante (só o horário) | EUA/global | Onda 1, item 3 |
+| Google (Gmail SMTP) — avisos | E-mail de reserva do aviso de chegada (opt-in, limite diário) | E-mail do usuário da portaria; texto sem dados do visitante | EUA/global | Onda 1, item 3 |
 
 ### Groq — detalhes
 - Contrato (Groq Services Agreement §4.2): proibido usar entradas/saídas para treinar modelos sem autorização do cliente.

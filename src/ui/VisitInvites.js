@@ -54,12 +54,14 @@
     var fIni = field('invIni', 'Das', 'time', { required: '' }); fIni.input.value = '09:00';
     var fFim = field('invFim', 'Até', 'time', { required: '' }); fFim.input.value = '18:00';
     var times = el('div', 'inv-row inv-times'); times.append(fIni.wrap, fFim.wrap);
+    var fAvisar = field('invAvisar', 'Avisar quem quando chegar', 'select', { options: [['', 'Eu (quem cria o convite)']] });
+    api().get('/avisos/membros').then(function (ms) { (ms || []).forEach(function (m) { if (m.eu) return; var o = el('option', null, m.label); o.value = m.id; fAvisar.input.appendChild(o); }); }).catch(function () {});
     var fUsos = field('invUsos', 'Quantas pessoas podem usar', 'select', { options: [['1', '1 pessoa (uso único)'], ['2', '2 pessoas'], ['3', '3 pessoas'], ['5', '5 pessoas'], ['10', '10 pessoas'], ['20', '20 pessoas']] });
     var fVal = field('invVal', 'Link válido até (opcional)', 'datetime-local', { 'aria-describedby': 'invValHint' });
     var vh = el('p', 'sv-hint', 'Sem preencher, o link vale até o fim do horário da visita.'); vh.id = 'invValHint';
     var ferr = el('p', 'sv-err'); ferr.setAttribute('role', 'alert');
     var fbar = el('div', 'sv-actions'); var fcan = btn('btn-cancel sv-btn', 'Cancelar'); var fok = el('button', 'btn-gold sv-btn', 'Criar convite'); fok.type = 'submit'; fbar.append(fcan, fok);
-    form.append(fNome.wrap, fHost.wrap, fUni.wrap, fData.wrap, times, fUsos.wrap, fVal.wrap, vh, ferr, fbar);
+    form.append(fNome.wrap, fHost.wrap, fUni.wrap, fData.wrap, times, fUsos.wrap, fAvisar.wrap, fVal.wrap, vh, ferr, fbar);
     var share = el('div', 'inv-share'); share.hidden = true; share.setAttribute('tabindex', '-1');
 
     // 3) Lista
@@ -126,7 +128,7 @@
     });
     form.addEventListener('submit', function (e) {
       e.preventDefault(); ferr.textContent = '';
-      var data = { modulo: modulo, nome: fNome.input.value.trim(), anfitriao: fHost.input.value.trim(), unidade: fUni.input.value.trim(), data: fData.input.value, inicio: fIni.input.value, fim: fFim.input.value, usos: Number(fUsos.input.value), validoAte: fVal.input.value || '' };
+      var data = { modulo: modulo, nome: fNome.input.value.trim(), anfitriao: fHost.input.value.trim(), unidade: fUni.input.value.trim(), data: fData.input.value, inicio: fIni.input.value, fim: fFim.input.value, usos: Number(fUsos.input.value), validoAte: fVal.input.value || '', avisar: fAvisar.input.value || '' };
       if (!data.data || !data.inicio || !data.fim) { ferr.textContent = 'Informe a data e o horário da visita.'; return; }
       if (data.fim <= data.inicio) { ferr.textContent = 'O horário final precisa ser depois do inicial.'; fFim.input.focus(); return; }
       if (data.nome && data.nome.length < 3) { ferr.textContent = 'O nome precisa ter pelo menos 3 letras (ou deixe em branco).'; fNome.input.focus(); return; }
