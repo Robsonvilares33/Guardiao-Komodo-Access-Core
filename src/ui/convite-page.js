@@ -28,6 +28,8 @@
     $('invNome').focus();
   }).catch(function () { say('Sem conexão. Verifique a internet e recarregue a página.'); });
   $('invPlaca').addEventListener('input', function () { var e = this; var p = e.selectionStart; e.value = e.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''); try { e.setSelectionRange(p, p); } catch (_) {} });
+  $('invConsent').addEventListener('change', function () { if (this.checked) { $('invConsentErr').textContent = ''; this.removeAttribute('aria-invalid'); } });
+  $('invNome').addEventListener('input', function () { if (this.value.trim().length >= 3) { $('invNomeErr').textContent = ''; this.removeAttribute('aria-invalid'); } });
   var busy = false;
   $('invForm').addEventListener('submit', function (ev) {
     ev.preventDefault(); if (busy) return;

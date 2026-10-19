@@ -162,3 +162,4 @@ html body .inv-consent input{width:22px;height:22px;margin-top:2px;accent-color:
 html body .inv-submit{min-height:var(--kac-tap);width:100%}
 html body .inv-done{margin-top:var(--kac-sp-3)}
 html body .inv-done:focus{outline:none}
+html body .inv-dialog [hidden],html body .inv-public [hidden]{display:none!important}
