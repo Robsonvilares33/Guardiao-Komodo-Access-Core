@@ -16,9 +16,17 @@ test('dump.mjs: só GET (sem POST/PATCH/DELETE), tabelas kac_/komodo_, exige as 
   for(const t of ['kac_plans','kac_subscriptions','kac_payment_events','komodo_acessos'])assert.ok(d.includes(`'${t}'`));
   assert.match(d,/\^\(kac\|komodo\)_/);assert.ok(!/console\.log\([^)]*rows/.test(d));
 });
-test('restore-check.mjs: mesma cifra do workflow, md5 com TimeZone UTC, ordem 005→006→008→007',()=>{
+test('restore-check.mjs: mesma cifra do workflow, md5 com TimeZone UTC, esquema gerado das migrações do repo',()=>{
   const r=src('scripts/backup/restore-check.mjs');assert.match(r,/'-aes-256-cbc','-pbkdf2','-iter','600000','-md','sha256'/);
-  assert.match(r,/SET TimeZone='UTC'/);assert.match(r,/'005_tenancy.sql','006_visit_history_audit.sql','008_supabase_auth.sql','007_billing.sql'/);
+  assert.match(r,/SET TimeZone='UTC'/);assert.match(r,/migrationOrder\(fs\.readdirSync\(M\)\)/);
+  assert.ok(!/const ORDER=\[/.test(r),'sem lista fixa de tabelas');assert.match(r,/contype='f'/);assert.match(r,/attidentity='a'/);assert.match(r,/WARN /);
+  assert.ok(!/console\.log\([^)]*row/.test(r),'nunca imprime linhas');
+});
+test('ordem das migrações = ordem de produção (008 antes de 007; 013b depois de 013; sem rollback) e cobre todas do repo',()=>{
+  const {migrationOrder:m}=require('../scripts/backup/migration-order.cjs');
+  assert.deepEqual(m(['014_x.sql','007_billing.sql','013b_y.sql','008_a.sql','013_z.sql','005_t.sql','006_h.sql','007_billing_rollback.sql','README.md']),['005_t.sql','006_h.sql','008_a.sql','007_billing.sql','013_z.sql','013b_y.sql','014_x.sql']);
+  const all=fs.readdirSync(path.join(__dirname,'..','docs/master/migrations'));const o=m(all);
+  assert.equal(o.length,all.filter(f=>f.endsWith('.sql')&&!f.endsWith('_rollback.sql')).length);assert.ok(o.indexOf('008_supabase_auth.sql')<o.indexOf('007_billing.sql'));assert.equal(o[o.length-1],all.filter(f=>/^\d{3}/.test(f)&&!f.endsWith('_rollback.sql')).sort().pop());
 });
 test('.gitignore bloqueia backups',()=>{const g=fs.existsSync(path.join(__dirname,'..','.gitignore'))?src('.gitignore'):'';assert.match(g,/kac_\*\.json/);assert.match(g,/\*\.json\.enc/);});
 test('smoke-auth: job ligado por variável, usa secrets do usuário dedicado, script só lê e prova isolamento',()=>{
