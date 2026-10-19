@@ -4,7 +4,7 @@
    Sempre REDE PRIMEIRO (HTML, JS e CSS): depois de um deploy nunca serve código velho; o cache só é usado sem conexão.
    Atualização segura: a nova versão espera ("waiting") até o usuário tocar em "Atualizar" (mensagem SKIP_WAITING). */
 'use strict';
-var VERSION = 'kac-shell-2026-10-18-v2';
+var VERSION = 'kac-shell-2026-10-19-v1';
 var SHELL = ['/index.html', '/residencial.html', '/login.html', '/auth.html', '/manifest.webmanifest',
   '/src/ui/styles/design-tokens.css', '/src/ui/styles/main.css', '/src/ui/styles/login.css', '/src/ui/styles/auth.css', '/src/ui/styles/kac-theme.css', '/src/ui/styles/kac-brand.css', '/src/ui/KomodoBrand3D.js', '/src/ui/PasswordToggle.js',
   '/assets/brand/guardiao-komodo-logo-256.webp', '/assets/brand/guardiao-komodo-logo-128.webp', '/assets/fonts/poppins-400-latin.woff2', '/assets/fonts/poppins-700-latin.woff2',
@@ -40,4 +40,24 @@ self.addEventListener('fetch', function (e) {
   }, function () {
     return caches.match(key).then(function (m) { return m || (page ? caches.match('/index.html') : null); }).then(function (m) { return m || Response.error(); });
   }));
+});
+// Avisos de chegada (Onda 1, item 3): mostra a notificação recebida por Web Push. O conteúdo vem do servidor SEM dados do visitante.
+// Só abre páginas do próprio site ao tocar.
+self.addEventListener('push', function (e) {
+  var d = {}; try { d = e.data ? e.data.json() : {}; } catch (_) { d = {}; }
+  var title = String(d.title || 'Guardião Komodo').slice(0, 80);
+  var url = '/index.html'; try { var u = new URL(String(d.url || '/index.html'), self.location.origin); if (u.origin === self.location.origin) url = u.pathname; } catch (_) {}
+  e.waitUntil(self.registration.showNotification(title, { body: String(d.body || '').slice(0, 200), tag: String(d.tag || 'kac').slice(0, 40), renotify: true,
+    icon: '/assets/icon-192.png', badge: '/assets/icon-192.png', lang: 'pt-BR', data: { url: url } }));
+});
+self.addEventListener('notificationclick', function (e) {
+  e.notification.close(); var url = (e.notification.data && e.notification.data.url) || '/index.html';
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (cs) {
+    for (var i = 0; i < cs.length; i++) { var c = cs[i]; if (new URL(c.url).pathname === url && 'focus' in c) return c.focus(); }
+    return self.clients.openWindow ? self.clients.openWindow(url) : null;
+  }));
+});
+// Inscrição renovada pelo navegador: avisa as páginas abertas para reenviar ao servidor.
+self.addEventListener('pushsubscriptionchange', function (e) {
+  e.waitUntil(self.clients.matchAll({ type: 'window' }).then(function (cs) { cs.forEach(function (c) { c.postMessage({ type: 'KAC_PUSH_RESUBSCRIBE' }); }); }));
 });

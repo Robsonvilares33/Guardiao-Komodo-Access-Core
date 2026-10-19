@@ -3,7 +3,7 @@
 (function (root) {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
-  var MAP = { 'new': 'btnOpenModal', saved: 'btnSavedVisitors', invites: 'btnInvites', dashboard: 'btnOpenDashboard', pdf: 'btnExportPDF', config: 'btnOpenConfig', logout: 'btnLogout' };
+  var MAP = { 'new': 'btnOpenModal', saved: 'btnSavedVisitors', invites: 'btnInvites', alerts: 'btnAlerts', dashboard: 'btnOpenDashboard', pdf: 'btnExportPDF', config: 'btnOpenConfig', logout: 'btnLogout' };
   function nav(action) {
     if (action === 'agenda') { root.scrollTo({ top: 0, behavior: 'smooth' }); var c = $('cardsContainer'); if (c) c.focus(); return; }
     if (action === 'search') { var s = $('globalSearch'); if (s) { s.scrollIntoView({ block: 'center' }); s.focus(); } return; }
