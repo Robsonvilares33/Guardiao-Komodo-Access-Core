@@ -1,7 +1,7 @@
 'use strict';
 const crypto = require('node:crypto');
 const KomodoDate = require('../src/core/KomodoDate.js');
-const SA = require('../lib/supabase-auth.cjs');const BILL=require('../lib/billing.cjs');const ALPR=require('../lib/alpr.cjs');const AIG=require('../lib/ai-guardrails.cjs');const AIP=require('../lib/ai-provider.cjs');const AI_RL=new Map();const ONB=require('../lib/onboarding.cjs');
+const SA = require('../lib/supabase-auth.cjs');const BILL=require('../lib/billing.cjs');const ALPR=require('../lib/alpr.cjs');const AIG=require('../lib/ai-guardrails.cjs');/*DIAG-AI-TEMP*/try{const e=process.env,k=e.GROQ_API_KEY,o=String(e.KAC_AI_ORGS||'');console.log('[diag-ai] kac_ai_set='+(e.KAC_AI!==undefined)+' kac_ai_on='+(e.KAC_AI==='on')+' groq_set='+(k!==undefined)+' groq_type='+typeof k+' groq_len_ok='+(typeof k==='string'&&k.length>=20)+' groq_empty='+(k==='')+' alt_set='+(e.KAC_AI_PROVIDER_KEY!==undefined)+' orgs_n='+AIG.allowedOrgs(e)?.length+' orgs_raw_set='+(o.length>0)+' enabled='+AIG.enabled()+' vercel_env='+String(e.VERCEL_ENV||'-').replace(/[^a-z]/g,''));}catch(_){}const AIP=require('../lib/ai-provider.cjs');const AI_RL=new Map();const ONB=require('../lib/onboarding.cjs');
 const INVITES = 'kac_invites';
 const USERS = 'komodo_tbl_usuarios';
 const VISITORS = 'komodo_acessos';
