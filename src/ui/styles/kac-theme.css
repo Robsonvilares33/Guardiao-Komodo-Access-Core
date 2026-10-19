@@ -86,3 +86,38 @@ html body .pw-eye[aria-pressed=true] .pw-ico-hide{display:block}
 @media (forced-colors:active){html body .pw-eye{border:1px solid ButtonText}}
 html body .auth-card button.linkish{background:transparent!important;color:var(--kac-primary)!important;border:0;text-decoration:underline;font-weight:600;box-shadow:none}
 html body .auth-card button.linkish:hover{color:var(--kac-primary-hover)!important;transform:none!important}
+/* Visitantes salvos (Onda 1 item 1): sugestão de nome + tela de gestão. Mobile-first, alvos ≥ 48px, foco visível. */
+html body .sv-anchor{position:relative}
+html body .sv-list{display:none;position:absolute;left:0;right:0;top:100%;z-index:1000;margin-top:4px;background:var(--kac-surface);border:1px solid var(--kac-primary);border-radius:var(--kac-r-md);max-height:min(50vh,360px);overflow:auto;box-shadow:0 12px 32px rgba(0,0,0,.55)}
+html body .sv-list.sv-open{display:block}
+html body .sv-opt{min-height:var(--kac-tap);padding:10px 14px;cursor:pointer}
+html body .sv-opt.sv-active,html body .sv-opt:hover{background:var(--kac-surface-2);box-shadow:inset 3px 0 0 var(--kac-primary)}
+html body .sv-opt .auto-name{font-size:var(--kac-fs-md)}
+html body .sv-opt .auto-doc,html body .sv-row .auto-doc{font-size:var(--kac-fs-sm);color:var(--kac-muted)}
+html body .sv-empty{color:var(--kac-muted);font-size:var(--kac-fs-sm);cursor:default}
+html body .sv-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+html body .sv-remember{display:flex;align-items:center;gap:var(--kac-sp-3);min-height:var(--kac-tap);font-weight:500!important;cursor:pointer}
+html body .sv-remember input{width:22px;height:22px;accent-color:var(--kac-primary);flex:0 0 auto}
+html body .sv-note{margin:6px 0 0;font-size:var(--kac-fs-sm);color:var(--kac-muted)}
+html body .sv-dialog{margin:auto;inset:0;width:min(560px,calc(100vw - 16px));max-height:calc(100dvh - 16px);padding:0;border:1px solid var(--kac-border);border-radius:var(--kac-r-lg);background:var(--kac-bg);color:var(--kac-text)}
+html body .sv-dialog::backdrop{background:rgba(0,0,0,.65)}
+html body .sv-head{display:flex;align-items:center;justify-content:space-between;gap:var(--kac-sp-2);padding:var(--kac-sp-3) var(--kac-sp-4);border-bottom:1px solid var(--kac-border);position:sticky;top:0;background:var(--kac-bg);z-index:1}
+html body .sv-title{margin:0;font-size:var(--kac-fs-lg)}
+html body .sv-close{min-width:var(--kac-tap);min-height:var(--kac-tap);font-size:28px;line-height:1;background:transparent;color:var(--kac-text);border:0}
+html body .sv-body{padding:var(--kac-sp-4);display:flex;flex-direction:column;gap:var(--kac-sp-2)}
+html body .sv-hint{margin:0;color:var(--kac-muted);font-size:var(--kac-fs-sm)}
+html body .sv-status{margin:0;color:var(--kac-muted);font-size:var(--kac-fs-sm);min-height:1.2em}
+html body .sv-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--kac-sp-2)}
+html body .sv-row{background:var(--kac-surface);border:1px solid var(--kac-border);border-radius:var(--kac-r-md);padding:var(--kac-sp-3);display:flex;flex-direction:column;gap:var(--kac-sp-2)}
+html body .sv-info{display:flex;flex-direction:column;gap:2px;min-width:0;overflow-wrap:anywhere}
+html body .sv-obs{font-size:var(--kac-fs-sm);color:var(--kac-text)}
+html body .sv-actions{display:flex;gap:var(--kac-sp-2);justify-content:flex-end}
+html body .sv-btn{min-height:var(--kac-tap);padding:0 var(--kac-sp-4);flex:0 0 auto}
+html body .sv-form{display:flex;flex-direction:column;gap:var(--kac-sp-1)}
+html body .sv-form .form-control{width:100%;box-sizing:border-box}
+html body .sv-err{margin:0;color:var(--kac-danger);font-size:var(--kac-fs-sm);min-height:1.2em}
+@media (min-width:600px){html body .sv-row{flex-direction:row;align-items:center;justify-content:space-between}}
+/* Sugestão do agendamento rápido: largura do campo (o CSS antigo deslocava 155px à esquerda) */
+html body #quickDropdown.autocomplete-dropdown{left:0;right:0;max-height:min(50vh,360px);overflow:auto;border-radius:var(--kac-r-md)}
+/* No celular o acesso fica no menu "Mais" (como Painel e PDF) */
+@media (max-width:768px){html body .calendar-nav #btnSavedVisitors{display:none}}

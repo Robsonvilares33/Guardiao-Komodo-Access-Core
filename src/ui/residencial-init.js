@@ -227,6 +227,11 @@
                     status: 0
                 };
     
+                // Visitante salvo (só no cadastro de visitante; morador não entra). Documento nunca vai para o cadastro salvo.
+                var remember = document.getElementById('svRemember');
+                recordToSave.salvar = !isMorador && (!remember || remember.checked);
+                if (!isMorador) recordToSave.visitante = { placa: dto.placa || '', cor: dto.cor || '', marca: brandStr === 'Sem Veículo' ? '' : brandStr, tipo: baseType };
+
                 // 2. O ValidationManager valida as regras de negócio puros
                 var valResult = window.ValidationManager.validateVisitor(recordToSave);
                 if (!valResult.isValid) {
@@ -238,6 +243,8 @@
                 window.VisitorRepository.save(recordToSave).then(savedId => {
                     closeModal();
                     window.formManager.clear(formId);
+                    if (remember) remember.checked = true;
+                    var svNote = document.getElementById('svNote'); if (svNote) { svNote.textContent = ''; svNote.hidden = true; }
                     
                     // Reseta dropdowns e valores serializados para o próximo cadastro.
                     Object.keys(vehicleSelectors).forEach(function(wrapperId) {
@@ -652,34 +659,38 @@
         quickAddModule.classList.add('active');
     }
 
-    quickInput.addEventListener('input', async function() {
-        var term = this.value.trim().toLocaleLowerCase('pt-BR');
-        if (term.length < 2) { closeQuickSuggestions(); return; }
+    // Sugestão de visitantes salvos (servidor, por empresa). Sem conta online/sem rede: usa os registros já carregados, como antes.
+    function quickFallback(term) {
+        term = String(term || '').toLocaleLowerCase('pt-BR');
         var requestVersion = ++quickRequestVersion;
-        try {
-            var allRecords = await window.VisitorRepository.getAllByModule('residencial');
-            if (requestVersion !== quickRequestVersion) return;
+        return window.VisitorRepository.getAllByModule('residencial').then(function(allRecords) {
+            if (requestVersion !== quickRequestVersion) return [];
             var uniqueByName = {};
             allRecords.forEach(function(record) {
                 var name = String(record.nome || '').toLocaleLowerCase('pt-BR');
                 if (name.indexOf(term) !== -1 && !uniqueByName[name]) uniqueByName[name] = record;
             });
             quickRecords = Object.keys(uniqueByName).map(function(key) { return uniqueByName[key]; });
-            showQuickSuggestions(quickRecords);
-        } catch (error) {
-            console.error('Falha ao carregar sugestões:', error);
-            quickRecords = [];
-            showQuickSuggestions([]);
-        }
-    });
-
-    quickDropdown.addEventListener('click', function(event) {
-        var item = event.target.closest('[data-quick-index]');
-        if (!item) return;
-        var record = quickRecords[Number(item.dataset.quickIndex)];
-        if (record) quickInput.value = record.nome;
-        closeQuickSuggestions();
-    });
+            return quickRecords.map(function(r) { return { nome: r.nome, tipo: r.tipo, unidade: r.unidade, visits_count: 0, _visit: r }; });
+        });
+    }
+    var quickSaved = null;
+    function wireSaved() {
+        if (!window.KacSavedVisitors || quickSaved) return;
+        quickSaved = window.KacSavedVisitors.attach(quickInput, { modulo: 'residencial', listbox: quickDropdown, host: quickAddModule, fallback: quickFallback,
+            emptyText: 'Nenhum visitante salvo com esse nome. Use “Morador e visita” para o primeiro cadastro.' });
+        var nomeVis = document.getElementById('resF1');
+        var note = document.getElementById('svNote');
+        window.KacSavedVisitors.attach(nomeVis, { modulo: 'residencial', onPick: function(r) {
+            var f = document.getElementById('form-visitante');
+            var set = function(field, v) { var i = f && f.querySelector('[data-field="' + field + '"]'); if (i && v) { i.value = v; i.dispatchEvent(new Event('input', { bubbles: true })); } };
+            set('unidade', r.unidade); set('placa', r.placa); set('cor', r.cor);
+            if (r.marca) { var lb = document.getElementById('labelDropdownVis'); if (lb) lb.innerText = '✔️ ' + r.marca; var hm = document.getElementById('hiddenMarcaVeicVis'); if (hm) hm.value = r.marca; }
+            if (r.placa) { var det = f && f.querySelector('[data-field="placa"]'); det = det && det.closest('details'); if (det) det.open = true; }
+            if (note) { note.textContent = r.observacao ? 'Observação salva: ' + r.observacao : 'Dados do visitante salvo preenchidos. Confira antes de salvar.'; note.hidden = false; }
+        } });
+    }
+    if (window.KacSavedVisitors) wireSaved(); else document.addEventListener('DOMContentLoaded', wireSaved);
 
     document.addEventListener('click', function(event) {
         if (!quickAddModule.contains(event.target)) closeQuickSuggestions();
@@ -690,9 +701,17 @@
         var time = document.getElementById('quickTime').value || '00:00';
         if (!name) { alert('Digite ou selecione o nome da pessoa.'); return; }
 
-        var source = quickRecords.find(function(record) {
+        var saved = quickSaved ? quickSaved.picked() : null;
+        if (saved && saved._visit) saved = null;
+        var source = saved ? { nome: saved.nome, unidade: saved.unidade || '', tipo: saved.tipo || 'Visitante', placa: window.KacSavedVisitors.composePlaca(saved) } : quickRecords.find(function(record) {
             return String(record.nome || '').toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR');
         });
+        if (source && saved && !source.unidade) {
+            document.getElementById('mainModalOverlay').setAttribute('open', '');
+            document.querySelector('#form-visitante [data-field="nome"]').value = name;
+            alert('Informe a unidade de destino para concluir o agendamento.');
+            return;
+        }
         if (!source) {
             document.getElementById('mainModalOverlay').setAttribute('open', '');
             document.querySelector('#form-visitante [data-field="nome"]').value = name;
@@ -705,12 +724,14 @@
             id: Date.now().toString(), modulo: 'residencial', dia: state.diaAtivo, hora: time,
             nome: source.nome, unidade: source.unidade, tipo: source.tipo, placa: source.placa,
             acompanhantes: source.acompanhantes || '0', placaAcompanhante: source.placaAcompanhante || '',
-            historico: 'Agendamento rápido criado em ' + new Date().toLocaleDateString('pt-BR'),
+            historico: saved && saved.observacao ? saved.observacao : 'Agendamento rápido criado em ' + new Date().toLocaleDateString('pt-BR'),
             alerta: source.alerta ? 1 : 0, status: 0
         };
+        if (saved) recordToSave.visitante = { placa: saved.placa || '', cor: saved.cor || '', marca: saved.marca || '', tipo: saved.tipo || '' };
         try {
             await window.VisitorRepository.save(recordToSave);
             quickInput.value = '';
+            if (quickSaved) quickSaved.clear();
             closeQuickSuggestions();
             if (window.renderController) await window.renderController.reloadDailyData(state.diaAtivo, 'residencial');
         } catch (error) {

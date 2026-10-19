@@ -195,6 +195,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                     alerta: 0,
                     status: 0
                 };
+                // Visitante salvo: guarda placa/cor/marca separadas para preencher a próxima visita (nada de documento).
+                var remember = document.getElementById('svRemember');
+                novoRegistro.salvar = !remember || remember.checked;
+                novoRegistro.visitante = { placa: placaVal, cor: corVal, marca: brandStr1 === 'Sem Veículo' || brandStr1 === 'Sem veículo' ? '' : brandStr1, tipo: typeStr };
                 
                 var saveButton = document.getElementById('btnSalvar');
                 saveButton.disabled = true;
@@ -203,6 +207,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 await window.VisitorRepository.save(novoRegistro);
                 closeModal();
                 window.formManager.clear('form-acesso');
+                if (remember) remember.checked = true;
+                var svNote = document.getElementById('svNote'); if (svNote) { svNote.textContent = ''; svNote.hidden = true; }
                 document.getElementById('labelDropdown1').textContent = '🔍 Buscar veículo';
                 document.getElementById('labelDropdown2').textContent = '🔍 Buscar veículo';
                 if (window.renderController) await window.renderController.reloadDailyData(currentDia, 'empresarial');
@@ -624,6 +630,26 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }, 300));
 
+    // Cadastro completo: ao digitar o nome, sugere visitantes salvos e preenche tipo, veículo e observação.
+    (function wireModalSaved() {
+        var nomeInput = document.getElementById('idxF1');
+        if (!nomeInput || !window.KacSavedVisitors) return;
+        var note = document.getElementById('svNote');
+        window.KacSavedVisitors.attach(nomeInput, { modulo: 'empresarial', onPick: function(r) {
+            var group = document.querySelector('#modalContent .btn-toggle-group[data-group="tipo"]');
+            if (group && r.tipo) {
+                var want = /cliente/i.test(r.tipo) ? 'Cliente' : 'Visita';
+                group.querySelectorAll('.btn-toggle').forEach(function(b) { b.classList.toggle('active', b.getAttribute('data-val') === want); });
+            }
+            var f = document.getElementById('form-acesso');
+            var set = function(field, v) { var i = f && f.querySelector('[data-field="' + field + '"]'); if (i && v) { i.value = v; i.dispatchEvent(new Event('input', { bubbles: true })); } };
+            set('placa', r.placa); set('cor', r.cor);
+            if (r.marca) { var lb = document.getElementById('labelDropdown1'); if (lb) lb.textContent = '✔️ ' + r.marca; }
+            if (r.placa) { var det = f && f.querySelector('[data-field="placa"]'); det = det && det.closest('details'); if (det) det.open = true; }
+            if (note) { note.textContent = r.observacao ? 'Observação salva: ' + r.observacao : 'Dados do visitante salvo preenchidos. Confira antes de salvar.'; note.hidden = false; }
+        } });
+    })();
+
     // Autocomplete do agendamento rápido
     var quickInput = document.getElementById('quickInput');
     var quickAddModule = document.getElementById('quickAddModule');
@@ -638,62 +664,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     if (window.eventBus && window.SystemEvents) window.eventBus.on(window.SystemEvents.DB_SAVE_SUCCESS, function() { historyCache = null; });
 
-    quickInput.addEventListener('input', async function() {
-        var term = this.value.toLowerCase().trim();
-        if (term.length > 1) {
-            var database = await loadHistory();
-            // Filtrar itens unicos por nome do BD global
+    // Sugestão de visitantes salvos (servidor, por empresa). Sem conta online/sem rede: usa o histórico local como antes.
+    function historyFallback(term) {
+        term = String(term || '').toLowerCase();
+        return loadHistory().then(function(database) {
             var mapS = {};
-            database.forEach(function(p) {
-                if(p.nome.toLowerCase().indexOf(term) !== -1) mapS[p.nome.toLowerCase()] = p;
-            });
-            var suggs = Object.values(mapS);
-            
-            quickAddModule.classList.add('active');
-            quickDropdown.replaceChildren();
-            if (suggs.length) {
-                suggs.forEach(function(s) {
-                    var item = document.createElement('div');
-                    item.className = 'auto-item';
-                    item.dataset.nome = String(s.nome == null ? '' : s.nome);
-
-                    var name = document.createElement('span');
-                    name.className = 'auto-name';
-                    name.textContent = String(s.nome == null ? '' : s.nome);
-
-                    var details = document.createElement('span');
-                    details.className = 'auto-doc';
-                    details.textContent = String(s.tipo || 'Visitante') + ' | Placa: ' + String(s.placa || '');
-
-                    var history = document.createElement('span');
-                    history.style.cssText = 'font-size:12px;font-weight:600;margin-top:2px;';
-                    history.style.color = s.alerta ? 'var(--danger)' : 'var(--success)';
-                    history.textContent = (s.alerta ? '⚠️' : '✅') + ' ' + String(s.historico || '');
-
-                    item.append(name, details, history);
-                    quickDropdown.appendChild(item);
-                });
-            } else {
-                var empty = document.createElement('div');
-                empty.className = 'auto-item';
-                empty.style.color = 'var(--gold)';
-                empty.style.textAlign = 'center';
-                empty.textContent = 'Não encontrado no histórico. Clique em CLIENTE E VISITA para cadastrar novo.';
-                quickDropdown.appendChild(empty);
-            }
-        } else {
-            quickAddModule.classList.remove('active');
-        }
-    });
-
-    quickDropdown.addEventListener('click', function(e) {
-        var item = e.target.closest('.auto-item');
-        if (item && item.getAttribute('data-nome')) {
-            quickInput.value = item.getAttribute('data-nome');
-            quickAddModule.classList.remove('active');
-        }
-    });
-
+            (database || []).forEach(function(p) { var n = String(p.nome || ''); if (n.toLowerCase().indexOf(term) !== -1) mapS[n.toLowerCase()] = { nome: n, tipo: p.tipo, placa: '', visits_count: 0, _visit: p }; });
+            return Object.values(mapS);
+        });
+    }
+    var quickSaved = window.KacSavedVisitors ? window.KacSavedVisitors.attach(quickInput, { modulo: 'empresarial', listbox: quickDropdown, host: quickAddModule, fallback: historyFallback }) : null;
     document.addEventListener('click', function(e) {
         if (!quickAddModule.contains(e.target)) quickAddModule.classList.remove('active');
     });
@@ -705,9 +685,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         var hora = document.getElementById('quickTime').value || "00:00";
         if (!nome) { alert('Digite um nome ou selecione da lista.'); return; }
         
+        var saved = quickSaved ? quickSaved.picked() : null;
+        if (saved && saved._visit) saved = null;
         var found = null;
-        for(var i = database.length - 1; i >= 0; i--) {
-            if (database[i].nome.toLowerCase() === nome.toLowerCase()) { found = database[i]; break; }
+        if (!saved) {
+            for(var i = database.length - 1; i >= 0; i--) {
+                if (String(database[i].nome || '').toLowerCase() === nome.toLowerCase()) { found = database[i]; break; }
+            }
         }
         
         var newRecord = {
@@ -717,20 +701,22 @@ document.addEventListener('DOMContentLoaded', async function() {
             hora: hora,
             nome: nome,
             unidade: '',
-            tipo: found ? found.tipo : "Visitante",
-            placa: found ? found.placa : "Sem Veículo",
+            tipo: saved ? (saved.tipo || 'Visita') : found ? found.tipo : "Visitante",
+            placa: saved ? window.KacSavedVisitors.composePlaca(saved) : found ? found.placa : "Sem Veículo",
             acompanhantes: found ? found.acompanhantes : "0",
             placaAcompanhante: found ? found.placaAcompanhante : "",
-            historico: found ? found.historico : "Adicionado via Agendamento Rápido",
+            historico: saved && saved.observacao ? saved.observacao : found ? found.historico : "Adicionado via Agendamento Rápido",
             alerta: found ? found.alerta : 0,
             status: 0
         };
+        if (saved) newRecord.visitante = { placa: saved.placa || '', cor: saved.cor || '', marca: saved.marca || '', tipo: saved.tipo || '' };
         
         try {
             await window.VisitorRepository.save(newRecord);
             if (window.renderController) window.renderController.reloadDailyData(state.diaAtivo, 'empresarial');
             
             quickInput.value = '';
+            if (quickSaved) quickSaved.clear();
             quickAddModule.classList.remove('active');
             alert('Registro Adicionado com Sucesso!');
         } catch(err) {
