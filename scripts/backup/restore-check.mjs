@@ -49,12 +49,16 @@ if(T.length)await db.exec(`TRUNCATE ${T.map(t=>'public.'+id(t)).join(',')} CASCA
 for(const t of T)await db.exec(`ALTER TABLE public.${id(t)} DISABLE TRIGGER USER;`);
 for(const t of order){const rows=bk.tables[t]||[];const have=await cols(t);
   const identity=(await q(`select count(*)::int n from pg_attribute where attrelid=$1::regclass and attidentity='a' and not attisdropped`,['public.'+id(t)]))[0].n>0;
-  const conv=(k,v)=>{if(v===null||v===undefined)return null;const c=have.get(k);if(c&&c.d==='ARRAY')return v;if(typeof v==='object')return JSON.stringify(v);return v;};
-  try{for(const row of rows){const k=Object.keys(row);if(!k.length){await db.exec(`insert into public.${id(t)} default values`);continue;}
+  // Colunas GERADAS (GENERATED ALWAYS AS … STORED) não aceitam valor: o banco recalcula. Ficam fora do INSERT e são conferidas depois.
+  const generated=new Set((await q(`select attname a from pg_attribute where attrelid=$1::regclass and attgenerated<>'' and attnum>0 and not attisdropped`,['public.'+id(t)])).map(r=>r.a));
+  const conv=(k,v)=>{if(v===null||v===undefined)return null;const c=have.get(k);if(c&&c.d==='ARRAY')return v;if(c&&(c.u==='json'||c.u==='jsonb'))return JSON.stringify(v);if(typeof v==='object')return JSON.stringify(v);return v;};
+  try{for(const row of rows){const k=Object.keys(row).filter(c=>!generated.has(c));if(!k.length){await db.exec(`insert into public.${id(t)} default values`);continue;}
     await db.query(`insert into public.${id(t)}(${k.map(id).join(',')})${identity?' OVERRIDING SYSTEM VALUE':''} values(${k.map((_,i)=>'$'+(i+1)).join(',')})`,k.map(x=>conv(x,row[x])));}}
   catch(e){ok(`restore ${t}`,false,`${e.code||''} ${String(e.message).slice(0,140)}`);continue;}
   const n=(await q(`select count(*)::int n from public.${id(t)}`))[0].n; ok(`restore ${t}: ${n}`,n===rows.length);
-  if(man&&man.counts&&t in man.counts)ok(`contagem ${t} = manifesto`,man.counts[t]===rows.length);}
+  if(man&&man.counts&&t in man.counts)ok(`contagem ${t} = manifesto`,man.counts[t]===rows.length);
+  for(const g of generated){const exp=rows.map(r=>r[g]===undefined||r[g]===null?null:String(r[g])).sort();const got=(await q(`select ${id(g)}::text v from public.${id(t)}`)).map(r=>r.v).sort();
+    ok(`coluna gerada ${t}.${g} recalculada igual ao backup`,JSON.stringify(exp)===JSON.stringify(got));}}
 for(const t of T)await db.exec(`ALTER TABLE public.${id(t)} ENABLE TRIGGER USER;`);
 // Reposiciona todas as sequências (serial e identity) depois dos ids explícitos.
 for(const t of T)for(const r of await q(`select a.attname c, pg_get_serial_sequence($1,a.attname) s from pg_attribute a where a.attrelid=$1::regclass and a.attnum>0 and not a.attisdropped`,['public.'+id(t)]))

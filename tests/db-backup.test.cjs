@@ -19,7 +19,7 @@ test('dump.mjs: só GET (sem POST/PATCH/DELETE), tabelas kac_/komodo_, exige as 
 test('restore-check.mjs: mesma cifra do workflow, md5 com TimeZone UTC, esquema gerado das migrações do repo',()=>{
   const r=src('scripts/backup/restore-check.mjs');assert.match(r,/'-aes-256-cbc','-pbkdf2','-iter','600000','-md','sha256'/);
   assert.match(r,/SET TimeZone='UTC'/);assert.match(r,/migrationOrder\(fs\.readdirSync\(M\)\)/);
-  assert.ok(!/const ORDER=\[/.test(r),'sem lista fixa de tabelas');assert.match(r,/contype='f'/);assert.match(r,/attidentity='a'/);assert.match(r,/WARN /);
+  assert.ok(!/const ORDER=\[/.test(r),'sem lista fixa de tabelas');assert.match(r,/contype='f'/);assert.match(r,/attidentity='a'/);assert.match(r,/attgenerated<>''/);assert.match(r,/filter\(c=>!generated\.has\(c\)\)/);assert.match(r,/c\.u==='jsonb'/);assert.match(r,/WARN /);
   assert.ok(!/console\.log\([^)]*row/.test(r),'nunca imprime linhas');
 });
 test('ordem das migrações = ordem de produção (008 antes de 007; 013b depois de 013; sem rollback) e cobre todas do repo',()=>{

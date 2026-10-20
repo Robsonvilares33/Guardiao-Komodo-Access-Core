@@ -58,6 +58,13 @@ Guardados em `/workspace/backups` (box, pasta 700/arquivos 600) e `C:\Users\yyy\
 - Pendente (precisa de token com escopo `workflow`): publicar o artefato **cifrado** mesmo se o teste de restauração falhar (`id: enc` no passo Cifrar e `if: always() && steps.guard.outputs.ready == 'true' && steps.enc.outcome == 'success'` no upload). Hoje, se a restauração falhar, o artefato não sai.
 - Restauração real (passo 5 acima): use a ordem de carga que o `restore-check.mjs` calcula (pais antes de filhos pelas FKs).
 
+### Correção 20/10/2026 — colunas geradas e outras armadilhas
+- Run agendada 39257770347 (19/10) falhou: `428C9 cannot insert a non-DEFAULT value into column "nome_norm"` (`kac_saved_visitors.nome_norm` é `GENERATED ALWAYS … STORED`). A run manual de 19/10 passou porque a tabela estava vazia.
+- `restore-check.mjs` agora detecta colunas geradas pelo catálogo (`pg_attribute.attgenerated`), tira essas colunas do INSERT e confere se o valor recalculado é igual ao do backup. IDENTITY ALWAYS continua com `OVERRIDING SYSTEM VALUE`.
+- Também corrigido: valor jsonb que é um texto simples (ex.: `"abc"`) era enviado sem aspas JSON e falhava com `22P02`. Agora toda coluna json/jsonb é serializada.
+- Varredura de prod (só leitura): 1 coluna gerada (`kac_saved_visitors.nome_norm`), 1 identity ALWAYS (`kac_payment_events.id`), nenhum enum nem array em `public`. Gatilhos de usuário (`trg_kac_touch_*`, `trg_kac_track_visit`) ficam desligados durante a carga, e as sequências são reposicionadas.
+- Teste com linhas reais nessas tabelas: `tests/pglite/backup-restore-check.mjs` (dados fictícios).
+
 ## Usuário dedicado de smoke (15/10/2026)
 - Criado em produção (aditivo; backup antes: `kac_presmoke_20261015T220144.json`, SHA-256 72489f15…edf0947): org fictícia `Smoke CI (fictícia, sem dados reais)` (`53b19a65-0627-41eb-a662-48c2fee0a81a`), usuário `user_smoke_ci` / `smoke-ci@komodo-smoke.invalid` (papel `operador`, membro `viewer`), assinatura free.
 - Isolamento: toda consulta de visitas filtra `organization_id` da sessão; verificado ao vivo (0 visitas visíveis, real intacta). Os jobs `smoke-auth` e `smoke-a11y` só leem.
